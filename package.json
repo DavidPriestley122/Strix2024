@@ -1,0 +1,26 @@
+{
+  "name": "strix2024",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "live-server"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babylonjs/core": "^7.4.0",
+    "@babylonjs/gui": "^7.4.0",
+    "@babylonjs/loaders": "^7.4.0",
+    "babylonjs": "^7.4.0",
+    "babylonjs-gui": "^7.4.0",
+    "earcut": "^2.2.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.5",
+    "@babel/preset-env": "^7.24.5",
+    "babel-loader": "^9.1.3",
+    "live-server": "^1.2.1"
+  }
+}
