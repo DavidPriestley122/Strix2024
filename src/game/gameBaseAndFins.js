@@ -3,7 +3,7 @@
 
  export var baseMesh, fin1, fin2, fin3;
  
- (function () {
+ (function (boardContainer) {
  
  
  
@@ -123,4 +123,9 @@
     // Apply the translation to the fin
     fin3.position.addInPlace(rotatedTranslationVector);
 
-})();
+ // Make the base and fins children of the boardContainer
+ baseMesh.parent = boardContainer;
+ fin1.parent = boardContainer;
+ fin2.parent = boardContainer;
+ fin3.parent = boardContainer;
+})(boardContainer);
