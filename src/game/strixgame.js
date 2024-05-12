@@ -1,4 +1,5 @@
 import {gameStateManager} from './gameStateManager.js';
+import { baseMesh as _baseMesh, fin1 as _fin1, fin2 as _fin2, fin3 as _fin3 } from "./gameboard.js";
 import { Scene, ArcRotateCamera, HemisphericLight, DirectionalLight, Vector3, Color3, MeshBuilder,StandardMaterial, MultiMaterial,  TransformNode, Mesh, SubMesh, ActionManager, ExecuteCodeAction, Matrix } from "@babylonjs/core";
 import {AdvancedDynamicTexture, TextBlock, Control,Rectangle, TextWrapping, ScrollViewer } from '@babylonjs/gui/2D'
 import {Animation,CubicEase,EasingFunction} from '@babylonjs/core'
@@ -61,7 +62,7 @@ export function createScene(engine,canvas) {
     boardContainer.rotation = new Vector3(-(1 / Math.sqrt(3)), 0, Math.cos(Math.asin(1 / Math.sqrt(3))));
     boardContainer.position.y += 1.45;
 
-
+/*
     //THE BASE
 
     // Create the hexagonal base
@@ -178,7 +179,7 @@ export function createScene(engine,canvas) {
     // Apply the translation to the fin
     fin3.position.addInPlace(rotatedTranslationVector);
 
-
+*/
 
 
    // INFO TEXT SET-UP
