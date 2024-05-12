@@ -1,5 +1,4 @@
-
-var gameStateManager = {
+export var gameStateManager = {
 
     piecePositions: {
         brownOwl: "b7-1",
@@ -121,5 +120,3 @@ var gameStateManager = {
 
 
 }
-
-export default gameStateManager;
