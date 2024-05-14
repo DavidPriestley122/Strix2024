@@ -1,12 +1,17 @@
  
  import { Mesh, MeshBuilder, Vector3, Color3, StandardMaterial, ActionManager, ExecuteCodeAction, Matrix } from "@babylonjs/core";
 
- export var baseMesh, fin1, fin2, fin3;
- 
- (function (boardContainer) {
- 
- 
- 
+ export function gameBaseAndFins(boardContainer,scene) {
+    // ... module code ...
+    var baseMesh = MeshBuilder.ExtrudePolygon("base", baseOptions, scene);
+    //baseMesh.sideOrientation = 2;
+    var fin1 = MeshBuilder.ExtrudePolygon("fin1", finOptions, scene);
+    //fin1.sideOrientation = 2;
+    var fin2 = MeshBuilder.ExtrudePolygon("fin2", finOptions, scene);
+    //fin2.sideOrientation = 2;
+    var fin3 = MeshBuilder.ExtrudePolygon("fin3", finOptions, scene);
+    //fin3.sideOrientation = 2;
+  
  //THE BASE
 
     // Create the hexagonal base
@@ -27,11 +32,12 @@
     var baseOptions = {
         shape: baseShape,
         depth: baseThickness,
-        sideOrientation: Mesh.DOUBLESIDE
+        sideOrientation: Mesh._GetDefaultSideOrientation(null)
     };
 
     var baseMesh = MeshBuilder.ExtrudePolygon("base", baseOptions, scene);
     baseMesh.visibility = 1;
+    baseMesh.parent = boardContainer;
 
     // Create a material for the base
     var baseMaterial = new StandardMaterial("baseMaterial", scene);
@@ -78,7 +84,7 @@
     var finOptions = {
         shape: finShape,
         depth: finThickness,
-        sideOrientation: Mesh.DOUBLESIDE
+        sideOrientation: Mesh._GetDefaultSideOrientation(null)
     };
 
     var fin1 = MeshBuilder.ExtrudePolygon("fin1", finOptions, scene);
@@ -123,9 +129,5 @@
     // Apply the translation to the fin
     fin3.position.addInPlace(rotatedTranslationVector);
 
- // Make the base and fins children of the boardContainer
- baseMesh.parent = boardContainer;
- fin1.parent = boardContainer;
- fin2.parent = boardContainer;
- fin3.parent = boardContainer;
-})(boardContainer);
+    
+}

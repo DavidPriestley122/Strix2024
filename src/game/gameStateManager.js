@@ -1,4 +1,11 @@
+
+
+
+
+
 export var gameStateManager = {
+
+    
 
     piecePositions: {
         brownOwl: "b7-1",
@@ -115,8 +122,12 @@ export var gameStateManager = {
     updateMoveHistoryDisplay: function () {
         var moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
         moveHistoryText.text = this.moveHistory.join("\n");
-    }
+    },
 
+  // Add a method to set the moveHistoryText
+  setMoveHistoryText: function(moveHistoryText) {
+    this.moveHistoryText = moveHistoryText;
+  }
 
 
 }

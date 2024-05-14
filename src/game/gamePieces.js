@@ -1,82 +1,56 @@
-import {
-    Color3,
-    Mesh,
-    MeshBuilder,
-    MultiMaterial,
-    StandardMaterial,
-    SubMesh,
-} from "@babylonjs/core";
+import { Mesh, MeshBuilder, Vector3, Color3, StandardMaterial } from "@babylonjs/core";
 
-export var brownOwl, brownKite, brownRaven, yellowOwl, yellowKite, yellowRaven, greenOwl, greenKite, greenRaven;
+export function gamePieces(boardContainer,scene) {
+    // Create the game pieces
+    var brownOwl = MeshBuilder.CreateBox("brownOwl", { size: 1 }, scene);
+    var brownKite = MeshBuilder.CreateBox("brownKite", { size: 1 }, scene);
+    var brownRaven = MeshBuilder.CreateBox("brownRaven", { size: 1 }, scene);
+    var yellowOwl = MeshBuilder.CreateBox("yellowOwl", { size: 1 }, scene);
+    var yellowKite = MeshBuilder.CreateBox("yellowKite", { size: 1 }, scene);
+    var yellowRaven = MeshBuilder.CreateBox("yellowRaven", { size: 1 }, scene);
+    var greenOwl = MeshBuilder.CreateBox("greenOwl", { size: 1 }, scene);
+    var greenKite = MeshBuilder.CreateBox("greenKite", { size: 1 }, scene);
+    var greenRaven = MeshBuilder.CreateBox("greenRaven", { size: 1 }, scene);
 
-(function (boardContainer) {
-// MAKING THE PLAYING PIECES
+    // Create the materials for the game pieces
+    var brownOwlMaterial = new StandardMaterial("brownOwlMaterial", scene);
+    brownOwlMaterial.diffuseColor = new Color3(0.8, 0.4, 0.1);
+    var brownKiteMaterial = new StandardMaterial("brownKiteMaterial", scene);
+    brownKiteMaterial.diffuseColor = new Color3(0.6, 0.3, 0.1);
+    var brownRavenMaterial = new StandardMaterial("brownRavenMaterial", scene);
+    brownRavenMaterial.diffuseColor = new Color3(0.4, 0.2, 0.1);
+    var yellowOwlMaterial = new StandardMaterial("yellowOwlMaterial", scene);
+    yellowOwlMaterial.diffuseColor = new Color3(1, 1, 0);
+    var yellowKiteMaterial = new StandardMaterial("yellowKiteMaterial", scene);
+    yellowKiteMaterial.diffuseColor = new Color3(0.8, 0.8, 0);
+    var yellowRavenMaterial = new StandardMaterial("yellowRavenMaterial", scene);
+    yellowRavenMaterial.diffuseColor = new Color3(0.6, 0.6, 0);
+    var greenOwlMaterial = new StandardMaterial("greenOwlMaterial", scene);
+    greenOwlMaterial.diffuseColor = new Color3(0, 0.8, 0);
+    var greenKiteMaterial = new StandardMaterial("greenKiteMaterial", scene);
+    greenKiteMaterial.diffuseColor = new Color3(0, 0.6, 0);
+    var greenRavenMaterial = new StandardMaterial("greenRavenMaterial", scene);
+    greenRavenMaterial.diffuseColor = new Color3(0, 0.4, 0);
 
-// Create materials for the cylinder
-var brownMaterial = new StandardMaterial("brownMaterial", scene);
-brownMaterial.diffuseColor = Color3.FromInts(88, 54, 41); // Brown
+    // Apply the materials to the game pieces
+    brownOwl.material = brownOwlMaterial;
+    brownKite.material = brownKiteMaterial;
+    brownRaven.material = brownRavenMaterial;
+    yellowOwl.material = yellowOwlMaterial;
+    yellowKite.material = yellowKiteMaterial;
+    yellowRaven.material = yellowRavenMaterial;
+    greenOwl.material = greenOwlMaterial;
+    greenKite.material = greenKiteMaterial;
+    greenRaven.material = greenRavenMaterial;
 
-var owlMat = new StandardMaterial("owlMat", scene);
-owlMat.diffuseColor = Color3.FromInts(204, 153, 102); // Owl Color
-
-var kiteMat = new StandardMaterial("kiteMat", scene);
-kiteMat.diffuseColor = Color3.FromInts(139, 0, 0); // Kite Color
-
-var ravenMat = new StandardMaterial("ravenMat", scene);
-ravenMat.diffuseColor = Color3.FromInts(10, 10, 10); // Raven Color
-
-var brownTeamMat = new StandardMaterial("brownTeamMat", scene);
-brownTeamMat.diffuseColor = Color3.FromInts(88, 54, 41); // Brown Team Color
-
-var yellowTeamMat = new StandardMaterial("yellowTeamMat", scene);
-yellowTeamMat.diffuseColor = Color3.FromInts(255, 204, 0); // Yellow Team Color
-
-var greenTeamMat = new StandardMaterial("greenTeamMat", scene);
-greenTeamMat.diffuseColor = Color3.FromInts(8, 64, 0); // Green Team Color
-
-// Create the multimeshes for the cylinders
-function createMeshWithMultiMaterial(name, material, teamMaterial, scene) {
-    var mesh = MeshBuilder.CreateCylinder(name, { height: 7, diameter: 0.5, subdivisions: 7 }, scene);
-    var multiMaterial = new MultiMaterial("multiMaterial_" + name, scene);
-
-    // Create sub-materials
-    for (var i = 0; i < 6; i++) {
-        multiMaterial.subMaterials.push(material);
-    }
-    multiMaterial.subMaterials.push(teamMaterial); // Bottom section
-    multiMaterial.subMaterials.push(teamMaterial); // Top section
-
-    // Apply multi-material to mesh
-    mesh.material = multiMaterial;
-
-    // Define sub-meshes
-    mesh.subMeshes = [];
-    var verticesCount = mesh.getTotalVertices();
-    for (var j = 0; j < 8; j++) {
-        var start = j * 144;
-        new SubMesh(j, 0, verticesCount, start, 144, mesh);
-    }
-
-    mesh.parent = boardContainer;
-    return mesh;
+    // Set the parent of the game pieces to the board container
+    brownOwl.parent = boardContainer;
+    brownKite.parent = boardContainer;
+    brownRaven.parent = boardContainer;
+    yellowOwl.parent = boardContainer;
+    yellowKite.parent = boardContainer;
+    yellowRaven.parent = boardContainer;
+    greenOwl.parent = boardContainer;
+    greenKite.parent = boardContainer;
+    greenRaven.parent = boardContainer;
 }
-var brownOwl = createMeshWithMultiMaterial("brownOwl", owlMat, brownTeamMat, scene);
-brownOwl.parent = boardContainer;
-var brownKite = createMeshWithMultiMaterial("brownKite", kiteMat, brownTeamMat, scene);
-brownKite.parent = boardContainer;
-var brownRaven = createMeshWithMultiMaterial("brownRaven", ravenMat, brownTeamMat, scene);
-brownRaven.parent = boardContainer;
-var yellowOwl = createMeshWithMultiMaterial("yellowOwl", owlMat, yellowTeamMat, scene);
-yellowOwl.parent = boardContainer;
-var yellowKite = createMeshWithMultiMaterial("yellowKite", kiteMat, yellowTeamMat, scene);
-yellowKite.parent = boardContainer;
-var yellowRaven = createMeshWithMultiMaterial("yellowRaven", ravenMat, yellowTeamMat, scene);
-yellowRaven.parent = boardContainer;
-var greenOwl = createMeshWithMultiMaterial("greenOwl", owlMat, greenTeamMat, scene);
-greenOwl.parent = boardContainer;
-var greenKite = createMeshWithMultiMaterial("greenKite", kiteMat, greenTeamMat, scene);
-greenKite.parent = boardContainer;
-var greenRaven = createMeshWithMultiMaterial("greenRaven", ravenMat, greenTeamMat, scene);
-greenRaven.parent = boardContainer;
-
-})(boardContainer);

@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@babylonjs/core": "^7.5.0",
+    "@babylonjs/core": "^7.6.1",
     "@babylonjs/gui": "^7.5.0",
     "@babylonjs/loaders": "^7.4.0",
     "babylonjs": "^7.4.0",
