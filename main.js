@@ -1,3 +1,7 @@
+
+import createScene from "./src/game/strixGame.js";
+
+
 function main() {
   const canvas = document.getElementById("renderCanvas");
   const engine = new BABYLON.Engine(canvas, true);

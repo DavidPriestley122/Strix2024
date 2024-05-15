@@ -1,4 +1,9 @@
-function createScene(engine,canvas) {
+
+import { createBaseAndFins } from "./gameBaseAndFins.js";
+
+
+
+export default function createScene(engine,canvas) {
     //This creates a basic Babylon scene object
     var scene = new BABYLON.Scene(engine)
 
@@ -57,6 +62,10 @@ function createScene(engine,canvas) {
     boardContainer.position.y += 1.45;
 
 
+
+    createBaseAndFins(scene, boardContainer);
+
+/*
     //THE BASE
 
     // Create the hexagonal base
@@ -173,7 +182,7 @@ function createScene(engine,canvas) {
     // Apply the translation to the fin
     fin3.position.addInPlace(rotatedTranslationVector);
 
-
+*/
 
 
    // INFO TEXT SET-UP
@@ -1134,4 +1143,4 @@ moveHistoryViewer.addControl(moveHistoryText);
 };
 
 //Make the createScene function globally accessible
-window.createScene = createScene;
+//window.createScene = createScene;

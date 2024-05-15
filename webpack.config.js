@@ -12,7 +12,7 @@ export default {
   },
   resolve: {
     extensions: ['.js'],
-    modules:['node_modules'],
+    modules:['node_modules', 'src'],
     alias: {
       '@babylonjs/gui': path.resolve(__dirname, 'node_modules/@babylonjs/gui'),
     },
