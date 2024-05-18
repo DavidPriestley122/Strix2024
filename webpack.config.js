@@ -17,4 +17,8 @@ export default {
       '@babylonjs/gui': path.resolve(__dirname, 'node_modules/@babylonjs/gui'),
     },
   },
+  //externals: {
+   // earcut: 'earcut', // Add this line
+  //},
+
 };
