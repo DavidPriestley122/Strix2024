@@ -998,7 +998,7 @@ moveHistoryViewer.addControl(moveHistoryText);
 
 
 
-
+/*
     // Add x-axis (red)
     var xAxis = Mesh.CreateLines("xAxis", [
         new Vector3(-5, 0, 0),
@@ -1019,7 +1019,7 @@ moveHistoryViewer.addControl(moveHistoryText);
         new Vector3(0, 0, 5)
     ], scene);
     zAxis.color = new Color3(0, 0, 1); // Blue
-    
+  */
     return scene;
 };
 

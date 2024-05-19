@@ -71,7 +71,7 @@ export function createBaseAndFins(scene) {
     baseMesh.material = baseMaterial;
 
     // Rotate the base by 30 degrees in the plane
-    baseMesh.rotation.y = Math.PI / 3;
+    //baseMesh.rotation.y = Math.PI / 3;
     baseMesh.position.y += 0.51;
 
     baseMesh.actionManager = new ActionManager(scene);
@@ -135,26 +135,10 @@ function createFin(name, rotation, translation) {
     return fin;
 }
 
-/*var fin1 = createFin("fin1", Math.PI / 6, new Vector3(0.15, 0, -0.22));
-
-var fin2 = createFin("fin2", Math.PI * 5 / 6, new Vector3(-0.2, 0, 0));
-
-var fin3 = createFin("fin3", -Math.PI / 2, new Vector3(0.1, 0, 0.26));
-*/
-
-/*var finOffset = finThickness / 2;
-var finApothem = (Math.sqrt(3) / 4) * finThickness;
-
-var fin1 = createFin("fin1", Math.PI / 6, new Vector3(0, 0, -finOffset));
-*/
 var finOffset = finThickness / 2;
-//var fin1 = createFin("fin1", Math.PI / 6, new Vector3(finOffset * Math.cos(Math.PI / 6), 0.51, -finOffset * Math.sin(Math.PI / 6)));
-
-
-
-var fin1 = createFin("fin1", Math.PI / 6, new Vector3(finOffset * Math.cos(Math.PI / 6), 0, -finOffset * Math.sin(Math.PI / 6)));
-var fin2 = createFin("fin2", Math.PI * 5 / 6, new Vector3(finOffset * Math.cos(Math.PI * 5 / 6), 0, -finOffset * Math.sin(Math.PI * 5 / 6)));
-var fin3 = createFin("fin3", -Math.PI / 2, new Vector3(finOffset * Math.cos(-Math.PI / 2), 0, -finOffset * Math.sin(-Math.PI / 2)));
+var fin1 = createFin("fin1", Math.PI / 2, new Vector3(-finOffset,0,0));
+var fin2 = createFin("fin2", -Math.PI / 6, new Vector3(finOffset * Math.cos(Math.PI / 3), 0, -finOffset * Math.sin(Math.PI / 3)));
+var fin3 = createFin("fin3", -5 * Math.PI / 6, new Vector3(finOffset * Math.cos(Math.PI / 3), 0, finOffset * Math.sin(Math.PI / 3)));
 
 
 
