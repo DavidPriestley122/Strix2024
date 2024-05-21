@@ -73,6 +73,7 @@ moveHistoryText.resizeToFit = true;
 moveHistoryText.textWrapping = TextWrapping.WordWrap;
 moveHistoryViewer.addControl(moveHistoryText);
 
+
 return {
     advancedTexture,
     infoText,
@@ -81,6 +82,7 @@ return {
     moveHistoryContainer,
     moveHistoryViewer,
     moveHistoryText
+
   };
 }
 
@@ -88,18 +90,18 @@ return {
 /*export const  gameStateManager = {
 */
     export function createGameStateManager(guiElements) {
-        const { moveHistoryViewer, moveHistoryText, messageText, messageRect } = guiElements;
+    const { moveHistoryViewer, moveHistoryText, messageText, messageRect,advancedTexture } = guiElements;
 
+    let nextPlayerText = null; // Variable to store the reference to nextPlayerText control
 
-
-        function displayInfoMessage(message) {
-            messageText.text = message;
-            messageRect.isVisible = true;
+    function displayInfoMessage(message) {
+        messageText.text = message;
+        messageRect.isVisible = true;
     
-            setTimeout(function () {
-                messageRect.isVisible = false;
-            }, 2000);
-        }    
+        setTimeout(function () {
+            messageRect.isVisible = false;
+        }, 2000);
+    }    
 
     return {
         piecePositions: {
@@ -175,6 +177,8 @@ return {
 
     moveHistory: [],
 
+    currentPlayerTurn: "brown",
+
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
         var abbreviatedPiece = "";
         switch (piece) {
@@ -211,14 +215,41 @@ return {
 
         this.moveHistory.push(`${abbreviatedPiece} - ${formattedDestination}`);
 
+        // Extract the color of the piece from the recorded move
+        var moveColor = this.moveHistory[this.moveHistory.length - 1].charAt(0);
+
+         // Determine the next player's turn based on the color of the current move
+         if (moveColor === "b") {
+        this.currentPlayerTurn = "yellow";
+        } else if (moveColor === "y") {
+         this.currentPlayerTurn = "green";
+        } else if (moveColor === "g") {
+         this.currentPlayerTurn = "brown";
+        }
 
         this.updateMoveHistoryDisplay();
+        this.updateNextPlayerDisplay(); // Add this line to update the next player display
     },
 
     updateMoveHistoryDisplay: function () {
         var moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
         moveHistoryText.text = this.moveHistory.join("\n");
     },
+
+    updateNextPlayerDisplay: function () {
+        if (nextPlayerText) {
+            advancedTexture.removeControl(nextPlayerText); // Remove the previous nextPlayerText control
+          }
+        nextPlayerText = new TextBlock("nextPlayerText");
+        nextPlayerText.text = "Next Player: " + this.currentPlayerTurn;
+        nextPlayerText.color = "white";
+        nextPlayerText.fontSize = 16;
+        nextPlayerText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+        nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+        nextPlayerText.top = "280px"; // Adjust the position as needed
+        nextPlayerText.left = "20px"; // Adjust the position as needed
+        advancedTexture.addControl(nextPlayerText);
+      },
 
     displayInfoMessage: displayInfoMessage
 
