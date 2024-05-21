@@ -1,9 +1,11 @@
-
+//import { gameStateManager } from './gameStateManager.js';
 import { createBaseAndFins } from "./gameBaseAndFins.js";
-//import { gameStateManager } from "./gameStateManager.js";
+import { createGUI } from "./gameStateManager.js";
+import { createGameStateManager } from "./gameStateManager.js";
+
 
 import { Scene, ArcRotateCamera, HemisphericLight, DirectionalLight, Vector3, Color3, MeshBuilder,StandardMaterial, MultiMaterial,  TransformNode, Mesh, SubMesh, ActionManager, ExecuteCodeAction, Matrix } from "@babylonjs/core";
-import {AdvancedDynamicTexture, TextBlock, Control,Rectangle, TextWrapping, ScrollViewer } from '@babylonjs/gui/2D'
+//import {AdvancedDynamicTexture, TextBlock, Control,Rectangle, TextWrapping, ScrollViewer } from '@babylonjs/gui/2D'
 import {Animation,CubicEase,EasingFunction} from '@babylonjs/core'
 
 
@@ -69,7 +71,12 @@ export default function createScene(engine,canvas) {
 
     createBaseAndFins(scene, boardContainer);
 
+    const guiElements = createGUI(scene);
 
+    const gameStateManager = createGameStateManager(guiElements)
+
+
+/*
    // INFO TEXT SET-UP
 // Create GUI manager
 var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
@@ -123,8 +130,10 @@ moveHistoryContainer.top = "80px";
 moveHistoryContainer.left = "20px";
 advancedTexture.addControl(moveHistoryContainer);
 
+
+
 // Create a scroll viewer for the move history
-var moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
+export var moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
 moveHistoryViewer.width = "100%";
 moveHistoryViewer.height = "100%";
 moveHistoryContainer.addControl(moveHistoryViewer);
@@ -141,8 +150,13 @@ moveHistoryText.resizeToFit = true;
 moveHistoryText.textWrapping = TextWrapping.WordWrap;
 moveHistoryViewer.addControl(moveHistoryText);
 
+
+
 // Pass moveHistoryViewer when calling updateMoveHistoryDisplay
 //gameStateManager.updateMoveHistoryDisplay();
+
+
+*/
 
     // Define colors for each face of the bright cube
     var brightFaceColors = [
@@ -517,7 +531,7 @@ moveHistoryViewer.addControl(moveHistoryText);
     setPiecePosition(greenRaven, cubes, "g5-3", 0, 0, 3.75);
 
 
-    var gameStateManager = {
+    /*var gameStateManager = {
 
         piecePositions: {
             brownOwl: "b7-1",
@@ -641,7 +655,7 @@ moveHistoryViewer.addControl(moveHistoryText);
 
     }
 
-
+*/
 
     // Function to update the position of a piece in the game state manager
     function updatePiecePosition(pieceName, position) {
@@ -698,13 +712,13 @@ moveHistoryViewer.addControl(moveHistoryText);
 
                 if (occupyingPiece) {
                     // The clicked cube is already occupied by another piece
-                    displayInfoMessage("Destination square already occupied. Please choose another move.");
+                    gameStateManager.displayInfoMessage("Destination square already occupied. Please choose another move.");
                     selectedPiece = null;
                 } else {
                     // Check if the clicked cube is shadowed
                     gameStateManager.updateShadowedRows(selectedPiece.name);
                     if (isMoveCollidingWithShadowedRows(cube.name, selectedPiece)) {
-                        displayInfoMessage("The destination square is shadowed. Please choose another move.");
+                        gameStateManager.displayInfoMessage("The destination square is shadowed. Please choose another move.");
                         selectedPiece = null;
                     } else {
                         var offsetVector;
@@ -746,7 +760,8 @@ moveHistoryViewer.addControl(moveHistoryText);
             }
         }));
     }
-    function displayInfoMessage(message) {
+
+    /*function displayInfoMessage(message) {
         messageText.text = message;
         messageRect.isVisible = true;
 
@@ -754,7 +769,7 @@ moveHistoryViewer.addControl(moveHistoryText);
             messageRect.isVisible = false;
         }, 2000);
     }
-
+*/
     // Add click event listeners to the cubes
     cubes.forEach(function (cube) {
         addCubeClickListener(cube);
