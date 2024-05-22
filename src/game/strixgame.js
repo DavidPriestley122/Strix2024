@@ -1,11 +1,7 @@
-//import { gameStateManager } from './gameStateManager.js';
 import { createBaseAndFins } from "./gameBaseAndFins.js";
 import { createGUI } from "./gameStateManager.js";
 import { createGameStateManager } from "./gameStateManager.js";
-
-
 import { Scene, ArcRotateCamera, HemisphericLight, DirectionalLight, Vector3, Color3, MeshBuilder,StandardMaterial, MultiMaterial,  TransformNode, Mesh, SubMesh, ActionManager, ExecuteCodeAction, Matrix } from "@babylonjs/core";
-//import {AdvancedDynamicTexture, TextBlock, Control,Rectangle, TextWrapping, ScrollViewer } from '@babylonjs/gui/2D'
 import {Animation,CubicEase,EasingFunction} from '@babylonjs/core'
 
 
@@ -41,7 +37,7 @@ export default function createScene(engine,canvas) {
     light4.intensity = .5;
     //light5.intensity = .7;
 
-/*
+
     // Create a background plane
     var backgroundPlane = MeshBuilder.CreatePlane("backgroundPlane", { size: 1000 }, scene);
     backgroundPlane.position.y = 0; // Position the plane behind all other objects
@@ -55,7 +51,7 @@ export default function createScene(engine,canvas) {
     backgroundMaterial.specularColor = new Color3(0, 0, 0);
     backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
     backgroundPlane.material = backgroundMaterial;
-*/
+
 
 
     //CREATE THE BOARD CONTAINER
@@ -75,88 +71,6 @@ export default function createScene(engine,canvas) {
 
     const gameStateManager = createGameStateManager(guiElements)
 
-
-/*
-   // INFO TEXT SET-UP
-// Create GUI manager
-var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
-// Create dynamic text object to display information
-var infoText = new TextBlock();
-infoText.text = "";
-infoText.color = "white";
-infoText.fontSize = 24;
-infoText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-infoText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-infoText.top = "20px";
-infoText.left = "20px";
-infoText.isVisible = true;
-advancedTexture.addControl(infoText);
-
-var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
-
-var messageRect = new Rectangle("messageRect");
-messageRect.width = "40%";
-messageRect.height = "20%";
-messageRect.cornerRadius = 20;
-messageRect.color = "white";
-messageRect.thickness = 4;
-messageRect.background = "rgba(0, 0, 0, 0.7)";
-messageRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-messageRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-messageRect.isVisible = false;
-advancedTexture.addControl(messageRect);
-
-var messageText = new TextBlock("messageText");
-messageText.text = "";
-messageText.color = "white";
-messageText.fontSize = 24;
-messageText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-messageText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-messageText.resizeToFit = true;
-messageText.textWrapping = TextWrapping.WordWrap;
-messageText.paddingLeft = "5%";
-messageText.paddingRight = "5%";
-messageRect.addControl(messageText);
-
-// Create a container for the move history
-var moveHistoryContainer = new Rectangle("moveHistoryContainer");
-moveHistoryContainer.width = "100px";
-moveHistoryContainer.height = "200px";
-moveHistoryContainer.background = "rgba(0, 0, 0, 0.7)";
-moveHistoryContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-moveHistoryContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-moveHistoryContainer.top = "80px";
-moveHistoryContainer.left = "20px";
-advancedTexture.addControl(moveHistoryContainer);
-
-
-
-// Create a scroll viewer for the move history
-export var moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
-moveHistoryViewer.width = "100%";
-moveHistoryViewer.height = "100%";
-moveHistoryContainer.addControl(moveHistoryViewer);
-
-
-// Create a text block to display the move history
-var moveHistoryText = new TextBlock("moveHistoryText");
-moveHistoryText.text = "";
-moveHistoryText.color = "white";
-moveHistoryText.fontSize = 16;
-moveHistoryText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-moveHistoryText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-moveHistoryText.resizeToFit = true;
-moveHistoryText.textWrapping = TextWrapping.WordWrap;
-moveHistoryViewer.addControl(moveHistoryText);
-
-
-
-// Pass moveHistoryViewer when calling updateMoveHistoryDisplay
-//gameStateManager.updateMoveHistoryDisplay();
-
-
-*/
 
     // Define colors for each face of the bright cube
     var brightFaceColors = [
@@ -531,137 +445,6 @@ moveHistoryViewer.addControl(moveHistoryText);
     setPiecePosition(greenRaven, cubes, "g5-3", 0, 0, 3.75);
 
 
-    /*var gameStateManager = {
-
-        piecePositions: {
-            brownOwl: "b7-1",
-            brownKite: "b6-2",
-            brownRaven: "b5-3",
-            yellowOwl: "y7-1",
-            yellowKite: "y6-2",
-            yellowRaven: "y5-3",
-            greenOwl: "g7-1",
-            greenKite: "g6-2",
-            greenRaven: "g5-3"
-        },
-
-
-
-        updateShadowedRows: function (excludedPiece) {
-            // Reset shadowed rows
-            this.shadowedRows = {
-                b: [],
-                y: [],
-                g: []
-            };
-
-            // Iterate through each piece
-            for (let pieceName in this.piecePositions) {
-                let piecePosition = this.piecePositions[pieceName];
-
-                // Skip the excluded piece and pieces on owlHalla squares
-                if (pieceName === excludedPiece || piecePosition.includes("--")) {
-                    continue;
-                }
-
-                let boardColor = piecePosition.charAt(0);
-                let row = parseInt(piecePosition.charAt(1));
-                let column = parseInt(piecePosition.charAt(3));
-
-                // Update shadowed rows and columns based on the current piece's position
-                if (boardColor === 'b') {
-                    // Generate shadowed rows for yellow board
-                    for (let i = 1; i <= 7; i++) {
-                        this.shadowedRows.y.push(`y${column}-${i}`);
-                    }
-                    // Generate shadowed columns for green board
-                    for (let i = 1; i <= 7; i++) {
-                        this.shadowedRows.g.push(`g${i}-${row}`);
-                    }
-                } else if (boardColor === 'y') {
-                    // Generate shadowed rows for brown board
-                    for (let i = 1; i <= 7; i++) {
-                        this.shadowedRows.b.push(`b${i}-${row}`);
-                    }
-                    // Generate shadowed columns for green board
-                    for (let i = 1; i <= 7; i++) {
-                        this.shadowedRows.g.push(`g${column}-${i}`);
-                    }
-                } else if (boardColor === 'g') {
-                    // Generate shadowed rows for brown board
-                    for (let i = 1; i <= 7; i++) {
-                        this.shadowedRows.b.push(`b${column}-${i}`);
-                    }
-                    // Generate shadowed rows for yellow board
-                    for (let i = 1; i <= 7; i++) {
-                        this.shadowedRows.y.push(`y${i}-${row}`);
-                    }
-                }
-            }
-        },
-
-        updatePiecePosition: function (pieceName, position) {
-            this.piecePositions[pieceName] = position;
-        },
-
-        moveHistory: [],
-
-        addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
-            var abbreviatedPiece = "";
-            switch (piece) {
-                case "brownOwl":
-                    abbreviatedPiece = "bO";
-                    break;
-                case "brownKite":
-                    abbreviatedPiece = "bK";
-                    break;
-                case "brownRaven":
-                    abbreviatedPiece = "bR";
-                    break;
-                case "yellowOwl":
-                    abbreviatedPiece = "yO";
-                    break;
-                case "yellowKite":
-                    abbreviatedPiece = "yK";
-                    break;
-                case "yellowRaven":
-                    abbreviatedPiece = "yR";
-                    break;
-                case "greenOwl":
-                    abbreviatedPiece = "gO";
-                    break;
-                case "greenKite":
-                    abbreviatedPiece = "gK";
-                    break;
-                case "greenRaven":
-                    abbreviatedPiece = "gR";
-                    break;
-            }
-
-            var formattedDestination = destinationSquare.replace("-", "");
-
-            this.moveHistory.push(`${abbreviatedPiece} - ${formattedDestination}`);
-
-
-            this.updateMoveHistoryDisplay();
-        },
-
-        updateMoveHistoryDisplay: function () {
-            var moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
-            moveHistoryText.text = this.moveHistory.join("\n");
-        }
-
-
-
-    }
-
-*/
-
-    // Function to update the position of a piece in the game state manager
-    function updatePiecePosition(pieceName, position) {
-        gameStateManager.piecePositions[pieceName] = position;
-    }
-
 
     function isMoveCollidingWithShadowedRows(targetCube, selectedPiece) {
         // Update shadowed rows excluding the selected piece
@@ -761,15 +544,7 @@ moveHistoryViewer.addControl(moveHistoryText);
         }));
     }
 
-    /*function displayInfoMessage(message) {
-        messageText.text = message;
-        messageRect.isVisible = true;
-
-        setTimeout(function () {
-            messageRect.isVisible = false;
-        }, 2000);
-    }
-*/
+   
     // Add click event listeners to the cubes
     cubes.forEach(function (cube) {
         addCubeClickListener(cube);
@@ -1038,5 +813,3 @@ moveHistoryViewer.addControl(moveHistoryText);
     return scene;
 };
 
-//Make the createScene function globally accessible
-//window.createScene = createScene;
