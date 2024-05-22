@@ -3,10 +3,10 @@ import { AdvancedDynamicTexture, TextBlock, Rectangle, Control, ScrollViewer, Te
 
 export function createGUI(scene) {
 
- var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
 // Create dynamic text object to display information
-var infoText = new TextBlock();
+const infoText = new TextBlock();
 infoText.text = "";
 infoText.color = "white";
 infoText.fontSize = 24;
@@ -19,7 +19,7 @@ advancedTexture.addControl(infoText);
 
 
 
-var messageRect = new Rectangle("messageRect");
+const messageRect = new Rectangle("messageRect");
 messageRect.width = "40%";
 messageRect.height = "20%";
 messageRect.cornerRadius = 20;
@@ -31,7 +31,7 @@ messageRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
 messageRect.isVisible = false;
 advancedTexture.addControl(messageRect);
 
-var messageText = new TextBlock("messageText");
+const messageText = new TextBlock("messageText");
 messageText.text = "";
 messageText.color = "white";
 messageText.fontSize = 24;
@@ -44,7 +44,7 @@ messageText.paddingRight = "5%";
 messageRect.addControl(messageText);
 
 // Create a container for the move history
-var moveHistoryContainer = new Rectangle("moveHistoryContainer");
+const moveHistoryContainer = new Rectangle("moveHistoryContainer");
 moveHistoryContainer.width = "100px";
 moveHistoryContainer.height = "200px";
 moveHistoryContainer.background = "rgba(0, 0, 0, 0.7)";
@@ -56,14 +56,14 @@ advancedTexture.addControl(moveHistoryContainer);
 
 
 // Create a scroll viewer for the move history
-var moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
+const moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
 moveHistoryViewer.width = "100%";
 moveHistoryViewer.height = "100%";
 moveHistoryContainer.addControl(moveHistoryViewer);
 
 
 // Create a text block to display the move history
-var moveHistoryText = new TextBlock("moveHistoryText");
+const moveHistoryText = new TextBlock("moveHistoryText");
 moveHistoryText.text = "";
 moveHistoryText.color = "white";
 moveHistoryText.fontSize = 16;
@@ -87,8 +87,7 @@ return {
 }
 
 
-/*export const  gameStateManager = {
-*/
+
     export function createGameStateManager(guiElements) {
     const { moveHistoryViewer, moveHistoryText, messageText, messageRect,advancedTexture } = guiElements;
 
@@ -180,7 +179,7 @@ return {
     currentPlayerTurn: "brown",
 
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
-        var abbreviatedPiece = "";
+        let abbreviatedPiece = "";
         switch (piece) {
             case "brownOwl":
                 abbreviatedPiece = "bO";
@@ -211,12 +210,12 @@ return {
                 break;
         }
 
-        var formattedDestination = destinationSquare.replace("-", "");
+        const formattedDestination = destinationSquare.replace("-", "");
 
         this.moveHistory.push(`${abbreviatedPiece} - ${formattedDestination}`);
 
         // Extract the color of the piece from the recorded move
-        var moveColor = this.moveHistory[this.moveHistory.length - 1].charAt(0);
+        const moveColor = this.moveHistory[this.moveHistory.length - 1].charAt(0);
 
          // Determine the next player's turn based on the color of the current move
          if (moveColor === "b") {
@@ -232,7 +231,7 @@ return {
     },
 
     updateMoveHistoryDisplay: function () {
-        var moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
+        const moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
         moveHistoryText.text = this.moveHistory.join("\n");
     },
 
