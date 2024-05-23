@@ -255,14 +255,14 @@ export default function createScene(engine,canvas) {
 
     //OTHER BOARD STRUCTURE
     // Create the back panels
-    var backPanelWidth = 7.55;
-    var backPanelHeight = 7.55;
-    var backPanelThickness = 0.05;
-    var backPanelMaterial = new StandardMaterial("backPanelMaterial", scene);
+    const backPanelWidth = 7.55;
+    const backPanelHeight = 7.55;
+    const backPanelThickness = 0.05;
+    const backPanelMaterial = new StandardMaterial("backPanelMaterial", scene);
     backPanelMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
 
     function createBackPanel(position, rotation) {
-        var backPanel = MeshBuilder.CreateBox("backPanel",
+        const backPanel = MeshBuilder.CreateBox("backPanel",
             { width: backPanelWidth, height: backPanelHeight, depth: backPanelThickness }, scene);
         backPanel.material = backPanelMaterial;
         backPanel.position = position;
@@ -276,14 +276,14 @@ export default function createScene(engine,canvas) {
 
 
     // Create the edge strips
-    var edgeStripWidth = 0.55;
-    var edgeStripHeight = 7.6;
-    var edgeStripThickness = 0.05;
-    var edgeStripMaterial = new StandardMaterial("edgeStripMaterial", scene);
+    const edgeStripWidth = 0.55;
+    const edgeStripHeight = 7.6;
+    const edgeStripThickness = 0.05;
+    const edgeStripMaterial = new StandardMaterial("edgeStripMaterial", scene);
     edgeStripMaterial.diffuseColor = Color3.FromInts(8, 64, 0); // Green Team Colour;
 
     function createEdgeStrip(position, rotation) {
-        var edgeStrip = MeshBuilder.CreateBox("edgeStrip",
+        const edgeStrip = MeshBuilder.CreateBox("edgeStrip",
             { width: edgeStripWidth, height: edgeStripHeight, depth: edgeStripThickness }, scene);
         edgeStrip.material = edgeStripMaterial;
         edgeStrip.position = position;
@@ -301,34 +301,34 @@ export default function createScene(engine,canvas) {
     // MAKING THE PLAYING PIECES
 
     // Create materials for the cylinder
-    var brownMaterial = new StandardMaterial("brownMaterial", scene);
+    const brownMaterial = new StandardMaterial("brownMaterial", scene);
     brownMaterial.diffuseColor = Color3.FromInts(88, 54, 41); // Brown
 
-    var owlMat = new StandardMaterial("owlMat", scene);
+    const owlMat = new StandardMaterial("owlMat", scene);
     owlMat.diffuseColor = Color3.FromInts(204, 153, 102); // Owl Color
 
-    var kiteMat = new StandardMaterial("kiteMat", scene);
+    const kiteMat = new StandardMaterial("kiteMat", scene);
     kiteMat.diffuseColor = Color3.FromInts(139, 0, 0); // Kite Color
 
-    var ravenMat = new StandardMaterial("ravenMat", scene);
+    const ravenMat = new StandardMaterial("ravenMat", scene);
     ravenMat.diffuseColor = Color3.FromInts(10, 10, 10); // Raven Color
 
-    var brownTeamMat = new StandardMaterial("brownTeamMat", scene);
+    const brownTeamMat = new StandardMaterial("brownTeamMat", scene);
     brownTeamMat.diffuseColor = Color3.FromInts(88, 54, 41); // Brown Team Color
 
-    var yellowTeamMat = new StandardMaterial("yellowTeamMat", scene);
+    const yellowTeamMat = new StandardMaterial("yellowTeamMat", scene);
     yellowTeamMat.diffuseColor = Color3.FromInts(255, 204, 0); // Yellow Team Color
 
-    var greenTeamMat = new StandardMaterial("greenTeamMat", scene);
+    const greenTeamMat = new StandardMaterial("greenTeamMat", scene);
     greenTeamMat.diffuseColor = Color3.FromInts(8, 64, 0); // Green Team Color
 
     // Create the multimeshes for the cylinders
     function createMeshWithMultiMaterial(name, material, teamMaterial, scene) {
-        var mesh = MeshBuilder.CreateCylinder(name, { height: 7, diameter: 0.5, subdivisions: 7 }, scene);
-        var multiMaterial = new MultiMaterial("multiMaterial_" + name, scene);
+        const mesh = MeshBuilder.CreateCylinder(name, { height: 7, diameter: 0.5, subdivisions: 7 }, scene);
+        const multiMaterial = new MultiMaterial("multiMaterial_" + name, scene);
 
         // Create sub-materials
-        for (var i = 0; i < 6; i++) {
+        for (let i = 0; i < 6; i++) {
             multiMaterial.subMaterials.push(material);
         }
         multiMaterial.subMaterials.push(teamMaterial); // Bottom section
@@ -339,40 +339,40 @@ export default function createScene(engine,canvas) {
 
         // Define sub-meshes
         mesh.subMeshes = [];
-        var verticesCount = mesh.getTotalVertices();
-        for (var j = 0; j < 8; j++) {
-            var start = j * 144;
+        const verticesCount = mesh.getTotalVertices();
+        for (let j = 0; j < 8; j++) {
+            let start = j * 144;
             new SubMesh(j, 0, verticesCount, start, 144, mesh);
         }
 
         mesh.parent = boardContainer;
         return mesh;
     }
-    var brownOwl = createMeshWithMultiMaterial("brownOwl", owlMat, brownTeamMat, scene);
+    const brownOwl = createMeshWithMultiMaterial("brownOwl", owlMat, brownTeamMat, scene);
     brownOwl.parent = boardContainer;
-    var brownKite = createMeshWithMultiMaterial("brownKite", kiteMat, brownTeamMat, scene);
+    const brownKite = createMeshWithMultiMaterial("brownKite", kiteMat, brownTeamMat, scene);
     brownKite.parent = boardContainer;
-    var brownRaven = createMeshWithMultiMaterial("brownRaven", ravenMat, brownTeamMat, scene);
+    const brownRaven = createMeshWithMultiMaterial("brownRaven", ravenMat, brownTeamMat, scene);
     brownRaven.parent = boardContainer;
-    var yellowOwl = createMeshWithMultiMaterial("yellowOwl", owlMat, yellowTeamMat, scene);
+    const yellowOwl = createMeshWithMultiMaterial("yellowOwl", owlMat, yellowTeamMat, scene);
     yellowOwl.parent = boardContainer;
-    var yellowKite = createMeshWithMultiMaterial("yellowKite", kiteMat, yellowTeamMat, scene);
+    const yellowKite = createMeshWithMultiMaterial("yellowKite", kiteMat, yellowTeamMat, scene);
     yellowKite.parent = boardContainer;
-    var yellowRaven = createMeshWithMultiMaterial("yellowRaven", ravenMat, yellowTeamMat, scene);
+    const yellowRaven = createMeshWithMultiMaterial("yellowRaven", ravenMat, yellowTeamMat, scene);
     yellowRaven.parent = boardContainer;
-    var greenOwl = createMeshWithMultiMaterial("greenOwl", owlMat, greenTeamMat, scene);
+    const greenOwl = createMeshWithMultiMaterial("greenOwl", owlMat, greenTeamMat, scene);
     greenOwl.parent = boardContainer;
-    var greenKite = createMeshWithMultiMaterial("greenKite", kiteMat, greenTeamMat, scene);
+    const greenKite = createMeshWithMultiMaterial("greenKite", kiteMat, greenTeamMat, scene);
     greenKite.parent = boardContainer;
-    var greenRaven = createMeshWithMultiMaterial("greenRaven", ravenMat, greenTeamMat, scene);
+    const greenRaven = createMeshWithMultiMaterial("greenRaven", ravenMat, greenTeamMat, scene);
     greenRaven.parent = boardContainer;
 
     // THE OWL SQUARES - MARKED BY TORUSES
 
     // Place a flattened torus on top of the cube named "b7-1"
-    var targetCube1 = cubes.find(cube => cube.name === "b7-1");
+    const targetCube1 = cubes.find(cube => cube.name === "b7-1");
     if (targetCube1) {
-        var torus1 = MeshBuilder.CreateTorus("torus1", {
+        const torus1 = MeshBuilder.CreateTorus("torus1", {
             diameter: 0.75,
             thickness: 0.1,
             tessellation: 32
@@ -386,9 +386,9 @@ export default function createScene(engine,canvas) {
     }
 
     // Place a flattened torus on top of the cube named "y7-1"
-    var targetCube2 = cubes.find(cube => cube.name === "y7-1");
+    const targetCube2 = cubes.find(cube => cube.name === "y7-1");
     if (targetCube2) {
-        var torus2 = MeshBuilder.CreateTorus("torus_y7-1", {
+        const torus2 = MeshBuilder.CreateTorus("torus_y7-1", {
             diameter: 0.75,
             thickness: 0.1,
             tessellation: 32
@@ -402,9 +402,9 @@ export default function createScene(engine,canvas) {
     }
 
     // Place a flattened torus on top of the cube named "g7-1"
-    var targetCube3 = cubes.find(cube => cube.name === "g7-1");
+    const targetCube3 = cubes.find(cube => cube.name === "g7-1");
     if (targetCube3) {
-        var torus3 = MeshBuilder.CreateTorus("torus_g7-1", {
+        const torus3 = MeshBuilder.CreateTorus("torus_g7-1", {
             diameter: 0.75,
             thickness: 0.1,
             tessellation: 32
@@ -422,7 +422,7 @@ export default function createScene(engine,canvas) {
 
     // Set the starting positions of the pieces
     function setPiecePosition(piece, cubes, name, offsetX, offsetY, offsetZ) {
-        var cube = cubes.find(cube => cube.name === name);
+        const cube = cubes.find(cube => cube.name === name);
         piece.position = cube.position.clone().add(new Vector3(offsetX, offsetY, offsetZ));
         piece.rotation = cube.rotation.clone();
     }
@@ -466,10 +466,10 @@ export default function createScene(engine,canvas) {
 
     //MOVING THE PIECES
 
-    var selectedPiece = null;
+    let selectedPiece = null;
 
     function animatePieceMovement(piece, targetPosition, targetRotation, duration, onAnimationEnd) {
-        var easingFunction = new CubicEase();
+        const easingFunction = new CubicEase();
         easingFunction.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
 
         Animation.CreateAndStartAnimation("pieceAnimation", piece, "position", 60, duration, piece.position, targetPosition, 0, easingFunction, onAnimationEnd);
@@ -487,7 +487,7 @@ export default function createScene(engine,canvas) {
                 }
 
                 // Check if the clicked cube already contains a piece
-                var occupyingPiece = scene.meshes.find(mesh => {
+                const occupyingPiece = scene.meshes.find(mesh => {
                     return mesh !== selectedPiece && (mesh.name.endsWith("Owl") || mesh.name.endsWith("Kite") || mesh.name.endsWith("Raven")) &&
                         mesh.position.x.toFixed(2) === (cube.position.x + (cube.name.startsWith("y") ? 3.75 : 0)).toFixed(2) &&
                         mesh.position.y.toFixed(2) === (cube.position.y + (cube.name.startsWith("b") ? 3.75 : 0)).toFixed(2) &&
@@ -505,7 +505,7 @@ export default function createScene(engine,canvas) {
                         gameStateManager.displayInfoMessage("The destination square is shadowed. Please choose another move.");
                         selectedPiece = null;
                     } else {
-                        var offsetVector;
+                        let offsetVector;
                         if (cube.name.startsWith("b")) {
                             // Cube is on the brown checkerboard
                             offsetVector = new Vector3(0, 3.75, 0);
@@ -518,11 +518,11 @@ export default function createScene(engine,canvas) {
                         }
 
                         // Calculate the target position and rotation for the selected piece
-                        var targetPosition = cube.position.clone().add(offsetVector);
-                        var targetRotation = cube.rotation.clone();
+                        const targetPosition = cube.position.clone().add(offsetVector);
+                        const targetRotation = cube.rotation.clone();
 
                         // Store the current position before the move
-                        var currentPosition = gameStateManager.piecePositions[selectedPiece.name];
+                        const currentPosition = gameStateManager.piecePositions[selectedPiece.name];
 
                         // Animate the selected piece movement
                         animatePieceMovement(selectedPiece, targetPosition, targetRotation, 30, function () {
@@ -533,7 +533,7 @@ export default function createScene(engine,canvas) {
                             gameStateManager.addMoveToHistory(selectedPiece.name, currentPosition, cube.name);
 
                             // Store the selected piece name before setting it to null
-                            var movedPieceName = selectedPiece.name;
+                            const movedPieceName = selectedPiece.name;
                             selectedPiece = null;
 
                             // Update shadowed rows after the move
@@ -557,12 +557,12 @@ export default function createScene(engine,canvas) {
 
     function createOwlHallaCubes(mainBoardCubes) {
 
-        var owlHallaCubes = [];
+        const owlHallaCubes = [];
 
         // Clone and position the owlHalla cubes for the brown side
-        for (var i = 1; i <= 3; i++) {
-            var cubeName = "b" + (8 - i) + "--1";
-            var cube = mainBoardCubes["b" + (8 - i) + "-1"].clone(cubeName);
+        for (let i = 1; i <= 3; i++) {
+            const cubeName = "b" + (8 - i) + "--1";
+            const cube = mainBoardCubes["b" + (8 - i) + "-1"].clone(cubeName);
             cube.position = new Vector3(i - 0.5, -0.25, 8.5);
             cube.material = brownTeamMat;
             cube.visibility = false;
@@ -571,9 +571,9 @@ export default function createScene(engine,canvas) {
         }
 
         // Clone and position the owlHalla cubes for the yellow side
-        for (var i = 1; i <= 3; i++) {
-            var cubeName = "y" + (8 - i) + "--1";
-            var cube = mainBoardCubes["y" + (8 - i) + "-1"].clone(cubeName);
+        for (let i = 1; i <= 3; i++) {
+            const cubeName = "y" + (8 - i) + "--1";
+            const cube = mainBoardCubes["y" + (8 - i) + "-1"].clone(cubeName);
             cube.position = new Vector3(-0.25, 8.5, i - 0.5);
             cube.material = yellowTeamMat;
             cube.visibility = false;
@@ -582,9 +582,9 @@ export default function createScene(engine,canvas) {
         }
 
         // Clone and position the owlHalla cubes for the green side
-        for (var i = 1; i <= 3; i++) {
-            var cubeName = "g" + (8 - i) + "--1";
-            var cube = mainBoardCubes["g" + (8 - i) + "-1"].clone(cubeName);
+        for (let i = 1; i <= 3; i++) {
+            const cubeName = "g" + (8 - i) + "--1";
+            const cube = mainBoardCubes["g" + (8 - i) + "-1"].clone(cubeName);
             cube.position = new Vector3(8.5, i - 0.5, -0.25);
             cube.material = greenTeamMat;
             cube.visibility = false;
@@ -595,10 +595,10 @@ export default function createScene(engine,canvas) {
         return owlHallaCubes;
     }
 
-    var owlHallaCubes = createOwlHallaCubes(mainBoardCubes);
+    const owlHallaCubes = createOwlHallaCubes(mainBoardCubes);
 
     // Create action manager for edge strips
-    var edgeStripActionManager = new ActionManager(scene);
+    const edgeStripActionManager = new ActionManager(scene);
 
     // Register action for click event on edge strips
     edgeStripActionManager.registerAction(
@@ -606,7 +606,7 @@ export default function createScene(engine,canvas) {
             ActionManager.OnPickDownTrigger,
             function (evt) {
                 // Handle click event on edge strips
-                var pickedMesh = evt.meshUnderPointer;
+                const pickedMesh = evt.meshUnderPointer;
                 if (pickedMesh && pickedMesh.name === "edgeStrip") {
                     // Toggle visibility of owlHalla cubes and any pieces
                     toggleOwlHallaVisibility();
@@ -622,11 +622,11 @@ export default function createScene(engine,canvas) {
         }
     });
 
-    var piecesOnOwlHalla = [];
+    const piecesOnOwlHalla = [];
 
     // Function to toggle visibility of owlHalla cubes and any pieces
     function toggleOwlHallaVisibility() {
-        var owlHallaVisible = !owlHallaCubes[0].visibility;
+        const owlHallaVisible = !owlHallaCubes[0].visibility;
 
         owlHallaCubes.forEach(function (cube) {
             cube.visibility = owlHallaVisible;
@@ -634,14 +634,14 @@ export default function createScene(engine,canvas) {
 
         // Toggle visibility of pieces on owlHalla squares
         piecesOnOwlHalla.forEach(function (pieceName) {
-            var piece = scene.getMeshByName(pieceName);
+            const piece = scene.getMeshByName(pieceName);
             piece.visibility = owlHallaVisible;
         });
     }
 
     // Function to update the piecesOnOwlHalla array when a piece is leaving owlHalla
     function updatePiecesLeavingOwlHalla(pieceName) {
-        var index = piecesOnOwlHalla.indexOf(pieceName);
+        const index = piecesOnOwlHalla.indexOf(pieceName);
         if (index > -1) {
             piecesOnOwlHalla.splice(index, 1);
         }
@@ -656,7 +656,7 @@ export default function createScene(engine,canvas) {
     // TAKING PLAYING PIECES - DOUBLE-CLICK CODE
 
     // Object to store the original positions of the pieces
-    var originalPositions = {
+    const originalPositions = {
         brownOwl: null,
         brownKite: null,
         brownRaven: null,
@@ -670,8 +670,8 @@ export default function createScene(engine,canvas) {
 
     // Function to handle the single click event for a piece
     function handlePieceSingleClick(piece) {
-        var pieceName = piece.name;
-        var currentPosition = gameStateManager.piecePositions[pieceName];
+        const pieceName = piece.name;
+        const currentPosition = gameStateManager.piecePositions[pieceName];
 
         if (currentPosition && currentPosition.endsWith("--1")) {
             // The clicked piece is on an owlHalla square, clear the selection
@@ -687,8 +687,8 @@ export default function createScene(engine,canvas) {
 
     // Function to handle the double click event for a piece
     function handlePieceDoubleClick(piece) {
-        var pieceName = piece.name;
-        var originalPosition = originalPositions[pieceName];
+        const pieceName = piece.name;
+        const originalPosition = originalPositions[pieceName];
 
         if (originalPosition) {
             // The piece is on the owlHalla square, move it back to its original position
@@ -705,8 +705,8 @@ export default function createScene(engine,canvas) {
             // Move it to the owlHalla square and copy the rotation from the owlHalla square
             originalPositions[pieceName] = piece.position.clone();
             originalPositions[pieceName + "Rotation"] = piece.rotation.clone();
-            var owlHallaCubeName = getOwlHallaCubeName(pieceName);
-            var owlHallaPosition = getPositionFromCubeName(owlHallaCubeName);
+            const owlHallaCubeName = getOwlHallaCubeName(pieceName);
+            const owlHallaPosition = getPositionFromCubeName(owlHallaCubeName);
 
             // Apply the offset based on the color of the piece
             if (pieceName.startsWith("brown")) {
@@ -718,7 +718,7 @@ export default function createScene(engine,canvas) {
             }
 
             piece.position = owlHallaPosition;
-            var owlHallaCube = scene.getMeshByName(owlHallaCubeName);
+            const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
             piece.rotation = owlHallaCube.rotation.clone(); // Copy the rotation from the owlHalla cube
 
             piece.visibility = false; // Make the piece invisible when moved to the owlHalla square
@@ -730,7 +730,7 @@ export default function createScene(engine,canvas) {
 
     // Function to get the owlHalla cube name for a piece
     function getOwlHallaCubeName(pieceName) {
-        var owlHallaCubeNames = {
+        const owlHallaCubeNames = {
             brownOwl: "b7--1",
             brownKite: "b6--1",
             brownRaven: "b5--1",
@@ -747,13 +747,13 @@ export default function createScene(engine,canvas) {
 
     // Function to get the position from a cube name
     function getPositionFromCubeName(cubeName) {
-        var cube = scene.getMeshByName(cubeName);
+        const cube = scene.getMeshByName(cubeName);
         return cube.position.clone();
     }
 
     // Function to create action manager for a piece
     function createPieceActionManager(piece) {
-        var actionManager = new ActionManager(scene);
+        const actionManager = new ActionManager(scene);
 
         actionManager.registerAction(
             new ExecuteCodeAction(
