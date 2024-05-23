@@ -7,13 +7,13 @@ import {Animation,CubicEase,EasingFunction} from '@babylonjs/core'
 
 export default function createScene(engine,canvas) {
     //This creates a basic Babylon scene object
-    var scene = new Scene(engine)
+    const scene = new Scene(engine)
 
     // ArcRotateCamera
-    var camera = new ArcRotateCamera("camera1", 0, Math.PI / 4, 30, new Vector3(0, 0, 0), scene);
+    const camera = new ArcRotateCamera("camera1", 0, Math.PI / 4, 30, new Vector3(0, 0, 0), scene);
     // Get the current camera position and target
-    var currentPosition = camera.position;
-    var currentTarget = camera.target;
+    const currentPosition = camera.position;
+    const currentTarget = camera.target;
 
     // Adjust the camera position and target to move the game set lower
     camera.position = new Vector3(currentPosition.x, currentPosition.y - 3, currentPosition.z);
@@ -23,10 +23,10 @@ export default function createScene(engine,canvas) {
 
 
     // This creates a light, aiming 0,1,0 - to the sky (non-mesh)
-    var light1 = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
-    var light2 = new DirectionalLight("light2", new Vector3(0, 0, -1), scene);
-    var light3 = new DirectionalLight("light3", new Vector3(-1, 0, 0), scene);
-    var light4 = new DirectionalLight("light4", new Vector3(0, -1, 0), scene);
+    const light1 = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
+    const light2 = new DirectionalLight("light2", new Vector3(0, 0, -1), scene);
+    const light3 = new DirectionalLight("light3", new Vector3(-1, 0, 0), scene);
+    const light4 = new DirectionalLight("light4", new Vector3(0, -1, 0), scene);
     //var light5 = new DirectionalLight("light5", new Vector3(-1, -1, -1), scene);
 
 
@@ -39,14 +39,14 @@ export default function createScene(engine,canvas) {
 
 
     // Create a background plane
-    var backgroundPlane = MeshBuilder.CreatePlane("backgroundPlane", { size: 1000 }, scene);
+    const backgroundPlane = MeshBuilder.CreatePlane("backgroundPlane", { size: 1000 }, scene);
     backgroundPlane.position.y = 0; // Position the plane behind all other objects
     backgroundPlane.rotation.x = Math.PI / 2;
     backgroundPlane.rotation.y = 0;
     backgroundPlane.rotation.z = 0;
 
     // Create a standard material for the background plane
-    var backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
+    const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
     backgroundMaterial.diffuseColor = new Color3(0.1, 0.4, 0.6); // Set the color of the material
     backgroundMaterial.specularColor = new Color3(0, 0, 0);
     backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
@@ -56,7 +56,7 @@ export default function createScene(engine,canvas) {
 
     //CREATE THE BOARD CONTAINER
 
-    var boardContainer = new TransformNode("boardContainer", scene);
+    const boardContainer = new TransformNode("boardContainer", scene);
 
     // Rotate by the sine of the "magic angle" for x and the cosine of it for z, to make the set stand on its point
 
@@ -73,7 +73,7 @@ export default function createScene(engine,canvas) {
 
 
     // Define colors for each face of the bright cube
-    var brightFaceColors = [
+    const brightFaceColors = [
         new Color3(1, 0, 0), // Red
         new Color3(0, 1, 0), // Green
         new Color3(0, 0, 1), // Blue
@@ -83,7 +83,7 @@ export default function createScene(engine,canvas) {
     ];
 
     // Define paler colors for each face of the pale cube
-    var paleFaceColors = [
+    const paleFaceColors = [
         new Color3(1, 0.8, 0.8), // Pale Red
         new Color3(0.8, 1, 0.8), // Pale Green
         new Color3(0.8, 0.8, 1), // Pale Blue
@@ -96,17 +96,18 @@ export default function createScene(engine,canvas) {
 
 
     // Create the first checkerboard with a 7x7 pattern
-    var cubes = [];
-    var instanceNames = "";
-    for (var i = 1; i < 8; i++) {
-        for (var j = 1; j < 8; j++) {
-            var cubeName = `b${i}-${j}`;
-            var cube = MeshBuilder.CreateBox(cubeName, { size: 1 }, scene);
+    const cubes = [];
+    let instanceNames = "";
+
+    for (let i = 1; i < 8; i++) {
+        for (let j = 1; j < 8; j++) {
+            let cubeName = `b${i}-${j}`;
+            const cube = MeshBuilder.CreateBox(cubeName, { size: 1 }, scene);
             // Create a multi-material for the cube
-            var multiMaterial = new MultiMaterial(`multiMaterial_${i}-${j}`, scene);
+            const multiMaterial = new MultiMaterial(`multiMaterial_${i}-${j}`, scene);
             // Create materials for each face and assign them to the multi-material
-            for (var k = 0; k < 6; k++) {
-                var material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
+            for (let k = 0; k < 6; k++) {
+                const material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
                 material.diffuseColor = ((i + j) % 2 === 0) ? brightFaceColors[k] : paleFaceColors[k];
                 multiMaterial.subMaterials.push(material);
             }
@@ -114,8 +115,8 @@ export default function createScene(engine,canvas) {
             cube.material = multiMaterial;
             // Apply the face UVs to the cube
             cube.subMeshes = [];
-            var verticesCount = cube.getTotalVertices();
-            for (var k = 0; k < 6; k++) {
+            const verticesCount = cube.getTotalVertices();
+            for (let k = 0; k < 6; k++) {
                 new SubMesh(k, 0, verticesCount, k * 6, 6, cube);
             }
             cube.position.x = 6 - (i - 1) + 0.5; // Adjust the x position
@@ -133,18 +134,18 @@ export default function createScene(engine,canvas) {
     }
 
     // Create the second checkerboard at right angles to the first one
-    for (var i = 1; i < 8; i++) {
-        for (var j = 1; j < 8; j++) {
-            var cube;
-            var cubeName;
+    for (let i = 1; i < 8; i++) {
+        for (let j = 1; j < 8; j++) {
+            let cube;
+            let cubeName;
             if ((i + j) % 2 === 0) {
                 cubeName = `y${i}-${j}`;
                 cube = MeshBuilder.CreateBox(cubeName, { size: 1 }, scene);
                 // Create a multi-material for the cube
-                var multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
+                const multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
                 // Create materials for each face and assign them to the multi-material
-                for (var k = 0; k < 6; k++) {
-                    var material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
+                for (let k = 0; k < 6; k++) {
+                    const material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
                     material.diffuseColor = brightFaceColors[k];
                     multiMaterial.subMaterials.push(material);
                 }
@@ -154,10 +155,10 @@ export default function createScene(engine,canvas) {
                 cubeName = `y${i}-${j}`;
                 cube = MeshBuilder.CreateBox(cubeName, { size: 1 }, scene);
                 // Create a multi-material for the cube
-                var multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
+                const multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
                 // Create materials for each face and assign them to the multi-material
-                for (var k = 0; k < 6; k++) {
-                    var material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
+                for (let k = 0; k < 6; k++) {
+                    const material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
                     material.diffuseColor = paleFaceColors[k];
                     multiMaterial.subMaterials.push(material);
                 }
@@ -166,8 +167,8 @@ export default function createScene(engine,canvas) {
             }
             // Apply the face UVs to the cube
             cube.subMeshes = [];
-            var verticesCount = cube.getTotalVertices();
-            for (var k = 0; k < 6; k++) {
+            const verticesCount = cube.getTotalVertices();
+            for (let k = 0; k < 6; k++) {
                 new SubMesh(k, 0, verticesCount, k * 6, 6, cube);
             }
             cube.position.x = -0.25; // Set the x position to align with the back row of the first checkerboard
@@ -188,18 +189,18 @@ export default function createScene(engine,canvas) {
     }
 
     // Create the third checkerboard at right angles to both existing ones
-    for (var i = 1; i < 8; i++) {
-        for (var j = 1; j < 8; j++) {
-            var cube;
-            var cubeName;
+    for (let i = 1; i < 8; i++) {
+        for (let j = 1; j < 8; j++) {
+            let cube;
+            let cubeName;
             if ((i + j) % 2 === 0) {
                 cubeName = `g${8 - i}-${8 - j}`;
                 cube = MeshBuilder.CreateBox(cubeName, { size: 1 }, scene);
                 // Create a multi-material for the cube
-                var multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
+                const multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
                 // Create materials for each face and assign them to the multi-material
-                for (var k = 0; k < 6; k++) {
-                    var material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
+                for (let k = 0; k < 6; k++) {
+                    const material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
                     material.diffuseColor = brightFaceColors[k];
                     multiMaterial.subMaterials.push(material);
                 }
@@ -209,10 +210,10 @@ export default function createScene(engine,canvas) {
                 cubeName = `g${8 - i}-${8 - j}`;
                 cube = MeshBuilder.CreateBox(cubeName, { size: 1 }, scene);
                 // Create a multi-material for the cube
-                var multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
+                const multiMaterial = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
                 // Create materials for each face and assign them to the multi-material
-                for (var k = 0; k < 6; k++) {
-                    var material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
+                for (let k = 0; k < 6; k++) {
+                    const material = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
                     material.diffuseColor = paleFaceColors[k];
                     multiMaterial.subMaterials.push(material);
                 }
@@ -221,8 +222,8 @@ export default function createScene(engine,canvas) {
             }
             // Apply the face UVs to the cube
             cube.subMeshes = [];
-            var verticesCount = cube.getTotalVertices();
-            for (var k = 0; k < 6; k++) {
+            const verticesCount = cube.getTotalVertices();
+            for (let k = 0; k < 6; k++) {
                 new SubMesh(k, 0, verticesCount, k * 6, 6, cube);
             }
             cube.position.x = j; // Adjust the x position
@@ -244,9 +245,9 @@ export default function createScene(engine,canvas) {
         }
     }
 
-    var mainBoardCubes = {};
-    for (var i = 0; i < cubes.length; i++) {
-        var cube = cubes[i];
+    const mainBoardCubes = {};
+    for (let i = 0; i < cubes.length; i++) {
+        const cube = cubes[i];
         mainBoardCubes[cube.name] = cube;
     }
 
