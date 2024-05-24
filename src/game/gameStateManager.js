@@ -237,7 +237,7 @@ export function createGameStateManager(guiElements) {
       moveHistoryText.text = this.moveHistory.join("\n");
     },
 
-    updateNextPlayerDisplay: function () {
+    /*updateNextPlayerDisplay: function () {
       if (nextPlayerText) {
         advancedTexture.removeControl(nextPlayerText); // Remove the previous nextPlayerText control
       }
@@ -252,6 +252,60 @@ export function createGameStateManager(guiElements) {
       nextPlayerText.left = "20px"; // Adjust the position as needed
       advancedTexture.addControl(nextPlayerText);
     },
+*/
+updateNextPlayerDisplay: function () {
+  if (nextPlayerText) {
+    advancedTexture.removeControl(nextPlayerText);
+  }
+
+  const nextPlayerRect = new Rectangle("nextPlayerRect");
+  nextPlayerRect.width = "150px";
+  nextPlayerRect.height = "40px";
+  nextPlayerRect.cornerRadius = 10;
+  nextPlayerRect.color = "white";
+  nextPlayerRect.thickness = 2;
+  nextPlayerRect.background = "rgba(0, 0, 0, 0.7)";
+  nextPlayerRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+  nextPlayerRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+  nextPlayerRect.left = "20px";
+  nextPlayerRect.top = "-20px";
+  advancedTexture.addControl(nextPlayerRect);
+
+  nextPlayerText = new TextBlock("nextPlayerText");
+  nextPlayerText.text = `${this.currentPlayerTurn.charAt(0).toUpperCase() + this.currentPlayerTurn.slice(1)} to play`;
+  nextPlayerText.color = "white";
+  nextPlayerText.fontSize = 16;
+  nextPlayerText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+  nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+  nextPlayerRect.addControl(nextPlayerText);
+},
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     displayInfoMessage: displayInfoMessage,
   };
