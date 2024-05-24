@@ -70,167 +70,80 @@ export default function createScene(engine,canvas) {
     const gameStateManager = createGameStateManager(guiElements)
 
 
-    // Define colors for each face of the bright cube
-    const brightFaceColors = [
-        new Color3(1, 0, 0), // Red
-        new Color3(0, 1, 0), // Green
-        new Color3(0, 0, 1), // Blue
-        new Color3(1, 1, 0), // Yellow
-        Color3.FromInts(50, 20, 15), // Dark Magenta
-        new Color3(0, 1, 1) // Cyan
-    ];
-
-    // Define paler colors for each face of the pale cube
-    const paleFaceColors = [
-        new Color3(1, 0.8, 0.8), // Pale Red
-        new Color3(0.8, 1, 0.8), // Pale Green
-        new Color3(0.8, 0.8, 1), // Pale Blue
-        new Color3(1, 1, 0.8), // Pale Yellow
-        Color3.FromInts(240, 230, 140), // Pale Magenta
-        new Color3(0.8, 1, 1) // Pale Cyan
-    ];
-
-
-
-
-    // Create the first checkerboard with a 7x7 pattern
-    const cubesOnTheThreeFaces = [];
-    let instanceNames = "";
-
-    for (let i = 1; i < 8; i++) {
-        for (let j = 1; j < 8; j++) {
-            let cubeNameOnBrownFace = `b${i}-${j}`;
-            const cubeOnBrownFace = MeshBuilder.CreateBox(cubeNameOnBrownFace, { size: 1 }, scene);
-            // Create a multi-material for the cube
-            const cubeMultiMaterialOnBrownFace = new MultiMaterial(`multiMaterial_${i}-${j}`, scene);
-            // Create materials for each face and assign them to the multi-material
-            for (let k = 0; k < 6; k++) {
-                const cubeFaceMaterialOnBrownFace = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
-                cubeFaceMaterialOnBrownFace.diffuseColor = ((i + j) % 2 === 0) ? brightFaceColors[k] : paleFaceColors[k];
-                cubeMultiMaterialOnBrownFace.subMaterials.push(cubeFaceMaterialOnBrownFace);
-            }
-            // Apply the multi-material to the cube
-            cubeOnBrownFace.material = cubeMultiMaterialOnBrownFace;
-            // Apply the face UVs to the cube
-            cubeOnBrownFace.subMeshes = [];
-            const verticesCount = cubeOnBrownFace.getTotalVertices();
-            for (let k = 0; k < 6; k++) {
-                new SubMesh(k, 0, verticesCount, k * 6, 6, cubeOnBrownFace);
-            }
-            cubeOnBrownFace.position.x = 6 - (i - 1) + 0.5; // Adjust the x position
-            cubeOnBrownFace.position.z = 6 - (j - 1) + 0.5; // Adjust the z position
-            cubeOnBrownFace.position.y = -0.25; // Adjust the y position
-            cubeOnBrownFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the y-direction
-            cubesOnTheThreeFaces.push(cubeOnBrownFace);
-            cubeOnBrownFace.parent = boardContainer;
-            instanceNames += cubeNameOnBrownFace + " ";
-            // Add a line break after every 3 instances
-            if ((j + 1) % 3 === 0) {
-                instanceNames += "\n";
-            }
-        }
-    }
-
-    // Create the second checkerboard at right angles to the first one
-    for (let i = 1; i < 8; i++) {
-        for (let j = 1; j < 8; j++) {
-            let cubeOnYellowFace;
-            let cubeNameOnYellowFace;
-            if ((i + j) % 2 === 0) {
-                cubeNameOnYellowFace = `y${i}-${j}`;
-                cubeOnYellowFace = MeshBuilder.CreateBox(cubeNameOnYellowFace, { size: 1 }, scene);
-                // Create a multi-material for the cube
-                const cubeMultiMaterialOnYellowFace = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
-                // Create materials for each face and assign them to the multi-material
-                for (let k = 0; k < 6; k++) {
-                    const cubeFaceMaterialOnYellowFace = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
-                    cubeFaceMaterialOnYellowFace.diffuseColor = brightFaceColors[k];
-                    cubeMultiMaterialOnYellowFace.subMaterials.push(cubeFaceMaterialOnYellowFace);
+  
+            const cubesOnTheThreeFaces = [];
+            let instanceNames = "";
+            
+            for (let i = 1; i < 8; i++) {
+                for (let j = 1; j < 8; j++) {
+                    let cubeNameOnBrownFace = `b${i}-${j}`;
+                    const cubeOnBrownFace = MeshBuilder.CreateBox(cubeNameOnBrownFace, { size: 1 }, scene);
+                    // Create a single material for the cube
+                    const cubeMaterialOnBrownFace = new StandardMaterial(`material_${i}-${j}`, scene);
+                    cubeMaterialOnBrownFace.diffuseColor = ((i + j) % 2 === 0) ? Color3.FromInts(50, 25, 15) : Color3.FromInts(240, 230, 140);
+                    // Apply the single material to the cube
+                    cubeOnBrownFace.material = cubeMaterialOnBrownFace;
+                    // Position and scale the cube
+                    cubeOnBrownFace.position.x = 6 - (i - 1) + 0.5; // Adjust the x position
+                    cubeOnBrownFace.position.z = 6 - (j - 1) + 0.5; // Adjust the z position
+                    cubeOnBrownFace.position.y = -0.25; // Adjust the y position
+                    cubeOnBrownFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the y-direction
+                    cubesOnTheThreeFaces.push(cubeOnBrownFace);
+                    cubeOnBrownFace.parent = boardContainer;
+                    instanceNames += cubeNameOnBrownFace + " ";
+                    // Add a line break after every 3 instances
+                    if ((j + 1) % 3 === 0) {
+                        instanceNames += "\n";
+                    }
                 }
-                // Apply the multi-material to the cube
-                cubeOnYellowFace.material = cubeMultiMaterialOnYellowFace;
-            } else {
-                cubeNameOnYellowFace = `y${i}-${j}`;
-                cubeOnYellowFace = MeshBuilder.CreateBox(cubeNameOnYellowFace, { size: 1 }, scene);
-                // Create a multi-material for the cube
-                const cubeMultiMaterialOnYellowFace = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
-                // Create materials for each face and assign them to the multi-material
-                for (let k = 0; k < 6; k++) {
-                    const cubeFaceMaterialOnYellowFace = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
-                    cubeFaceMaterialOnYellowFace.diffuseColor = paleFaceColors[k];
-                    cubeMultiMaterialOnYellowFace.subMaterials.push(cubeFaceMaterialOnYellowFace);
-                }
-                // Apply the multi-material to the cube
-                cubeOnYellowFace.material = cubeMultiMaterialOnYellowFace;
             }
-            // Apply the face UVs to the cube
-            cubeOnYellowFace.subMeshes = [];
-            const verticesCount = cubeOnYellowFace.getTotalVertices();
-            for (let k = 0; k < 6; k++) {
-                new SubMesh(k, 0, verticesCount, k * 6, 6, cubeOnYellowFace);
-            }
-            cubeOnYellowFace.position.x = -0.25; // Set the x position to align with the back row of the first checkerboard
-            cubeOnYellowFace.position.z = 6 - (i - 1) + 0.5; // Adjust the z position
-            cubeOnYellowFace.position.y = 6 - (j - 1) + 0.5; // Adjust the y position
-            cubeOnYellowFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the x-direction
-            cubeOnYellowFace.rotation.z = -Math.PI / 2; // Rotate the cubes by 90 degrees around the z-axis
-            cubesOnTheThreeFaces.push(cubeOnYellowFace);
-            cubeOnYellowFace.parent = boardContainer;
-            instanceNames += cubeNameOnYellowFace + " ";
+            
+            // Create the second checkerboard at right angles to the first one
+            for (let i = 1; i < 8; i++) {
+                for (let j = 1; j < 8; j++) {
+                    let cubeNameOnYellowFace = `y${i}-${j}`;
+                    const cubeOnYellowFace = MeshBuilder.CreateBox(cubeNameOnYellowFace, { size: 1 }, scene);
+                    // Create a single material for the cube
+                    const cubeMaterialOnYellowFace = new StandardMaterial(`material_${i}-${j}`, scene);
+                    cubeMaterialOnYellowFace.diffuseColor = ((i + j) % 2 === 0) ? Color3.FromInts(50, 25, 15) : Color3.FromInts(240, 230, 140);
+                    // Apply the single material to the cube
+                    cubeOnYellowFace.material = cubeMaterialOnYellowFace;
+                    // Position and scale the cube
+                    cubeOnYellowFace.position.x = -0.25; // Set the x position to align with the back row of the first checkerboard
+                    cubeOnYellowFace.position.z = 6 - (i - 1) + 0.5; // Adjust the z position
+                    cubeOnYellowFace.position.y = 6 - (j - 1) + 0.5; // Adjust the y position
+                    cubeOnYellowFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the x-direction
+                    cubeOnYellowFace.rotation.z = -Math.PI / 2; // Rotate the cubes by 90 degrees around the z-axis
+                    cubesOnTheThreeFaces.push(cubeOnYellowFace);
+                    cubeOnYellowFace.parent = boardContainer;
+                    instanceNames += cubeNameOnYellowFace + " ";
 
             // Add a line break after every 3 instances
             if ((j + 1) % 3 === 0) {
                 instanceNames += "\n";
             }
-
-        }
-    }
-
-    // Create the third checkerboard at right angles to both existing ones
-    for (let i = 1; i < 8; i++) {
-        for (let j = 1; j < 8; j++) {
-            let cubeOnGreenFace;
-            let cubeNameOnGreenFace;
-            if ((i + j) % 2 === 0) {
-                cubeNameOnGreenFace = `g${8 - i}-${8 - j}`;
-                cubeOnGreenFace = MeshBuilder.CreateBox(cubeNameOnGreenFace, { size: 1 }, scene);
-                // Create a multi-material for the cube
-                const cubeMultiMaterialOnGreenFace = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
-                // Create materials for each face and assign them to the multi-material
-                for (let k = 0; k < 6; k++) {
-                    const cubeFaceMaterialOnGreenFace = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
-                    cubeFaceMaterialOnGreenFace.diffuseColor = brightFaceColors[k];
-                    cubeMultiMaterialOnGreenFace.subMaterials.push(cubeFaceMaterialOnGreenFace);
                 }
-                // Apply the multi-material to the cube
-                cubeOnGreenFace.material = cubeMultiMaterialOnGreenFace;
-            } else {
-                cubeNameOnGreenFace = `g${8 - i}-${8 - j}`;
-                cubeOnGreenFace = MeshBuilder.CreateBox(cubeNameOnGreenFace, { size: 1 }, scene);
-                // Create a multi-material for the cube
-                const cubeMultiMaterialOnGreenFace = new MultiMaterial(`cubeMultiMaterial_${i}-${j}`, scene);
-                // Create materials for each face and assign them to the multi-material
-                for (let k = 0; k < 6; k++) {
-                    const cubeFaceMaterialOnGreenFace = new StandardMaterial(`material_${i}-${j}-${k}`, scene);
-                    cubeFaceMaterialOnGreenFace.diffuseColor = paleFaceColors[k];
-                    cubeMultiMaterialOnGreenFace.subMaterials.push(cubeFaceMaterialOnGreenFace);
-                }
-                // Apply the multi-material to the cube
-                cubeOnGreenFace.material = cubeMultiMaterialOnGreenFace;
             }
-            // Apply the face UVs to the cube
-            cubeOnGreenFace.subMeshes = [];
-            const verticesCount = cubeOnGreenFace.getTotalVertices();
-            for (let k = 0; k < 6; k++) {
-                new SubMesh(k, 0, verticesCount, k * 6, 6, cubeOnGreenFace);
-            }
-            cubeOnGreenFace.position.x = j; // Adjust the x position
-            cubeOnGreenFace.position.z = -0.25; // Set the z position to align with the left side of the "b" board
-            cubeOnGreenFace.position.y = i; // Adjust the y position
-            cubeOnGreenFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the z-direction
-            cubeOnGreenFace.rotation.x = Math.PI / 2; // Rotate the cubes by 90 degrees around the y-axis
-            cubeOnGreenFace.position.y -= 0.5;
-            cubeOnGreenFace.position.x -= 0.5;
+            
+            // Create the third checkerboard at right angles to both existing ones
+            for (let i = 1; i < 8; i++) {
+                for (let j = 1; j < 8; j++) {
+                    let cubeNameOnGreenFace = `g${8 - i}-${8 - j}`;
+                    const cubeOnGreenFace = MeshBuilder.CreateBox(cubeNameOnGreenFace, { size: 1 }, scene);
+                    // Create a single material for the cube
+                    const cubeMaterialOnGreenFace = new StandardMaterial(`material_${i}-${j}`, scene);
+                    cubeMaterialOnGreenFace.diffuseColor = ((i + j) % 2 === 0) ? Color3.FromInts(50, 25, 15) : Color3.FromInts(240, 230, 140);
+                    // Apply the single material to the cube
+                    cubeOnGreenFace.material = cubeMaterialOnGreenFace;
+                    // Position and scale the cube
+                    cubeOnGreenFace.position.x = j; // Adjust the x position
+                    cubeOnGreenFace.position.z = -0.25; // Set the z position to align with the left side of the "b" board
+                    cubeOnGreenFace.position.y = i; // Adjust the y position
+                    cubeOnGreenFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the z-direction
+                    cubeOnGreenFace.rotation.x = Math.PI / 2; // Rotate the cubes by 90 degrees around the y-axis
+                    cubeOnGreenFace.position.y -= 0.5;
+                    cubeOnGreenFace.position.x -= 0.5;
+           
 
             cubesOnTheThreeFaces.push(cubeOnGreenFace);
             cubeOnGreenFace.parent = boardContainer;
@@ -417,6 +330,7 @@ export default function createScene(engine,canvas) {
 
 
     // STARTING POSITIONS OF THE PLAYING PIECES
+   
 
     // Set the starting positions of the pieces
     function setPiecePosition(piece, cubesOnTheThreeFaces, name, offsetX, offsetY, offsetZ) {
@@ -545,53 +459,54 @@ export default function createScene(engine,canvas) {
 
    
     // Add click event listeners to the cubes
-    cubesOnTheThreeFaces.forEach(function (cube) {
-        addCubeClickListener(cube);
+    cubesOnTheThreeFaces.forEach(function (clickedCube) {
+        addCubeClickListener(clickedCube);
     });
 
 
-    // OWLHALLA CUBES
+    
+function createOwlHallaCubes(mainBoardCubes) {
+    const owlHallaCubes = [];
 
-
-    function createOwlHallaCubes(mainBoardCubes) {
-
-        const owlHallaCubes = [];
-
-        // Clone and position the owlHalla cubes for the brown side
-        for (let i = 1; i <= 3; i++) {
-            const cubeName = "b" + (8 - i) + "--1";
-            const cube = mainBoardCubes["b" + (8 - i) + "-1"].clone(cubeName);
-            cube.position = new Vector3(i - 0.5, -0.25, 8.5);
-            cube.material = brownTeamMat;
-            cube.visibility = false;
-            cube.parent = boardContainer;
-            owlHallaCubes.push(cube);
-        }
-
-        // Clone and position the owlHalla cubes for the yellow side
-        for (let i = 1; i <= 3; i++) {
-            const cubeName = "y" + (8 - i) + "--1";
-            const cube = mainBoardCubes["y" + (8 - i) + "-1"].clone(cubeName);
-            cube.position = new Vector3(-0.25, 8.5, i - 0.5);
-            cube.material = yellowTeamMat;
-            cube.visibility = false;
-            cube.parent = boardContainer;
-            owlHallaCubes.push(cube);
-        }
-
-        // Clone and position the owlHalla cubes for the green side
-        for (let i = 1; i <= 3; i++) {
-            const cubeName = "g" + (8 - i) + "--1";
-            const cube = mainBoardCubes["g" + (8 - i) + "-1"].clone(cubeName);
-            cube.position = new Vector3(8.5, i - 0.5, -0.25);
-            cube.material = greenTeamMat;
-            cube.visibility = false;
-            cube.parent = boardContainer;
-            owlHallaCubes.push(cube);
-        }
-
-        return owlHallaCubes;
+    // Clone and position the owlHalla cubes for the brown side
+    for (let i = 1; i <= 3; i++) {
+        const cubeNameOHBrown = "b" + (8 - i) + "--1";
+        const cubeOHBrown = mainBoardCubes["b" + (8 - i) + "-1"].clone(cubeNameOHBrown);
+        cubeOHBrown.position = new Vector3(i - 0.5, -0.25, 8.5);
+        cubeOHBrown.material = brownTeamMat;
+        cubeOHBrown.visibility = false;
+        cubeOHBrown.parent = boardContainer;
+        owlHallaCubes.push(cubeOHBrown);
     }
+
+    // Clone and position the owlHalla cubes for the yellow side
+    for (let i = 1; i <= 3; i++) {
+        const cubeNameOHYellow = "y" + (8 - i) + "--1";
+        const cubeOHYellow = mainBoardCubes["y" + (8 - i) + "-1"].clone(cubeNameOHYellow);
+        cubeOHYellow.position = new Vector3(-0.25, 8.5, i - 0.5);
+        cubeOHYellow.material = yellowTeamMat;
+        cubeOHYellow.visibility = false;
+        cubeOHYellow.parent = boardContainer;
+        owlHallaCubes.push(cubeOHYellow);
+    }
+
+    // Clone and position the owlHalla cubes for the green side
+    for (let i = 1; i <= 3; i++) {
+        const cubeNameOHGreen = "g" + (8 - i) + "--1";
+        const cubeOHGreen = mainBoardCubes["g" + (8 - i) + "-1"].clone(cubeNameOHGreen);
+        cubeOHGreen.position = new Vector3(8.5, i - 0.5, -0.25);
+        cubeOHGreen.material = greenTeamMat;
+        cubeOHGreen.visibility = false;
+        cubeOHGreen.parent = boardContainer;
+        owlHallaCubes.push(cubeOHGreen);
+    }
+
+    return owlHallaCubes;
+}
+
+
+
+
 
     const owlHallaCubes = createOwlHallaCubes(mainBoardCubes);
 
