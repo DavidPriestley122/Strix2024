@@ -474,12 +474,12 @@ export default function createScene(engine,canvas) {
         Animation.CreateAndStartAnimation("pieceRotationAnimation", piece, "rotation", 60, duration, piece.rotation, targetRotation, 0, easingFunction);
     }
 
-    function addCubeClickListener(cube) {
-        cube.actionManager = new ActionManager(scene);
-        cube.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnPickTrigger, function () {
+    function addCubeClickListener(clickedCube) {
+        clickedCube.actionManager = new ActionManager(scene);
+        clickedCube.actionManager.registerAction(new ExecuteCodeAction(ActionManager.OnPickTrigger, function () {
             if (selectedPiece) {
                 // Check if the clicked cube is an owlHalla cube
-                if (cube.name.endsWith("--1")) {
+                if (clickedCube.name.endsWith("--1")) {
                     // The clicked cube is an owlHalla cube, do not allow piece movement
                     return;
                 }
@@ -487,9 +487,9 @@ export default function createScene(engine,canvas) {
                 // Check if the clicked cube already contains a piece
                 const occupyingPiece = scene.meshes.find(mesh => {
                     return mesh !== selectedPiece && (mesh.name.endsWith("Owl") || mesh.name.endsWith("Kite") || mesh.name.endsWith("Raven")) &&
-                        mesh.position.x.toFixed(2) === (cube.position.x + (cube.name.startsWith("y") ? 3.75 : 0)).toFixed(2) &&
-                        mesh.position.y.toFixed(2) === (cube.position.y + (cube.name.startsWith("b") ? 3.75 : 0)).toFixed(2) &&
-                        mesh.position.z.toFixed(2) === (cube.position.z + (cube.name.startsWith("g") ? 3.75 : 0)).toFixed(2);
+                        mesh.position.x.toFixed(2) === (clickedCube.position.x + (clickedCube.name.startsWith("y") ? 3.75 : 0)).toFixed(2) &&
+                        mesh.position.y.toFixed(2) === (clickedCube.position.y + (clickedCube.name.startsWith("b") ? 3.75 : 0)).toFixed(2) &&
+                        mesh.position.z.toFixed(2) === (clickedCube.position.z + (clickedCube.name.startsWith("g") ? 3.75 : 0)).toFixed(2);
                 });
 
                 if (occupyingPiece) {
@@ -499,25 +499,25 @@ export default function createScene(engine,canvas) {
                 } else {
                     // Check if the clicked cube is shadowed
                     gameStateManager.updateShadowedRows(selectedPiece.name);
-                    if (isMoveCollidingWithShadowedRows(cube.name, selectedPiece)) {
+                    if (isMoveCollidingWithShadowedRows(clickedCube.name, selectedPiece)) {
                         gameStateManager.displayInfoMessage("The destination square is shadowed. Please choose another move.");
                         selectedPiece = null;
                     } else {
                         let offsetVector;
-                        if (cube.name.startsWith("b")) {
+                        if (clickedCube.name.startsWith("b")) {
                             // Cube is on the brown checkerboard
                             offsetVector = new Vector3(0, 3.75, 0);
-                        } else if (cube.name.startsWith("y")) {
+                        } else if (clickedCube.name.startsWith("y")) {
                             // Cube is on the yellow checkerboard
                             offsetVector = new Vector3(3.75, 0, 0);
-                        } else if (cube.name.startsWith("g")) {
+                        } else if (clickedCube.name.startsWith("g")) {
                             // Cube is on the green checkerboard
                             offsetVector = new Vector3(0, 0, 3.75);
                         }
 
                         // Calculate the target position and rotation for the selected piece
-                        const targetPosition = cube.position.clone().add(offsetVector);
-                        const targetRotation = cube.rotation.clone();
+                        const targetPosition = clickedCube.position.clone().add(offsetVector);
+                        const targetRotation = clickedCube.rotation.clone();
 
                         // Store the current position before the move
                         const currentPosition = gameStateManager.piecePositions[selectedPiece.name];
@@ -525,10 +525,10 @@ export default function createScene(engine,canvas) {
                         // Animate the selected piece movement
                         animatePieceMovement(selectedPiece, targetPosition, targetRotation, 30, function () {
                             // Update the position of the moved piece in gameStateManager.piecePositions
-                            gameStateManager.piecePositions[selectedPiece.name] = cube.name;
+                            gameStateManager.piecePositions[selectedPiece.name] = clickedCube.name;
 
                             // Add the move to the move history
-                            gameStateManager.addMoveToHistory(selectedPiece.name, currentPosition, cube.name);
+                            gameStateManager.addMoveToHistory(selectedPiece.name, currentPosition, clickedCube.name);
 
                             // Store the selected piece name before setting it to null
                             const movedPieceName = selectedPiece.name;
