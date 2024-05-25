@@ -2,6 +2,8 @@ import { createBaseAndFins } from "./gameBaseAndFins.js";
 import { createGUI } from "./gameStateManager.js";
 import { createGameStateManager } from "./gameStateManager.js";
 import { createCheckerBoards } from './gameCheckerBoards.js';
+import { createPlayingPieces } from './gamePieces.js';
+
 import {
   Scene,
   ArcRotateCamera,
@@ -101,7 +103,20 @@ export default function createScene(engine, canvas) {
   const guiElements = createGUI(scene);
   const gameStateManager = createGameStateManager(guiElements);
   const { cubesOnTheThreeFaces, mainBoardCubes } = createCheckerBoards(scene, boardContainer);
- 
+  //createPlayingPieces(scene, boardContainer);
+  const {
+    brownOwl,
+    brownKite,
+    brownRaven,
+    yellowOwl,
+    yellowKite,
+    yellowRaven,
+    greenOwl,
+    greenKite,
+    greenRaven,
+  } = createPlayingPieces(scene, boardContainer);
+
+ /*
   // MAKING THE PLAYING PIECES
 
   // Create materials for the cylinder
@@ -219,7 +234,7 @@ export default function createScene(engine, canvas) {
     scene
   );
   greenRaven.parent = boardContainer;
-
+*/
   // THE OWL SQUARES - MARKED BY TORUSES
 
   // Place a flattened torus on top of the cube named "b7-1"
@@ -238,7 +253,9 @@ export default function createScene(engine, canvas) {
     torus1.position.y = targetCube1.position.y + 0.25; // Adjust the height above the cube
     torus1.position.z = targetCube1.position.z;
     torus1.rotation = targetCube1.rotation.clone();
-    torus1.material = brownTeamMat; // Use the same material as the brown owlHalla cubes
+    //torus1.material = brownTeamMat; // Use the same material as the brown owlHalla cubes
+    torus1.material = new StandardMaterial("torus1Material", scene);
+    torus1.material.diffuseColor = Color3.FromInts(88, 54, 41); // Brown color
     torus1.parent = boardContainer;
   }
 
@@ -258,7 +275,9 @@ export default function createScene(engine, canvas) {
     torus2.position.y = targetCube2.position.y;
     torus2.position.z = targetCube2.position.z;
     torus2.rotation = targetCube2.rotation.clone();
-    torus2.material = yellowTeamMat; // Use the same material as the yellow owlHalla cubes
+    //torus2.material = yellowTeamMat; // Use the same material as the yellow owlHalla cubes
+    torus2.material = new StandardMaterial("torus2Material", scene);
+     torus2.material.diffuseColor = Color3.FromInts(255, 204, 0); // Yellow color
     torus2.parent = boardContainer;
   }
 
@@ -278,7 +297,9 @@ export default function createScene(engine, canvas) {
     torus3.position.y = targetCube3.position.y;
     torus3.position.z = targetCube3.position.z + 0.25; // Adjust the height above the cube
     torus3.rotation = targetCube3.rotation.clone();
-    torus3.material = greenTeamMat; // Use the same material as the green owlHalla cubes
+    //torus3.material = greenTeamMat; // Use the same material as the green owlHalla cubes
+    torus3.material = new StandardMaterial("torus3Material", scene);
+    torus3.material.diffuseColor = Color3.FromInts(8, 64, 0); // Green color
     torus3.parent = boardContainer;
   }
 
@@ -494,7 +515,9 @@ export default function createScene(engine, canvas) {
       const cubeOHBrown =
         mainBoardCubes["b" + (8 - i) + "-1"].clone(cubeNameOHBrown);
       cubeOHBrown.position = new Vector3(i - 0.5, -0.25, 8.5);
-      cubeOHBrown.material = brownTeamMat;
+      //cubeOHBrown.material = brownTeamMat;
+      cubeOHBrown.material = new StandardMaterial("brownMaterial", scene);
+      cubeOHBrown.material.diffuseColor = Color3.FromInts(88, 54, 41); // Brown color
       cubeOHBrown.visibility = false;
       cubeOHBrown.parent = boardContainer;
       owlHallaCubes.push(cubeOHBrown);
@@ -506,7 +529,9 @@ export default function createScene(engine, canvas) {
       const cubeOHYellow =
         mainBoardCubes["y" + (8 - i) + "-1"].clone(cubeNameOHYellow);
       cubeOHYellow.position = new Vector3(-0.25, 8.5, i - 0.5);
-      cubeOHYellow.material = yellowTeamMat;
+      //cubeOHYellow.material = yellowTeamMat;
+      cubeOHYellow.material = new StandardMaterial("yellowMaterial", scene);
+      cubeOHYellow.material.diffuseColor = Color3.FromInts(255, 204, 0); // Yellow color
       cubeOHYellow.visibility = false;
       cubeOHYellow.parent = boardContainer;
       owlHallaCubes.push(cubeOHYellow);
@@ -518,7 +543,9 @@ export default function createScene(engine, canvas) {
       const cubeOHGreen =
         mainBoardCubes["g" + (8 - i) + "-1"].clone(cubeNameOHGreen);
       cubeOHGreen.position = new Vector3(8.5, i - 0.5, -0.25);
-      cubeOHGreen.material = greenTeamMat;
+      //cubeOHGreen.material = greenTeamMat;
+      cubeOHGreen.material = new StandardMaterial("greenMaterial", scene);
+      cubeOHGreen.material.diffuseColor = Color3.FromInts(8, 64, 0); // Green color
       cubeOHGreen.visibility = false;
       cubeOHGreen.parent = boardContainer;
       owlHallaCubes.push(cubeOHGreen);
