@@ -2,6 +2,7 @@ import { createBaseAndFins } from "./gameBaseAndFins.js";
 import { createGUI } from "./gameStateManager.js";
 import { createGameStateManager } from "./gameStateManager.js";
 import { createCheckerBoards } from './gameCheckerBoards.js';
+import { createOwlSquareToruses } from './gameCheckerBoards.js';
 import { createPlayingPieces } from './gamePieces.js';
 
 import {
@@ -115,78 +116,12 @@ export default function createScene(engine, canvas) {
     greenKite,
     greenRaven,
   } = createPlayingPieces(scene, boardContainer);
+  createOwlSquareToruses(scene, boardContainer, cubesOnTheThreeFaces);
 
-  // THE OWL SQUARES - MARKED BY TORUSES
-
-  // Place a flattened torus on top of the cube named "b7-1"
-  const targetCube1 = cubesOnTheThreeFaces.find((cube) => cube.name === "b7-1");
-  if (targetCube1) {
-    const torus1 = MeshBuilder.CreateTorus(
-      "torus1",
-      {
-        diameter: 0.75,
-        thickness: 0.1,
-        tessellation: 32,
-      },
-      scene
-    );
-    torus1.position.x = targetCube1.position.x;
-    torus1.position.y = targetCube1.position.y + 0.25; // Adjust the height above the cube
-    torus1.position.z = targetCube1.position.z;
-    torus1.rotation = targetCube1.rotation.clone();
-    //torus1.material = brownTeamMat; // Use the same material as the brown owlHalla cubes
-    torus1.material = new StandardMaterial("torus1Material", scene);
-    torus1.material.diffuseColor = Color3.FromInts(88, 54, 41); // Brown color
-    torus1.parent = boardContainer;
-  }
-
-  // Place a flattened torus on top of the cube named "y7-1"
-  const targetCube2 = cubesOnTheThreeFaces.find((cube) => cube.name === "y7-1");
-  if (targetCube2) {
-    const torus2 = MeshBuilder.CreateTorus(
-      "torus_y7-1",
-      {
-        diameter: 0.75,
-        thickness: 0.1,
-        tessellation: 32,
-      },
-      scene
-    );
-    torus2.position.x = targetCube2.position.x + 0.25; // Adjust the height above the cube
-    torus2.position.y = targetCube2.position.y;
-    torus2.position.z = targetCube2.position.z;
-    torus2.rotation = targetCube2.rotation.clone();
-    //torus2.material = yellowTeamMat; // Use the same material as the yellow owlHalla cubes
-    torus2.material = new StandardMaterial("torus2Material", scene);
-     torus2.material.diffuseColor = Color3.FromInts(255, 204, 0); // Yellow color
-    torus2.parent = boardContainer;
-  }
-
-  // Place a flattened torus on top of the cube named "g7-1"
-  const targetCube3 = cubesOnTheThreeFaces.find((cube) => cube.name === "g7-1");
-  if (targetCube3) {
-    const torus3 = MeshBuilder.CreateTorus(
-      "torus_g7-1",
-      {
-        diameter: 0.75,
-        thickness: 0.1,
-        tessellation: 32,
-      },
-      scene
-    );
-    torus3.position.x = targetCube3.position.x;
-    torus3.position.y = targetCube3.position.y;
-    torus3.position.z = targetCube3.position.z + 0.25; // Adjust the height above the cube
-    torus3.rotation = targetCube3.rotation.clone();
-    //torus3.material = greenTeamMat; // Use the same material as the green owlHalla cubes
-    torus3.material = new StandardMaterial("torus3Material", scene);
-    torus3.material.diffuseColor = Color3.FromInts(8, 64, 0); // Green color
-    torus3.parent = boardContainer;
-  }
-
+  
   // STARTING POSITIONS OF THE PLAYING PIECES
-
   // Set the starting positions of the pieces
+  
   function setPiecePosition(
     piece,
     cubesOnTheThreeFaces,
