@@ -179,6 +179,9 @@ export function createGameStateManager(guiElements) {
 
     currentPlayerTurn: "brown",
 
+
+
+  
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
       let abbreviatedPiece = "";
       switch (piece) {
@@ -230,29 +233,13 @@ export function createGameStateManager(guiElements) {
       this.updateMoveHistoryDisplay();
       this.updateNextPlayerDisplay(); // Add this line to update the next player display
     },
-
     updateMoveHistoryDisplay: function () {
       const moveHistoryText =
         moveHistoryViewer.getChildByName("moveHistoryText");
       moveHistoryText.text = this.moveHistory.join("\n");
     },
 
-    /*updateNextPlayerDisplay: function () {
-      if (nextPlayerText) {
-        advancedTexture.removeControl(nextPlayerText); // Remove the previous nextPlayerText control
-      }
-      nextPlayerText = new TextBlock("nextPlayerText");
-      nextPlayerText.text = "Next Player: " + this.currentPlayerTurn;
-      nextPlayerText.color = "white";
-      nextPlayerText.fontSize = 16;
-      nextPlayerText.textHorizontalAlignment =
-        Control.HORIZONTAL_ALIGNMENT_LEFT;
-      nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-      nextPlayerText.top = "280px"; // Adjust the position as needed
-      nextPlayerText.left = "20px"; // Adjust the position as needed
-      advancedTexture.addControl(nextPlayerText);
-    },
-*/
+   
 updateNextPlayerDisplay: function () {
   if (nextPlayerText) {
     advancedTexture.removeControl(nextPlayerText);
@@ -279,34 +266,6 @@ updateNextPlayerDisplay: function () {
   nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
   nextPlayerRect.addControl(nextPlayerText);
 },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     displayInfoMessage: displayInfoMessage,
   };
 }

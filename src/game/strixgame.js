@@ -1,9 +1,9 @@
 import { createBaseAndFins } from "./gameBaseAndFins.js";
 import { createGUI } from "./gameStateManager.js";
 import { createGameStateManager } from "./gameStateManager.js";
-import { createCheckerBoards } from './gameCheckerBoards.js';
-import { createOwlSquareToruses } from './gameCheckerBoards.js';
-import { createPlayingPieces } from './gamePieces.js';
+import { createCheckerBoards } from "./gameCheckerBoards.js";
+import { createOwlSquareToruses } from "./gameCheckerBoards.js";
+import { createPlayingPieces } from "./gamePieces.js";
 
 import {
   Scene,
@@ -60,14 +60,12 @@ export default function createScene(engine, canvas) {
   const light2 = new DirectionalLight("light2", new Vector3(0, 0, -1), scene);
   const light3 = new DirectionalLight("light3", new Vector3(-1, 0, 0), scene);
   const light4 = new DirectionalLight("light4", new Vector3(0, -1, 0), scene);
- 
 
   // Default intensity is 1. Let's dim the light a small amount
   light1.intensity = 0.7;
   light2.intensity = 0.1;
   light3.intensity = 0.5;
   light4.intensity = 0.5;
-  
 
   // Create a background plane
   const backgroundPlane = MeshBuilder.CreatePlane(
@@ -103,9 +101,11 @@ export default function createScene(engine, canvas) {
   createBaseAndFins(scene, boardContainer);
   const guiElements = createGUI(scene);
   const gameStateManager = createGameStateManager(guiElements);
-  const { cubesOnTheThreeFaces, mainBoardCubes } = createCheckerBoards(scene, boardContainer);
-  //createPlayingPieces(scene, boardContainer);
-  const {
+  const { cubesOnTheThreeFaces, mainBoardCubes } = createCheckerBoards(
+    scene,
+    boardContainer
+  );
+   const {
     brownOwl,
     brownKite,
     brownRaven,
@@ -118,9 +118,8 @@ export default function createScene(engine, canvas) {
   } = createPlayingPieces(scene, boardContainer);
   createOwlSquareToruses(scene, boardContainer, cubesOnTheThreeFaces);
 
-  
   // STARTING POSITIONS OF THE PLAYING PIECES
- 
+
   function setPiecePosition(
     piece,
     cubesOnTheThreeFaces,
@@ -441,10 +440,10 @@ export default function createScene(engine, canvas) {
     const currentPosition = gameStateManager.piecePositions[pieceName];
 
     if (currentPosition && currentPosition.endsWith("--1")) {
-       selectedPiece = null;
-       } else {
+      selectedPiece = null;
+    } else {
       selectedPiece = piece;
-      }
+    }
   }
 
   // Function to handle the double click event for a piece
@@ -469,6 +468,7 @@ export default function createScene(engine, canvas) {
       originalPositions[pieceName + "Rotation"] = piece.rotation.clone();
       const owlHallaCubeName = getOwlHallaCubeName(pieceName);
       const owlHallaPosition = getPositionFromCubeName(owlHallaCubeName);
+      //gameStateManager.addMoveToHistory(pieceName, currentPosition, owlHallaCubeName, pieceName);
 
       // Apply the offset based on the color of the piece
       if (pieceName.startsWith("brown")) {
@@ -543,6 +543,5 @@ export default function createScene(engine, canvas) {
   greenKite.actionManager = createPieceActionManager(greenKite);
   greenRaven.actionManager = createPieceActionManager(greenRaven);
 
-  
   return scene;
 }
