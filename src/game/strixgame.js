@@ -60,14 +60,14 @@ export default function createScene(engine, canvas) {
   const light2 = new DirectionalLight("light2", new Vector3(0, 0, -1), scene);
   const light3 = new DirectionalLight("light3", new Vector3(-1, 0, 0), scene);
   const light4 = new DirectionalLight("light4", new Vector3(0, -1, 0), scene);
-  //var light5 = new DirectionalLight("light5", new Vector3(-1, -1, -1), scene);
+ 
 
   // Default intensity is 1. Let's dim the light a small amount
   light1.intensity = 0.7;
   light2.intensity = 0.1;
   light3.intensity = 0.5;
   light4.intensity = 0.5;
-  //light5.intensity = .7;
+  
 
   // Create a background plane
   const backgroundPlane = MeshBuilder.CreatePlane(
@@ -120,8 +120,7 @@ export default function createScene(engine, canvas) {
 
   
   // STARTING POSITIONS OF THE PLAYING PIECES
-  // Set the starting positions of the pieces
-  
+ 
   function setPiecePosition(
     piece,
     cubesOnTheThreeFaces,
@@ -331,7 +330,6 @@ export default function createScene(engine, canvas) {
       const cubeOHBrown =
         mainBoardCubes["b" + (8 - i) + "-1"].clone(cubeNameOHBrown);
       cubeOHBrown.position = new Vector3(i - 0.5, -0.25, 8.5);
-      //cubeOHBrown.material = brownTeamMat;
       cubeOHBrown.material = new StandardMaterial("brownMaterial", scene);
       cubeOHBrown.material.diffuseColor = Color3.FromInts(88, 54, 41); // Brown color
       cubeOHBrown.visibility = false;
@@ -345,7 +343,6 @@ export default function createScene(engine, canvas) {
       const cubeOHYellow =
         mainBoardCubes["y" + (8 - i) + "-1"].clone(cubeNameOHYellow);
       cubeOHYellow.position = new Vector3(-0.25, 8.5, i - 0.5);
-      //cubeOHYellow.material = yellowTeamMat;
       cubeOHYellow.material = new StandardMaterial("yellowMaterial", scene);
       cubeOHYellow.material.diffuseColor = Color3.FromInts(255, 204, 0); // Yellow color
       cubeOHYellow.visibility = false;
@@ -359,7 +356,6 @@ export default function createScene(engine, canvas) {
       const cubeOHGreen =
         mainBoardCubes["g" + (8 - i) + "-1"].clone(cubeNameOHGreen);
       cubeOHGreen.position = new Vector3(8.5, i - 0.5, -0.25);
-      //cubeOHGreen.material = greenTeamMat;
       cubeOHGreen.material = new StandardMaterial("greenMaterial", scene);
       cubeOHGreen.material.diffuseColor = Color3.FromInts(8, 64, 0); // Green color
       cubeOHGreen.visibility = false;
@@ -445,13 +441,10 @@ export default function createScene(engine, canvas) {
     const currentPosition = gameStateManager.piecePositions[pieceName];
 
     if (currentPosition && currentPosition.endsWith("--1")) {
-      // The clicked piece is on an owlHalla square, clear the selection
-      selectedPiece = null;
-      //infoText.text = "Cannot select a piece on an owlHalla square";
-    } else {
+       selectedPiece = null;
+       } else {
       selectedPiece = piece;
-      //infoText.text = "Single click on piece: " + pieceName;
-    }
+      }
   }
 
   // Function to handle the double click event for a piece
@@ -550,27 +543,6 @@ export default function createScene(engine, canvas) {
   greenKite.actionManager = createPieceActionManager(greenKite);
   greenRaven.actionManager = createPieceActionManager(greenRaven);
 
-  /*
-    // Add x-axis (red)
-    var xAxis = Mesh.CreateLines("xAxis", [
-        new Vector3(-5, 0, 0),
-        new Vector3(5, 0, 0)
-    ], scene);
-    xAxis.color = new Color3(1, 0, 0); // Red
-    
-    // Add y-axis (green)
-    var yAxis = Mesh.CreateLines("yAxis", [
-        new Vector3(0, -5, 0),
-        new Vector3(0, 5, 0)
-    ], scene);
-    yAxis.color = new Color3(0, 1, 0); // Green
-    
-    // Add z-axis (blue)
-    var zAxis = Mesh.CreateLines("zAxis", [
-        new Vector3(0, 0, -5),
-        new Vector3(0, 0, 5)
-    ], scene);
-    zAxis.color = new Color3(0, 0, 1); // Blue
-  */
+  
   return scene;
 }
