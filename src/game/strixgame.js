@@ -1,6 +1,7 @@
 import { createBaseAndFins } from "./gameBaseAndFins.js";
 import { createGUI } from "./gameStateManager.js";
 import { createGameStateManager } from "./gameStateManager.js";
+import { createCheckerBoards } from './gameCheckerBoards.js';
 import {
   Scene,
   ArcRotateCamera,
@@ -99,7 +100,12 @@ export default function createScene(engine, canvas) {
   createBaseAndFins(scene, boardContainer);
   const guiElements = createGUI(scene);
   const gameStateManager = createGameStateManager(guiElements);
+  const { cubesOnTheThreeFaces, mainBoardCubes } = createCheckerBoards(scene, boardContainer);
+  //const cubesOnTheThreeFaces = createCheckerBoards(scene, boardContainer);
+  //createCheckerBoards(scene, boardContainer);
 
+
+/*
   const cubesOnTheThreeFaces = [];
   let instanceNames = "";
 
@@ -300,7 +306,7 @@ export default function createScene(engine, canvas) {
     new Vector3(7.025, 3.25, -0.275),
     new Vector3(0, Math.PI / 2, 0)
   );
-
+*/
   // MAKING THE PLAYING PIECES
 
   // Create materials for the cylinder
