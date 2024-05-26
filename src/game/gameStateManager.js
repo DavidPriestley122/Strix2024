@@ -179,10 +179,12 @@ export function createGameStateManager(guiElements) {
 
     currentPlayerTurn: "brown",
 
-
-
-  
-    addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
+    addMoveToHistory: function (
+      piece,
+      sourceSquare,
+      destinationSquare,
+      capturedPiece
+    ) {
       let abbreviatedPiece = "";
       switch (piece) {
         case "brownOwl":
@@ -214,58 +216,112 @@ export function createGameStateManager(guiElements) {
           break;
       }
 
-      const formattedDestination = destinationSquare.replace("-", "");
+      let moveText = `${abbreviatedPiece}`;
 
-      this.moveHistory.push(`${abbreviatedPiece} - ${formattedDestination}`);
+      if (destinationSquare) {
+        const formattedDestination = destinationSquare.replace("-", "");
+        moveText += `-${formattedDestination}`;
+        this.moveHistory.push(moveText);
+      }
 
-      // Extract the color of the piece from the recorded move
-      const moveColor = this.moveHistory[this.moveHistory.length - 1].charAt(0);
+      if (capturedPiece) {
+        let abbreviatedCapturedPiece = "";
+        switch (capturedPiece) {
+          case "brownOwl":
+            abbreviatedCapturedPiece = "bO";
+            break;
+          case "brownKite":
+            abbreviatedCapturedPiece = "bK";
+            break;
+          case "brownRaven":
+            abbreviatedCapturedPiece = "bR";
+            break;
+          case "yellowOwl":
+            abbreviatedCapturedPiece = "yO";
+            break;
+          case "yellowKite":
+            abbreviatedCapturedPiece = "yK";
+            break;
+          case "yellowRaven":
+            abbreviatedCapturedPiece = "yR";
+            break;
+          case "greenOwl":
+            abbreviatedCapturedPiece = "gO";
+            break;
+          case "greenKite":
+            abbreviatedCapturedPiece = "gK";
+            break;
+          case "greenRaven":
+            abbreviatedCapturedPiece = "gR";
+            break;
+        }
 
-      // Determine the next player's turn based on the color of the current move
-      if (moveColor === "b") {
-        this.currentPlayerTurn = "yellow";
-      } else if (moveColor === "y") {
-        this.currentPlayerTurn = "green";
-      } else if (moveColor === "g") {
-        this.currentPlayerTurn = "brown";
+        const captureText = `${abbreviatedCapturedPiece} captured`;
+        this.moveHistory.push(captureText);
+      }
+
+      // Find the last non-capturing move
+      let lastNonCapturingMove = null;
+      for (let i = this.moveHistory.length - 1; i >= 0; i--) {
+        if (!this.moveHistory[i].includes("captured")) {
+          lastNonCapturingMove = this.moveHistory[i];
+          break;
+        }
+      }
+
+      // Determine the next player's turn based on the last non-capturing move
+      if (lastNonCapturingMove) {
+        const moveColor = lastNonCapturingMove.charAt(0);
+        if (moveColor === "b") {
+          this.currentPlayerTurn = "yellow";
+        } else if (moveColor === "y") {
+          this.currentPlayerTurn = "green";
+        } else if (moveColor === "g") {
+          this.currentPlayerTurn = "brown";
+        }
       }
 
       this.updateMoveHistoryDisplay();
-      this.updateNextPlayerDisplay(); // Add this line to update the next player display
+      this.updateNextPlayerDisplay();
     },
+
     updateMoveHistoryDisplay: function () {
       const moveHistoryText =
         moveHistoryViewer.getChildByName("moveHistoryText");
       moveHistoryText.text = this.moveHistory.join("\n");
     },
 
-   
-updateNextPlayerDisplay: function () {
-  if (nextPlayerText) {
-    advancedTexture.removeControl(nextPlayerText);
-  }
+    updateNextPlayerDisplay: function () {
+      if (nextPlayerText) {
+        advancedTexture.removeControl(nextPlayerText);
+      }
 
-  const nextPlayerRect = new Rectangle("nextPlayerRect");
-  nextPlayerRect.width = "150px";
-  nextPlayerRect.height = "40px";
-  nextPlayerRect.cornerRadius = 10;
-  nextPlayerRect.color = "white";
-  nextPlayerRect.thickness = 2;
-  nextPlayerRect.background = "rgba(0, 0, 0, 0.7)";
-  nextPlayerRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-  nextPlayerRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-  nextPlayerRect.left = "20px";
-  nextPlayerRect.top = "-20px";
-  advancedTexture.addControl(nextPlayerRect);
+      const nextPlayerRect = new Rectangle("nextPlayerRect");
+      nextPlayerRect.width = "150px";
+      nextPlayerRect.height = "40px";
+      nextPlayerRect.cornerRadius = 10;
+      nextPlayerRect.color = "white";
+      nextPlayerRect.thickness = 2;
+      nextPlayerRect.background = "rgba(0, 0, 0, 0.7)";
+      nextPlayerRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+      nextPlayerRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+      nextPlayerRect.left = "20px";
+      nextPlayerRect.top = "-20px";
+      advancedTexture.addControl(nextPlayerRect);
 
-  nextPlayerText = new TextBlock("nextPlayerText");
-  nextPlayerText.text = `${this.currentPlayerTurn.charAt(0).toUpperCase() + this.currentPlayerTurn.slice(1)} to play`;
-  nextPlayerText.color = "white";
-  nextPlayerText.fontSize = 16;
-  nextPlayerText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-  nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-  nextPlayerRect.addControl(nextPlayerText);
-},
+      nextPlayerText = new TextBlock("nextPlayerText");
+      nextPlayerText.text = `${
+        this.currentPlayerTurn.charAt(0).toUpperCase() +
+        this.currentPlayerTurn.slice(1)
+      } to play`;
+      nextPlayerText.color = "white";
+      nextPlayerText.fontSize = 16;
+      nextPlayerText.textHorizontalAlignment =
+        Control.HORIZONTAL_ALIGNMENT_CENTER;
+      nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+      nextPlayerRect.addControl(nextPlayerText);
+    },
+
     displayInfoMessage: displayInfoMessage,
   };
 }

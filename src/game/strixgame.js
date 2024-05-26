@@ -105,7 +105,7 @@ export default function createScene(engine, canvas) {
     scene,
     boardContainer
   );
-   const {
+  const {
     brownOwl,
     brownKite,
     brownRaven,
@@ -468,7 +468,14 @@ export default function createScene(engine, canvas) {
       originalPositions[pieceName + "Rotation"] = piece.rotation.clone();
       const owlHallaCubeName = getOwlHallaCubeName(pieceName);
       const owlHallaPosition = getPositionFromCubeName(owlHallaCubeName);
-      //gameStateManager.addMoveToHistory(pieceName, currentPosition, owlHallaCubeName, pieceName);
+
+      // Record the capturing move in the move history
+      gameStateManager.addMoveToHistory(
+        selectedPiece.name,
+        originalPositions[selectedPiece.name],
+        null,
+        pieceName
+      );
 
       // Apply the offset based on the color of the piece
       if (pieceName.startsWith("brown")) {
