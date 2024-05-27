@@ -101,6 +101,7 @@ export default function createScene(engine, canvas) {
   createBaseAndFins(scene, boardContainer);
   const guiElements = createGUI(scene);
   const gameStateManager = createGameStateManager(guiElements);
+  gameStateManager.updateNextPlayerDisplay();
   const { cubesOnTheThreeFaces, mainBoardCubes } = createCheckerBoards(
     scene,
     boardContainer

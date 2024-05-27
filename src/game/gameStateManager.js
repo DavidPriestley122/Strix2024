@@ -48,8 +48,8 @@ export function createGUI(scene) {
 
   // Create a container for the move history
   const moveHistoryContainer = new Rectangle("moveHistoryContainer");
-  moveHistoryContainer.width = "100px";
-  moveHistoryContainer.height = "200px";
+  moveHistoryContainer.width = "120px";
+  moveHistoryContainer.height = "220px";
   moveHistoryContainer.background = "rgba(0, 0, 0, 0.7)";
   moveHistoryContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
   moveHistoryContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
@@ -177,7 +177,11 @@ export function createGameStateManager(guiElements) {
 
     moveHistory: [],
 
+    knockedOutTeam: null,
+
     currentPlayerTurn: "brown",
+
+    // Here is the function for add moves to the move history window
 
     addMoveToHistory: function (
       piece,
@@ -222,7 +226,11 @@ export function createGameStateManager(guiElements) {
         const formattedDestination = destinationSquare.replace("-", "");
         moveText += `-${formattedDestination}`;
         this.moveHistory.push(moveText);
+
+        // Advance to the next player's turn
+        this.updateNextPlayer();
       }
+
 
       if (capturedPiece) {
         let abbreviatedCapturedPiece = "";
@@ -258,30 +266,30 @@ export function createGameStateManager(guiElements) {
 
         const captureText = `${abbreviatedCapturedPiece} captured`;
         this.moveHistory.push(captureText);
-      }
 
-      // Find the last non-capturing move
-      let lastNonCapturingMove = null;
-      for (let i = this.moveHistory.length - 1; i >= 0; i--) {
-        if (!this.moveHistory[i].includes("captured")) {
-          lastNonCapturingMove = this.moveHistory[i];
-          break;
+        // Check if the captured piece is an Owl
+        if (capturedPiece.includes("Owl")) {
+          // Remove the knocked-out team from the sequence of moves
+          this.knockedOutTeam = capturedPiece.split("Owl")[0];
         }
       }
-
-      // Determine the next player's turn based on the last non-capturing move
-      if (lastNonCapturingMove) {
-        const moveColor = lastNonCapturingMove.charAt(0);
-        if (moveColor === "b") {
-          this.currentPlayerTurn = "yellow";
-        } else if (moveColor === "y") {
-          this.currentPlayerTurn = "green";
-        } else if (moveColor === "g") {
-          this.currentPlayerTurn = "brown";
-        }
-      }
+      // Update the next player's turn
+     // this.updateNextPlayer();
 
       this.updateMoveHistoryDisplay();
+    },
+
+    updateNextPlayer: function () {
+      const teams = ["brown", "yellow", "green"];
+      let currentTeamIndex = teams.indexOf(this.currentPlayerTurn);
+      let nextTeamIndex = (currentTeamIndex + 1) % teams.length;
+
+      // Skip the knocked-out team
+      while (teams[nextTeamIndex] === this.knockedOutTeam) {
+        nextTeamIndex = (nextTeamIndex + 1) % teams.length;
+      }
+
+      this.currentPlayerTurn = teams[nextTeamIndex];
       this.updateNextPlayerDisplay();
     },
 
@@ -309,10 +317,11 @@ export function createGameStateManager(guiElements) {
       nextPlayerRect.top = "-20px";
       advancedTexture.addControl(nextPlayerRect);
 
+      const nextPlayerColor = this.currentPlayerTurn;
+
       nextPlayerText = new TextBlock("nextPlayerText");
       nextPlayerText.text = `${
-        this.currentPlayerTurn.charAt(0).toUpperCase() +
-        this.currentPlayerTurn.slice(1)
+        nextPlayerColor.charAt(0).toUpperCase() + nextPlayerColor.slice(1)
       } to play`;
       nextPlayerText.color = "white";
       nextPlayerText.fontSize = 16;
