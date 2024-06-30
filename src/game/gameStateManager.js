@@ -225,12 +225,12 @@ export function createGameStateManager(guiElements) {
       if (destinationSquare) {
         const formattedDestination = destinationSquare.replace("-", "");
         moveText += `-${formattedDestination}`;
+
         this.moveHistory.push(moveText);
 
         // Advance to the next player's turn
         this.updateNextPlayer();
       }
-
 
       if (capturedPiece) {
         let abbreviatedCapturedPiece = "";
@@ -274,7 +274,7 @@ export function createGameStateManager(guiElements) {
         }
       }
       // Update the next player's turn
-     // this.updateNextPlayer();
+      // this.updateNextPlayer();
 
       this.updateMoveHistoryDisplay();
     },

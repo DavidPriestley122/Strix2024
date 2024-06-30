@@ -391,6 +391,7 @@ export default function createScene(engine, canvas) {
   });
 
   const piecesOnOwlHalla = [];
+ 
 
   // Function to toggle visibility of owlHalla cubes and any pieces
   function toggleOwlHallaVisibility() {
@@ -448,6 +449,7 @@ export default function createScene(engine, canvas) {
   }
 
   // Function to handle the double click event for a piece
+  
   function handlePieceDoubleClick(piece) {
     const pieceName = piece.name;
     const originalPosition = originalPositions[pieceName];
@@ -456,7 +458,30 @@ export default function createScene(engine, canvas) {
       // The piece is on the owlHalla square, move it back to its original position
       piece.position = originalPosition;
       piece.rotation = originalPositions[pieceName + "Rotation"];
+
+      
+
+
+      piece.visibility = true;
+      piece.isPickable = true;
+  
+      // Use the stored original position name
+      const originalPositionName = originalPositions[pieceName + "Name"];
+      gameStateManager.updatePiecePosition(pieceName, originalPositionName);
+
+
+
+
+
+
+
+
+
+
+
+
       piece.visibility = true; // Make the piece visible when moved back to the original position
+      
       originalPositions[pieceName] = null;
       originalPositions[pieceName + "Rotation"] = null;
       gameStateManager.updateShadowedRows(pieceName); // Update shadowed rows after the piece is moved back to the original position
@@ -497,7 +522,7 @@ export default function createScene(engine, canvas) {
       updatePiecesArrivingOnOwlHalla(pieceName);
     }
   }
-
+  
   // Function to get the owlHalla cube name for a piece
   function getOwlHallaCubeName(pieceName) {
     const owlHallaCubeNames = {
@@ -536,6 +561,8 @@ export default function createScene(engine, canvas) {
         handlePieceDoubleClick(piece);
       })
     );
+
+
 
     return actionManager;
   }
