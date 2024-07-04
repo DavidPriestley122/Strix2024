@@ -5,6 +5,7 @@ import {
   Control,
   ScrollViewer,
   TextWrapping,
+  Button
 } from "@babylonjs/gui";
 
 export function createGUI(scene) {
@@ -181,6 +182,8 @@ export function createGameStateManager(guiElements) {
 
     currentPlayerTurn: "brown",
 
+    lastMove: null,
+
     // Here is the function for add moves to the move history window
 
     addMoveToHistory: function (
@@ -227,6 +230,16 @@ export function createGameStateManager(guiElements) {
         moveText += `-${formattedDestination}`;
 
         this.moveHistory.push(moveText);
+
+        // Update lastMove
+        this.lastMove = {
+          piece,
+          sourceSquare,
+          destinationSquare,
+          capturedPiece,
+        };
+
+        console.log("Last move updated:", this.lastMove);
 
         // Advance to the next player's turn
         this.updateNextPlayer();
@@ -291,6 +304,115 @@ export function createGameStateManager(guiElements) {
 
       this.currentPlayerTurn = teams[nextTeamIndex];
       this.updateNextPlayerDisplay();
+    },
+
+    isPotentialRetraction: function (pieceName) {
+      return this.lastMove && this.lastMove.piece === pieceName;
+    },
+
+    
+    showRetractionConfirmation: function(piece, onConfirm, onCancel) {
+      const confirmationRect = new Rectangle("confirmationRect");
+      confirmationRect.width = "300px";
+      confirmationRect.height = "150px";
+      confirmationRect.cornerRadius = 20;
+      confirmationRect.color = "White";
+      confirmationRect.thickness = 4;
+      confirmationRect.background = "rgba(0, 0, 0, 0.7)";
+      advancedTexture.addControl(confirmationRect);
+
+      const confirmationText = new TextBlock();
+      confirmationText.text = "Do you want to retract your last move?";
+      confirmationText.color = "white";
+      confirmationText.fontSize = 18;
+      confirmationText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+      confirmationText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+      confirmationText.top = "20px";
+      confirmationRect.addControl(confirmationText);
+
+      const yesButton = Button.CreateSimpleButton("yesButton", "Yes");
+      yesButton.width = "100px";
+      yesButton.height = "40px";
+      yesButton.color = "white";
+      yesButton.cornerRadius = 20;
+      yesButton.background = "green";
+      yesButton.top = "60px";
+      yesButton.left = "-60px";
+      yesButton.onPointerUpObservable.add(() => {
+        advancedTexture.removeControl(confirmationRect);
+        onConfirm();
+      });
+      confirmationRect.addControl(yesButton);
+
+      const noButton = Button.CreateSimpleButton("noButton", "No");
+      noButton.width = "100px";
+      noButton.height = "40px";
+      noButton.color = "white";
+      noButton.cornerRadius = 20;
+      noButton.background = "red";
+      noButton.top = "60px";
+      noButton.left = "60px";
+      noButton.onPointerUpObservable.add(() => {
+        advancedTexture.removeControl(confirmationRect);
+        onCancel();
+      });
+      confirmationRect.addControl(noButton);
+    },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    retractMove: function() {
+      if (this.lastMove) {
+        // Remove the last move from the move history
+        this.moveHistory.pop();
+    
+        // Revert the piece position
+        this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
+    
+        // If a piece was captured, restore it
+        if (this.lastMove.capturedPiece) {
+          const capturedPiece = scene.getMeshByName(this.lastMove.capturedPiece);
+          const capturedPiecePosition = getPositionFromCubeName(this.lastMove.destinationSquare);
+          const capturedPieceRotation = getRotationFromCubeName(this.lastMove.destinationSquare);
+    
+          animatePieceMovement(
+            capturedPiece,
+            capturedPiecePosition,
+            capturedPieceRotation,
+            30,
+            function() {
+              capturedPiece.visibility = true;
+              capturedPiece.isPickable = true;
+              this.piecePositions[this.lastMove.capturedPiece] = this.lastMove.destinationSquare;
+            }.bind(this)
+          );
+        }
+    
+        // Clear the last move
+        this.lastMove = null;
+    
+        // Update the move history display
+        this.updateMoveHistoryDisplay();
+    
+        console.log("Move retracted");
+      }
     },
 
     updateMoveHistoryDisplay: function () {

@@ -294,12 +294,25 @@ export default function createScene(engine, canvas) {
                   gameStateManager.piecePositions[selectedPiece.name] =
                     clickedCube.name;
 
+
+                // Update lastMove in gameStateManager
+                gameStateManager.lastMove = {
+                  piece: selectedPiece.name,
+                  sourceSquare: currentPosition,
+                  destinationSquare: clickedCube.name,
+                  capturedPiece: null // Update this if you implement piece capture
+                };
+
+                console.log("Last move updated:", gameStateManager.lastMove);
+
                   // Add the move to the move history
                   gameStateManager.addMoveToHistory(
                     selectedPiece.name,
                     currentPosition,
                     clickedCube.name
                   );
+
+                  console.log("Move completed:", selectedPiece.name, "from", currentPosition, "to", clickedCube.name);
 
                   // Store the selected piece name before setting it to null
                   const movedPieceName = selectedPiece.name;
@@ -436,17 +449,70 @@ export default function createScene(engine, canvas) {
     greenRaven: null,
   };
 
-  // Function to handle the single click event for a piece
   function handlePieceSingleClick(piece) {
     const pieceName = piece.name;
     const currentPosition = gameStateManager.piecePositions[pieceName];
-
+  
+    console.log("Piece clicked:", pieceName);
+  
     if (currentPosition && currentPosition.endsWith("--1")) {
       selectedPiece = null;
     } else {
-      selectedPiece = piece;
+      if (gameStateManager.isPotentialRetraction(pieceName)) {
+        console.log("Potential move retraction detected");
+        gameStateManager.showRetractionConfirmation(
+          piece,
+          () => performRetraction(piece, getPositionFromCubeName, getRotationFromCubeName),
+          () => console.log("Retraction cancelled")
+        );
+      } else {
+        selectedPiece = piece;
+        console.log("New piece selected:", pieceName);
+      }
     }
   }
+
+ 
+  function performRetraction(piece, getPositionFromCubeName, getRotationFromCubeName) {
+  const lastMove = gameStateManager.lastMove;
+  if (lastMove && lastMove.piece === piece.name) {
+    const sourcePosition = getPositionFromCubeName(lastMove.sourceSquare);
+    const sourceRotation = getRotationFromCubeName(lastMove.sourceSquare);
+
+    animatePieceMovement(
+      piece,
+      sourcePosition,
+      sourceRotation,
+      30,
+      function() {
+        gameStateManager.retractMove();
+        console.log("Move retracted");
+      }
+    );
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Function to handle the double click event for a piece
   
@@ -540,10 +606,42 @@ export default function createScene(engine, canvas) {
     return owlHallaCubeNames[pieceName];
   }
 
-  // Function to get the position from a cube name
+  /*// Function to get the position from a cube name
   function getPositionFromCubeName(cubeName) {
     const cube = scene.getMeshByName(cubeName);
     return cube.position.clone();
+  }
+*/
+function getPositionFromCubeName(cubeName) {
+  const cube = scene.getMeshByName(cubeName);
+  if (cube) {
+    const position = cube.position.clone();
+    // Add the offset based on which board the cube is on
+    if (cubeName.startsWith('b')) {
+      position.y += 3.75; // Adjust for brown board
+    } else if (cubeName.startsWith('y')) {
+      position.x += 3.75; // Adjust for yellow board
+    } else if (cubeName.startsWith('g')) {
+      position.z += 3.75; // Adjust for green board
+    }
+    return position;
+  }
+  return new BABYLON.Vector3(0, 0, 0);
+}
+
+
+
+
+
+
+
+
+
+  function getRotationFromCubeName(cubeName) {
+    // Implement the logic to get rotation from cube name
+    // This might involve looking up the cube in your scene and getting its rotation
+    const cube = scene.getMeshByName(cubeName);
+    return cube ? cube.rotation.clone() : new BABYLON.Vector3(0, 0, 0);
   }
 
   // Function to create action manager for a piece
