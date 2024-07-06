@@ -229,6 +229,7 @@ export function createGameStateManager(guiElements) {
       this.lastMove = { piece, sourceSquare, destinationSquare };
       this.updateNextPlayer();
       this.updateMoveHistoryDisplay();
+      this.updateNextPlayerDisplay(); // Add this line to ensure the display is updated
     },
 
     addOwlHallaMove: function (piece, isGoingToOwlHalla) {
@@ -332,18 +333,34 @@ export function createGameStateManager(guiElements) {
       if (this.lastMove) {
         // Revert the piece position
         this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
-
+    
         // Remove the last move from the move history
         this.moveHistory.pop();
-
+    
+        // Revert to the previous player's turn
+        this.revertToPreviousPlayer();
+    
         // Clear the last move
         this.lastMove = null;
-
+    
         this.updateMoveHistoryDisplay();
+        this.updateNextPlayerDisplay(); // Add this line
         console.log("Move retracted");
       } else {
         console.log("No move to retract");
       }
+    },
+    
+    // Add this new function
+    revertToPreviousPlayer: function () {
+      const teams = ["brown", "yellow", "green"];
+      let currentIndex = teams.indexOf(this.currentPlayerTurn);
+      let previousIndex;
+      do {
+        previousIndex = (currentIndex - 1 + teams.length) % teams.length;
+      } while (teams[previousIndex] === this.knockedOutTeam);
+      
+      this.currentPlayerTurn = teams[previousIndex];
     },
     
     updateMoveHistoryDisplay: function() {
@@ -398,6 +415,7 @@ export function createGameStateManager(guiElements) {
         Control.HORIZONTAL_ALIGNMENT_CENTER;
       nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
       nextPlayerRect.addControl(nextPlayerText);
+      console.log("Updated next player display:", nextPlayerText.text); // Add this for debugging
     },
 
     displayInfoMessage: displayInfoMessage,
