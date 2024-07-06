@@ -5,7 +5,7 @@ import {
   Control,
   ScrollViewer,
   TextWrapping,
-  Button
+  Button,
 } from "@babylonjs/gui";
 
 export function createGUI(scene) {
@@ -182,136 +182,104 @@ export function createGameStateManager(guiElements) {
 
     currentPlayerTurn: "brown",
 
+    owlHallaHistory: [],
+
     lastMove: null,
 
-    // Here is the function for add moves to the move history window
-
-    addMoveToHistory: function (
-      piece,
-      sourceSquare,
-      destinationSquare,
-      capturedPiece
-    ) {
-      let abbreviatedPiece = "";
+    abbreviatePiece: function (piece) {
       switch (piece) {
         case "brownOwl":
-          abbreviatedPiece = "bO";
-          break;
+          return "bO";
         case "brownKite":
-          abbreviatedPiece = "bK";
-          break;
+          return "bK";
         case "brownRaven":
-          abbreviatedPiece = "bR";
-          break;
+          return "bR";
         case "yellowOwl":
-          abbreviatedPiece = "yO";
-          break;
+          return "yO";
         case "yellowKite":
-          abbreviatedPiece = "yK";
-          break;
+          return "yK";
         case "yellowRaven":
-          abbreviatedPiece = "yR";
-          break;
+          return "yR";
         case "greenOwl":
-          abbreviatedPiece = "gO";
-          break;
+          return "gO";
         case "greenKite":
-          abbreviatedPiece = "gK";
-          break;
+          return "gK";
         case "greenRaven":
-          abbreviatedPiece = "gR";
-          break;
+          return "gR";
+        default:
+          return "??";
       }
+    },
 
-      let moveText = `${abbreviatedPiece}`;
-
-      if (destinationSquare) {
-        const formattedDestination = destinationSquare.replace("-", "");
-        moveText += `-${formattedDestination}`;
-
-        this.moveHistory.push(moveText);
-
-        // Update lastMove
-        this.lastMove = {
-          piece,
-          sourceSquare,
-          destinationSquare,
-          capturedPiece,
-        };
-
-        console.log("Last move updated:", this.lastMove);
-
-        // Advance to the next player's turn
-        this.updateNextPlayer();
+    reinstateTeam: function (piece) {
+      if (piece.includes("Owl") && this.knockedOutTeam === piece.split("Owl")[0]) {
+        this.knockedOutTeam = null;
+        console.log(`${piece.split("Owl")[0]} team reinstated in turn sequence`);
       }
+    },
+  
 
-      if (capturedPiece) {
-        let abbreviatedCapturedPiece = "";
-        switch (capturedPiece) {
-          case "brownOwl":
-            abbreviatedCapturedPiece = "bO";
-            break;
-          case "brownKite":
-            abbreviatedCapturedPiece = "bK";
-            break;
-          case "brownRaven":
-            abbreviatedCapturedPiece = "bR";
-            break;
-          case "yellowOwl":
-            abbreviatedCapturedPiece = "yO";
-            break;
-          case "yellowKite":
-            abbreviatedCapturedPiece = "yK";
-            break;
-          case "yellowRaven":
-            abbreviatedCapturedPiece = "yR";
-            break;
-          case "greenOwl":
-            abbreviatedCapturedPiece = "gO";
-            break;
-          case "greenKite":
-            abbreviatedCapturedPiece = "gK";
-            break;
-          case "greenRaven":
-            abbreviatedCapturedPiece = "gR";
-            break;
-        }
+    addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
+      const abbreviatedPiece = this.abbreviatePiece(piece);
+      const moveText = `${abbreviatedPiece}-${destinationSquare.replace(
+        "-",
+        ""
+      )}`;
+      this.moveHistory.push(moveText);
+      this.lastMove = { piece, sourceSquare, destinationSquare };
+      this.updateNextPlayer();
+      this.updateMoveHistoryDisplay();
+    },
 
-        const captureText = `${abbreviatedCapturedPiece} captured`;
-        this.moveHistory.push(captureText);
-
-        // Check if the captured piece is an Owl
-        if (capturedPiece.includes("Owl")) {
-          // Remove the knocked-out team from the sequence of moves
-          this.knockedOutTeam = capturedPiece.split("Owl")[0];
-        }
+    addOwlHallaMove: function (piece, isGoingToOwlHalla) {
+      const abbreviatedPiece = this.abbreviatePiece(piece);
+      const moveText = isGoingToOwlHalla 
+        ? `${abbreviatedPiece} to owlHalla` 
+        : `${abbreviatedPiece} from owlHalla`;
+      this.owlHallaHistory.push(moveText);
+    
+      if (isGoingToOwlHalla && piece.includes("Owl")) {
+        // Remove the knocked-out team from the sequence of moves
+        this.knockedOutTeam = piece.split("Owl")[0];
+        console.log(`${this.knockedOutTeam} team knocked out of turn sequence`);
+      } else if (!isGoingToOwlHalla) {
+        // Potentially reinstate the team when a piece returns from owlHalla
+        this.reinstateTeam(piece);
       }
-      // Update the next player's turn
-      // this.updateNextPlayer();
-
+    
       this.updateMoveHistoryDisplay();
     },
 
     updateNextPlayer: function () {
       const teams = ["brown", "yellow", "green"];
       let currentTeamIndex = teams.indexOf(this.currentPlayerTurn);
-      let nextTeamIndex = (currentTeamIndex + 1) % teams.length;
-
-      // Skip the knocked-out team
-      while (teams[nextTeamIndex] === this.knockedOutTeam) {
-        nextTeamIndex = (nextTeamIndex + 1) % teams.length;
-      }
-
+      let nextTeamIndex;
+    
+      do {
+        nextTeamIndex = (currentTeamIndex + 1) % teams.length;
+        currentTeamIndex = nextTeamIndex;
+      } while (teams[nextTeamIndex] === this.knockedOutTeam);
+    
       this.currentPlayerTurn = teams[nextTeamIndex];
       this.updateNextPlayerDisplay();
     },
 
     isPotentialRetraction: function (pieceName) {
-      return this.lastMove && this.lastMove.piece === pieceName;
+      if (!this.lastMove) {
+        console.log("No last move recorded");
+        return false;
+      }
+
+      if (this.lastMove.piece === pieceName) {
+        console.log("Potential retraction detected for piece:", pieceName);
+        return true;
+      }
+
+      console.log("Not a potential retraction for piece:", pieceName);
+      return false;
     },
 
-    
-    showRetractionConfirmation: function(piece, onConfirm, onCancel) {
+    showRetractionConfirmation: function (piece, onConfirm, onCancel) {
       const confirmationRect = new Rectangle("confirmationRect");
       confirmationRect.width = "300px";
       confirmationRect.height = "150px";
@@ -325,7 +293,8 @@ export function createGameStateManager(guiElements) {
       confirmationText.text = "Do you want to retract your last move?";
       confirmationText.color = "white";
       confirmationText.fontSize = 18;
-      confirmationText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+      confirmationText.textHorizontalAlignment =
+        Control.HORIZONTAL_ALIGNMENT_CENTER;
       confirmationText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
       confirmationText.top = "20px";
       confirmationRect.addControl(confirmationText);
@@ -359,66 +328,44 @@ export function createGameStateManager(guiElements) {
       confirmationRect.addControl(noButton);
     },
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-    retractMove: function() {
+    retractMove: function () {
       if (this.lastMove) {
-        // Remove the last move from the move history
-        this.moveHistory.pop();
-    
         // Revert the piece position
         this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
-    
-        // If a piece was captured, restore it
-        if (this.lastMove.capturedPiece) {
-          const capturedPiece = scene.getMeshByName(this.lastMove.capturedPiece);
-          const capturedPiecePosition = getPositionFromCubeName(this.lastMove.destinationSquare);
-          const capturedPieceRotation = getRotationFromCubeName(this.lastMove.destinationSquare);
-    
-          animatePieceMovement(
-            capturedPiece,
-            capturedPiecePosition,
-            capturedPieceRotation,
-            30,
-            function() {
-              capturedPiece.visibility = true;
-              capturedPiece.isPickable = true;
-              this.piecePositions[this.lastMove.capturedPiece] = this.lastMove.destinationSquare;
-            }.bind(this)
-          );
-        }
-    
+
+        // Remove the last move from the move history
+        this.moveHistory.pop();
+
         // Clear the last move
         this.lastMove = null;
-    
-        // Update the move history display
+
         this.updateMoveHistoryDisplay();
-    
         console.log("Move retracted");
+      } else {
+        console.log("No move to retract");
       }
     },
-
-    updateMoveHistoryDisplay: function () {
-      const moveHistoryText =
-        moveHistoryViewer.getChildByName("moveHistoryText");
-      moveHistoryText.text = this.moveHistory.join("\n");
+    
+    updateMoveHistoryDisplay: function() {
+      const moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
+      
+      // Combine main moves and owlHalla moves
+      const combinedHistory = [];
+      let mainIndex = 0;
+      let owlHallaIndex = 0;
+      
+      while (mainIndex < this.moveHistory.length || owlHallaIndex < this.owlHallaHistory.length) {
+        if (mainIndex < this.moveHistory.length) {
+          combinedHistory.push(this.moveHistory[mainIndex]);
+          mainIndex++;
+        }
+        if (owlHallaIndex < this.owlHallaHistory.length) {
+          combinedHistory.push(this.owlHallaHistory[owlHallaIndex]);
+          owlHallaIndex++;
+        }
+      }
+    
+      moveHistoryText.text = combinedHistory.join("\n");
     },
 
     updateNextPlayerDisplay: function () {
