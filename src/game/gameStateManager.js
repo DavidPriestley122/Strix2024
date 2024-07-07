@@ -1,3 +1,5 @@
+//IMPORT STATEMENTS
+
 import {
   AdvancedDynamicTexture,
   TextBlock,
@@ -10,11 +12,11 @@ import {
 
 import { ActionManager, ExecuteCodeAction } from "@babylonjs/core";
 
-
+//GUI CREATION FUNCTION
 export function createGUI(scene) {
   const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
-  // Create dynamic text object to display information
+  //INFO TEXT CREATION
   const infoText = new TextBlock();
   infoText.text = "";
   infoText.color = "white";
@@ -26,6 +28,7 @@ export function createGUI(scene) {
   infoText.isVisible = true;
   advancedTexture.addControl(infoText);
 
+  //MESSAGE DISPLAY CREATION
   const messageRect = new Rectangle("messageRect");
   messageRect.width = "40%";
   messageRect.height = "20%";
@@ -50,7 +53,7 @@ export function createGUI(scene) {
   messageText.paddingRight = "5%";
   messageRect.addControl(messageText);
 
-  // Create a container for the move history
+  //MOVE HISTORY DISPLAY CREATION
   const moveHistoryContainer = new Rectangle("moveHistoryContainer");
   moveHistoryContainer.width = "120px";
   moveHistoryContainer.height = "220px";
@@ -61,13 +64,11 @@ export function createGUI(scene) {
   moveHistoryContainer.left = "20px";
   advancedTexture.addControl(moveHistoryContainer);
 
-  // Create a scroll viewer for the move history
   const moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
   moveHistoryViewer.width = "100%";
   moveHistoryViewer.height = "100%";
   moveHistoryContainer.addControl(moveHistoryViewer);
 
-  // Create a text block to display the move history
   const moveHistoryText = new TextBlock("moveHistoryText");
   moveHistoryText.text = "";
   moveHistoryText.color = "white";
@@ -89,6 +90,7 @@ export function createGUI(scene) {
   };
 }
 
+//GAME STATE MANAGER CREATION
 export function createGameStateManager(guiElements) {
   const {
     moveHistoryViewer,
@@ -109,6 +111,8 @@ export function createGameStateManager(guiElements) {
     }, 2000);
   }
 
+  //GAME STATE OBJECT
+
   return {
     piecePositions: {
       brownOwl: "b7-1",
@@ -121,6 +125,8 @@ export function createGameStateManager(guiElements) {
       greenKite: "g6-2",
       greenRaven: "g5-3",
     },
+
+    //GAME STATE UPDATE FUNCTIONS
 
     updateShadowedRows: function (excludedPiece) {
       // Reset shadowed rows
@@ -179,19 +185,290 @@ export function createGameStateManager(guiElements) {
       this.piecePositions[pieceName] = position;
     },
 
+    //MOVE HISTORY MANAGEMENT
+
     moveHistory: [],
+    captureHistory: [],
+    retractionHistory: [],
+
+    addMoveToHistory: function (
+      piece,
+      sourceSquare,
+      destinationSquare,
+      capturedPiece
+    ) {
+      const abbreviatedPiece = this.abbreviatePiece(piece);
+      const moveText = `${abbreviatedPiece}-${destinationSquare.replace(
+        "-",
+        ""
+      )}`;
+      this.moveHistory.push(moveText);
+      this.lastMove = { piece, sourceSquare, destinationSquare };
+      this.isPlayAgainState = false;
+
+      if (capturedPiece) {
+        const captureMoveText = `(captures ${this.abbreviatePiece(
+          capturedPiece.name
+        )})`;
+        this.captureHistory.push({
+          moveIndex: this.moveHistory.length - 1,
+          text: captureMoveText,
+        });
+      }
+
+      this.updateNextPlayer();
+      this.updateMoveHistoryDisplay();
+      this.updateNextPlayerDisplay();
+    },
+
+    revertToPreviousPlayer: function () {
+      const teams = ["brown", "yellow", "green"];
+      let currentIndex = teams.indexOf(this.currentPlayerTurn);
+      let previousIndex;
+      do {
+        previousIndex = (currentIndex - 1 + teams.length) % teams.length;
+        currentIndex = previousIndex;
+      } while (teams[previousIndex] === this.knockedOutTeam);
+
+      this.currentPlayerTurn = teams[previousIndex];
+    },
+
+    //PLAYER TURN MANAGEMENT
 
     knockedOutTeam: null,
-
     currentPlayerTurn: "brown",
+
+    updateNextPlayer: function () {
+      const teams = ["brown", "yellow", "green"];
+      let currentTeamIndex = teams.indexOf(this.currentPlayerTurn);
+      let nextTeamIndex;
+
+      do {
+        nextTeamIndex = (currentTeamIndex + 1) % teams.length;
+        currentTeamIndex = nextTeamIndex;
+      } while (teams[nextTeamIndex] === this.knockedOutTeam);
+
+      this.currentPlayerTurn = teams[nextTeamIndex];
+      console.log("Updated to next player:", this.currentPlayerTurn);
+      this.updateNextPlayerDisplay();
+    },
+
+    reinstateTeam: function (piece) {
+      if (
+        piece.includes("Owl") &&
+        this.knockedOutTeam === piece.split("Owl")[0]
+      ) {
+        this.knockedOutTeam = null;
+        console.log(
+          `${piece.split("Owl")[0]} team reinstated in turn sequence`
+        );
+      }
+    },
+
+    //OWLHALLA MANAGEMENT
 
     owlHallaHistory: [],
 
+    addOwlHallaMove: function (piece, isGoingToOwlHalla) {
+      const abbreviatedPiece = this.abbreviatePiece(piece);
+      const moveText = isGoingToOwlHalla
+        ? `${abbreviatedPiece} to owlHalla`
+        : `${abbreviatedPiece} from owlHalla`;
+      this.owlHallaHistory.push(moveText);
+
+      if (isGoingToOwlHalla && piece.includes("Owl")) {
+        // Remove the knocked-out team from the sequence of moves
+        this.knockedOutTeam = piece.split("Owl")[0];
+        console.log(`${this.knockedOutTeam} team knocked out of turn sequence`);
+      } else if (!isGoingToOwlHalla) {
+        // Potentially reinstate the team when a piece returns from owlHalla
+        this.reinstateTeam(piece);
+      }
+
+      this.updateMoveHistoryDisplay();
+    },
+
+    //MOVE RETRACTION MANAGEMENT
+    
     lastMove: null,
-
-    justCancelledRetraction:false,
-
+    justCancelledRetraction: false,
     isPlayAgainState: false,
+
+    isPotentialRetraction: function (pieceName) {
+      const isPotential =
+        this.lastMove &&
+        this.lastMove.piece === pieceName &&
+        !this.justCancelledRetraction;
+      console.log(
+        "isPotentialRetraction check for",
+        pieceName,
+        ":",
+        isPotential
+      );
+      console.log(
+        "Current justCancelledRetraction value:",
+        this.justCancelledRetraction
+      );
+      return isPotential;
+    },
+
+    showRetractionConfirmation: function (piece, onRetract) {
+      const confirmationRect = new Rectangle("confirmationRect");
+      confirmationRect.width = "400px";
+      confirmationRect.height = "200px";
+      confirmationRect.cornerRadius = 20;
+      confirmationRect.color = "White";
+      confirmationRect.thickness = 4;
+      confirmationRect.background = "rgba(0, 0, 0, 0.7)";
+      advancedTexture.addControl(confirmationRect);
+
+      const confirmationText = new TextBlock();
+      confirmationText.text = "Do you want to retract your last move?";
+      confirmationText.color = "white";
+      confirmationText.fontSize = 20;
+      confirmationText.textHorizontalAlignment =
+        Control.HORIZONTAL_ALIGNMENT_CENTER;
+      confirmationText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+      confirmationText.top = "20px";
+      confirmationRect.addControl(confirmationText);
+
+      const retractButton = Button.CreateSimpleButton(
+        "retractButton",
+        "Retract Move"
+      );
+      retractButton.width = "150px";
+      retractButton.height = "40px";
+      retractButton.color = "white";
+      retractButton.cornerRadius = 20;
+      retractButton.background = "green";
+      retractButton.top = "80px";
+      retractButton.left = "-80px";
+      retractButton.onPointerUpObservable.add(() => {
+        advancedTexture.removeControl(confirmationRect);
+        onRetract();
+      });
+      confirmationRect.addControl(retractButton);
+
+      const cancelButton = Button.CreateSimpleButton("cancelButton", "Cancel");
+      cancelButton.width = "150px";
+      cancelButton.height = "40px";
+      cancelButton.color = "white";
+      cancelButton.cornerRadius = 20;
+      cancelButton.background = "red";
+      cancelButton.top = "80px";
+      cancelButton.left = "80px";
+      cancelButton.onPointerUpObservable.add(() => {
+        advancedTexture.removeControl(confirmationRect);
+        this.justCancelledRetraction = true; // Set the flag
+        console.log(
+          "Retraction cancelled. justCancelledRetraction set to:",
+          this.justCancelledRetraction
+        );
+        // Do nothing else, just close the window
+      });
+      confirmationRect.addControl(cancelButton);
+    },
+
+    retractMove: function () {
+      if (this.lastMove) {
+        const retractedMove = this.moveHistory.pop();
+        const retractionText = `[${retractedMove} retracted]`;
+        this.retractionHistory.push({
+          moveIndex: this.moveHistory.length,
+          text: retractionText,
+        });
+
+        // Remove any associated capture
+        if (
+          this.captureHistory.length > 0 &&
+          this.captureHistory[this.captureHistory.length - 1].moveIndex ===
+            this.moveHistory.length
+        ) {
+          this.captureHistory.pop();
+        }
+
+        this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
+        this.currentPlayerTurn = this.getColorFromPieceName(
+          this.lastMove.piece
+        );
+        this.isPlayAgainState = true;
+        this.lastMove = null;
+        this.updateMoveHistoryDisplay();
+        this.updateNextPlayerDisplay();
+      }
+    },
+
+    //DISPLAY UPDATE FUNCTIONS
+
+    updateMoveHistoryDisplay: function () {
+      let displayText = "";
+      let captureIndex = 0;
+      let retractionIndex = 0;
+
+      for (let i = 0; i < this.moveHistory.length; i++) {
+        displayText += this.moveHistory[i];
+        // Add capture if it exists for this move
+        if (
+          captureIndex < this.captureHistory.length &&
+          this.captureHistory[captureIndex].moveIndex === i
+        ) {
+          displayText += ` ${this.captureHistory[captureIndex].text}`;
+          captureIndex++;
+        }
+        displayText += "\n";
+        // Add retraction if it exists after this move
+        if (
+          retractionIndex < this.retractionHistory.length &&
+          this.retractionHistory[retractionIndex].moveIndex === i + 1
+        ) {
+          displayText += `${this.retractionHistory[retractionIndex].text}\n`;
+          retractionIndex++;
+        }
+      }
+      const moveHistoryText =
+        moveHistoryViewer.getChildByName("moveHistoryText");
+      moveHistoryText.text = displayText;
+    },
+
+    updateNextPlayerDisplay: function () {
+      if (nextPlayerText) {
+        advancedTexture.removeControl(nextPlayerText);
+      }
+
+      const nextPlayerRect = new Rectangle("nextPlayerRect");
+      nextPlayerRect.width = "150px";
+      nextPlayerRect.height = "40px";
+      nextPlayerRect.cornerRadius = 10;
+      nextPlayerRect.color = "white";
+      nextPlayerRect.thickness = 2;
+      nextPlayerRect.background = "rgba(0, 0, 0, 0.7)";
+      nextPlayerRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
+      nextPlayerRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
+      nextPlayerRect.left = "20px";
+      nextPlayerRect.top = "-20px";
+      advancedTexture.addControl(nextPlayerRect);
+
+      const playerColor = this.currentPlayerTurn;
+
+      nextPlayerText = new TextBlock("nextPlayerText");
+      nextPlayerText.text = this.isPlayAgainState
+        ? `${
+            playerColor.charAt(0).toUpperCase() + playerColor.slice(1)
+          } to play again`
+        : `${
+            playerColor.charAt(0).toUpperCase() + playerColor.slice(1)
+          } to play`;
+      nextPlayerText.color = "white";
+      nextPlayerText.fontSize = 16;
+      nextPlayerText.textHorizontalAlignment =
+        Control.HORIZONTAL_ALIGNMENT_CENTER;
+      nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+      nextPlayerRect.addControl(nextPlayerText);
+
+      console.log("Updated player turn display:", nextPlayerText.text);
+    },
+
+    //UTILITY FUNCTIONS
 
     abbreviatePiece: function (piece) {
       switch (piece) {
@@ -218,218 +495,13 @@ export function createGameStateManager(guiElements) {
       }
     },
 
-    reinstateTeam: function (piece) {
-      if (
-        piece.includes("Owl") &&
-        this.knockedOutTeam === piece.split("Owl")[0]
-      ) {
-        this.knockedOutTeam = null;
-        console.log(
-          `${piece.split("Owl")[0]} team reinstated in turn sequence`
-        );
-      }
+    getColorFromPieceName: function (pieceName) {
+      if (pieceName.startsWith("brown")) return "brown";
+      if (pieceName.startsWith("yellow")) return "yellow";
+      if (pieceName.startsWith("green")) return "green";
+      console.error("Unknown piece color:", pieceName);
+      return "unknown";
     },
-
-    addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
-      const abbreviatedPiece = this.abbreviatePiece(piece);
-      const moveText = `${abbreviatedPiece}-${destinationSquare.replace(
-        "-",
-        ""
-      )}`;
-      this.moveHistory.push(moveText);
-      this.lastMove = { piece, sourceSquare, destinationSquare };
-      this.isPlayAgainState = false; // Reset the flag
-      this.updateNextPlayer();
-      this.updateMoveHistoryDisplay();
-      this.updateNextPlayerDisplay(); // Add this line to ensure the display is updated
-      console.log("Move added to history, next player updated to:", this.currentPlayerTurn);
-    },
-
-    addOwlHallaMove: function (piece, isGoingToOwlHalla) {
-      const abbreviatedPiece = this.abbreviatePiece(piece);
-      const moveText = isGoingToOwlHalla
-        ? `${abbreviatedPiece} to owlHalla`
-        : `${abbreviatedPiece} from owlHalla`;
-      this.owlHallaHistory.push(moveText);
-
-      if (isGoingToOwlHalla && piece.includes("Owl")) {
-        // Remove the knocked-out team from the sequence of moves
-        this.knockedOutTeam = piece.split("Owl")[0];
-        console.log(`${this.knockedOutTeam} team knocked out of turn sequence`);
-      } else if (!isGoingToOwlHalla) {
-        // Potentially reinstate the team when a piece returns from owlHalla
-        this.reinstateTeam(piece);
-      }
-
-      this.updateMoveHistoryDisplay();
-    },
-
-    updateNextPlayer: function () {
-      const teams = ["brown", "yellow", "green"];
-      let currentTeamIndex = teams.indexOf(this.currentPlayerTurn);
-      let nextTeamIndex;
-
-      do {
-        nextTeamIndex = (currentTeamIndex + 1) % teams.length;
-        currentTeamIndex = nextTeamIndex;
-      } while (teams[nextTeamIndex] === this.knockedOutTeam);
-
-      this.currentPlayerTurn = teams[nextTeamIndex];
-      console.log("Updated to next player:", this.currentPlayerTurn);
-      this.updateNextPlayerDisplay();
-    },
-
-    isPotentialRetraction: function(pieceName) {
-      const isPotential = this.lastMove && this.lastMove.piece === pieceName && !this.justCancelledRetraction;
-      console.log("isPotentialRetraction check for", pieceName, ":", isPotential);
-      console.log("Current justCancelledRetraction value:", this.justCancelledRetraction);
-      return isPotential;
-  },
-
-  showRetractionConfirmation: function(piece, onRetract) {
-    const confirmationRect = new Rectangle("confirmationRect");
-    confirmationRect.width = "400px";
-    confirmationRect.height = "200px";
-    confirmationRect.cornerRadius = 20;
-    confirmationRect.color = "White";
-    confirmationRect.thickness = 4;
-    confirmationRect.background = "rgba(0, 0, 0, 0.7)";
-    advancedTexture.addControl(confirmationRect);
-
-    const confirmationText = new TextBlock();
-    confirmationText.text = "Do you want to retract your last move?";
-    confirmationText.color = "white";
-    confirmationText.fontSize = 20;
-    confirmationText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-    confirmationText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-    confirmationText.top = "20px";
-    confirmationRect.addControl(confirmationText);
-
-    const retractButton = Button.CreateSimpleButton("retractButton", "Retract Move");
-    retractButton.width = "150px";
-    retractButton.height = "40px";
-    retractButton.color = "white";
-    retractButton.cornerRadius = 20;
-    retractButton.background = "green";
-    retractButton.top = "80px";
-    retractButton.left = "-80px";
-    retractButton.onPointerUpObservable.add(() => {
-        advancedTexture.removeControl(confirmationRect);
-        onRetract();
-        
-    });
-    confirmationRect.addControl(retractButton);
-
-    const cancelButton = Button.CreateSimpleButton("cancelButton", "Cancel");
-    cancelButton.width = "150px";
-    cancelButton.height = "40px";
-    cancelButton.color = "white";
-    cancelButton.cornerRadius = 20;
-    cancelButton.background = "red";
-    cancelButton.top = "80px";
-    cancelButton.left = "80px";
-    cancelButton.onPointerUpObservable.add(() => {
-        advancedTexture.removeControl(confirmationRect);
-        this.justCancelledRetraction = true;  // Set the flag
-        console.log("Retraction cancelled. justCancelledRetraction set to:", this.justCancelledRetraction);
-        // Do nothing else, just close the window
-    });
-    confirmationRect.addControl(cancelButton);
-},
-
-getColorFromPieceName: function(pieceName) {
-  if (pieceName.startsWith('brown')) return 'brown';
-  if (pieceName.startsWith('yellow')) return 'yellow';
-  if (pieceName.startsWith('green')) return 'green';
-  console.error('Unknown piece color:', pieceName);
-  return 'unknown';
-},
-
-retractMove: function() {
-  if (this.lastMove) {
-      this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
-      this.moveHistory.pop();
-      this.currentPlayerTurn = this.getColorFromPieceName(this.lastMove.piece);
-      this.isPlayAgainState = true;
-      this.lastMove = null;
-      this.updateMoveHistoryDisplay();
-      this.updateNextPlayerDisplay();
-      console.log("Move retracted, player turn reverted to:", this.currentPlayerTurn);
-  }
-},
-
-
-    // Add this new function
-    revertToPreviousPlayer: function () {
-      const teams = ["brown", "yellow", "green"];
-      let currentIndex = teams.indexOf(this.currentPlayerTurn);
-      let previousIndex;
-      do {
-        previousIndex = (currentIndex - 1 + teams.length) % teams.length;
-        currentIndex = previousIndex;
-      } while (teams[previousIndex] === this.knockedOutTeam);
-
-      this.currentPlayerTurn = teams[previousIndex];
-    },
-
-    updateMoveHistoryDisplay: function () {
-      const moveHistoryText =
-        moveHistoryViewer.getChildByName("moveHistoryText");
-
-      // Combine main moves and owlHalla moves
-      const combinedHistory = [];
-      let mainIndex = 0;
-      let owlHallaIndex = 0;
-
-      while (
-        mainIndex < this.moveHistory.length ||
-        owlHallaIndex < this.owlHallaHistory.length
-      ) {
-        if (mainIndex < this.moveHistory.length) {
-          combinedHistory.push(this.moveHistory[mainIndex]);
-          mainIndex++;
-        }
-        if (owlHallaIndex < this.owlHallaHistory.length) {
-          combinedHistory.push(this.owlHallaHistory[owlHallaIndex]);
-          owlHallaIndex++;
-        }
-      }
-
-      moveHistoryText.text = combinedHistory.join("\n");
-    },
-
-    updateNextPlayerDisplay: function() {
-      if (nextPlayerText) {
-          advancedTexture.removeControl(nextPlayerText);
-      }
-  
-      const nextPlayerRect = new Rectangle("nextPlayerRect");
-      nextPlayerRect.width = "150px";
-      nextPlayerRect.height = "40px";
-      nextPlayerRect.cornerRadius = 10;
-      nextPlayerRect.color = "white";
-      nextPlayerRect.thickness = 2;
-      nextPlayerRect.background = "rgba(0, 0, 0, 0.7)";
-      nextPlayerRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-      nextPlayerRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-      nextPlayerRect.left = "20px";
-      nextPlayerRect.top = "-20px";
-      advancedTexture.addControl(nextPlayerRect);
-  
-      const playerColor = this.currentPlayerTurn;
-  
-      nextPlayerText = new TextBlock("nextPlayerText");
-      nextPlayerText.text = this.isPlayAgainState
-          ? `${playerColor.charAt(0).toUpperCase() + playerColor.slice(1)} to play again`
-          : `${playerColor.charAt(0).toUpperCase() + playerColor.slice(1)} to play`;
-      nextPlayerText.color = "white";
-      nextPlayerText.fontSize = 16;
-      nextPlayerText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-      nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-      nextPlayerRect.addControl(nextPlayerText);
-  
-      console.log("Updated player turn display:", nextPlayerText.text);
-  },
 
     displayInfoMessage: displayInfoMessage,
   };
