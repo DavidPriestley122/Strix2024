@@ -8,6 +8,9 @@ import {
   Button,
 } from "@babylonjs/gui";
 
+import { ActionManager, ExecuteCodeAction } from "@babylonjs/core";
+
+
 export function createGUI(scene) {
   const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
@@ -186,6 +189,10 @@ export function createGameStateManager(guiElements) {
 
     lastMove: null,
 
+    justCancelledRetraction:false,
+
+    isPlayAgainState: false,
+
     abbreviatePiece: function (piece) {
       switch (piece) {
         case "brownOwl":
@@ -212,12 +219,16 @@ export function createGameStateManager(guiElements) {
     },
 
     reinstateTeam: function (piece) {
-      if (piece.includes("Owl") && this.knockedOutTeam === piece.split("Owl")[0]) {
+      if (
+        piece.includes("Owl") &&
+        this.knockedOutTeam === piece.split("Owl")[0]
+      ) {
         this.knockedOutTeam = null;
-        console.log(`${piece.split("Owl")[0]} team reinstated in turn sequence`);
+        console.log(
+          `${piece.split("Owl")[0]} team reinstated in turn sequence`
+        );
       }
     },
-  
 
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
       const abbreviatedPiece = this.abbreviatePiece(piece);
@@ -227,18 +238,20 @@ export function createGameStateManager(guiElements) {
       )}`;
       this.moveHistory.push(moveText);
       this.lastMove = { piece, sourceSquare, destinationSquare };
+      this.isPlayAgainState = false; // Reset the flag
       this.updateNextPlayer();
       this.updateMoveHistoryDisplay();
       this.updateNextPlayerDisplay(); // Add this line to ensure the display is updated
+      console.log("Move added to history, next player updated to:", this.currentPlayerTurn);
     },
 
     addOwlHallaMove: function (piece, isGoingToOwlHalla) {
       const abbreviatedPiece = this.abbreviatePiece(piece);
-      const moveText = isGoingToOwlHalla 
-        ? `${abbreviatedPiece} to owlHalla` 
+      const moveText = isGoingToOwlHalla
+        ? `${abbreviatedPiece} to owlHalla`
         : `${abbreviatedPiece} from owlHalla`;
       this.owlHallaHistory.push(moveText);
-    
+
       if (isGoingToOwlHalla && piece.includes("Owl")) {
         // Remove the knocked-out team from the sequence of moves
         this.knockedOutTeam = piece.split("Owl")[0];
@@ -247,7 +260,7 @@ export function createGameStateManager(guiElements) {
         // Potentially reinstate the team when a piece returns from owlHalla
         this.reinstateTeam(piece);
       }
-    
+
       this.updateMoveHistoryDisplay();
     },
 
@@ -255,102 +268,97 @@ export function createGameStateManager(guiElements) {
       const teams = ["brown", "yellow", "green"];
       let currentTeamIndex = teams.indexOf(this.currentPlayerTurn);
       let nextTeamIndex;
-    
+
       do {
         nextTeamIndex = (currentTeamIndex + 1) % teams.length;
         currentTeamIndex = nextTeamIndex;
       } while (teams[nextTeamIndex] === this.knockedOutTeam);
-    
+
       this.currentPlayerTurn = teams[nextTeamIndex];
+      console.log("Updated to next player:", this.currentPlayerTurn);
       this.updateNextPlayerDisplay();
     },
 
-    isPotentialRetraction: function (pieceName) {
-      if (!this.lastMove) {
-        console.log("No last move recorded");
-        return false;
-      }
+    isPotentialRetraction: function(pieceName) {
+      const isPotential = this.lastMove && this.lastMove.piece === pieceName && !this.justCancelledRetraction;
+      console.log("isPotentialRetraction check for", pieceName, ":", isPotential);
+      console.log("Current justCancelledRetraction value:", this.justCancelledRetraction);
+      return isPotential;
+  },
 
-      if (this.lastMove.piece === pieceName) {
-        console.log("Potential retraction detected for piece:", pieceName);
-        return true;
-      }
+  showRetractionConfirmation: function(piece, onRetract) {
+    const confirmationRect = new Rectangle("confirmationRect");
+    confirmationRect.width = "400px";
+    confirmationRect.height = "200px";
+    confirmationRect.cornerRadius = 20;
+    confirmationRect.color = "White";
+    confirmationRect.thickness = 4;
+    confirmationRect.background = "rgba(0, 0, 0, 0.7)";
+    advancedTexture.addControl(confirmationRect);
 
-      console.log("Not a potential retraction for piece:", pieceName);
-      return false;
-    },
+    const confirmationText = new TextBlock();
+    confirmationText.text = "Do you want to retract your last move?";
+    confirmationText.color = "white";
+    confirmationText.fontSize = 20;
+    confirmationText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+    confirmationText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+    confirmationText.top = "20px";
+    confirmationRect.addControl(confirmationText);
 
-    showRetractionConfirmation: function (piece, onConfirm, onCancel) {
-      const confirmationRect = new Rectangle("confirmationRect");
-      confirmationRect.width = "300px";
-      confirmationRect.height = "150px";
-      confirmationRect.cornerRadius = 20;
-      confirmationRect.color = "White";
-      confirmationRect.thickness = 4;
-      confirmationRect.background = "rgba(0, 0, 0, 0.7)";
-      advancedTexture.addControl(confirmationRect);
-
-      const confirmationText = new TextBlock();
-      confirmationText.text = "Do you want to retract your last move?";
-      confirmationText.color = "white";
-      confirmationText.fontSize = 18;
-      confirmationText.textHorizontalAlignment =
-        Control.HORIZONTAL_ALIGNMENT_CENTER;
-      confirmationText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-      confirmationText.top = "20px";
-      confirmationRect.addControl(confirmationText);
-
-      const yesButton = Button.CreateSimpleButton("yesButton", "Yes");
-      yesButton.width = "100px";
-      yesButton.height = "40px";
-      yesButton.color = "white";
-      yesButton.cornerRadius = 20;
-      yesButton.background = "green";
-      yesButton.top = "60px";
-      yesButton.left = "-60px";
-      yesButton.onPointerUpObservable.add(() => {
+    const retractButton = Button.CreateSimpleButton("retractButton", "Retract Move");
+    retractButton.width = "150px";
+    retractButton.height = "40px";
+    retractButton.color = "white";
+    retractButton.cornerRadius = 20;
+    retractButton.background = "green";
+    retractButton.top = "80px";
+    retractButton.left = "-80px";
+    retractButton.onPointerUpObservable.add(() => {
         advancedTexture.removeControl(confirmationRect);
-        onConfirm();
-      });
-      confirmationRect.addControl(yesButton);
+        onRetract();
+        
+    });
+    confirmationRect.addControl(retractButton);
 
-      const noButton = Button.CreateSimpleButton("noButton", "No");
-      noButton.width = "100px";
-      noButton.height = "40px";
-      noButton.color = "white";
-      noButton.cornerRadius = 20;
-      noButton.background = "red";
-      noButton.top = "60px";
-      noButton.left = "60px";
-      noButton.onPointerUpObservable.add(() => {
+    const cancelButton = Button.CreateSimpleButton("cancelButton", "Cancel");
+    cancelButton.width = "150px";
+    cancelButton.height = "40px";
+    cancelButton.color = "white";
+    cancelButton.cornerRadius = 20;
+    cancelButton.background = "red";
+    cancelButton.top = "80px";
+    cancelButton.left = "80px";
+    cancelButton.onPointerUpObservable.add(() => {
         advancedTexture.removeControl(confirmationRect);
-        onCancel();
-      });
-      confirmationRect.addControl(noButton);
-    },
+        this.justCancelledRetraction = true;  // Set the flag
+        console.log("Retraction cancelled. justCancelledRetraction set to:", this.justCancelledRetraction);
+        // Do nothing else, just close the window
+    });
+    confirmationRect.addControl(cancelButton);
+},
 
-    retractMove: function () {
-      if (this.lastMove) {
-        // Revert the piece position
-        this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
-    
-        // Remove the last move from the move history
-        this.moveHistory.pop();
-    
-        // Revert to the previous player's turn
-        this.revertToPreviousPlayer();
-    
-        // Clear the last move
-        this.lastMove = null;
-    
-        this.updateMoveHistoryDisplay();
-        this.updateNextPlayerDisplay(); // Add this line
-        console.log("Move retracted");
-      } else {
-        console.log("No move to retract");
-      }
-    },
-    
+getColorFromPieceName: function(pieceName) {
+  if (pieceName.startsWith('brown')) return 'brown';
+  if (pieceName.startsWith('yellow')) return 'yellow';
+  if (pieceName.startsWith('green')) return 'green';
+  console.error('Unknown piece color:', pieceName);
+  return 'unknown';
+},
+
+retractMove: function() {
+  if (this.lastMove) {
+      this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
+      this.moveHistory.pop();
+      this.currentPlayerTurn = this.getColorFromPieceName(this.lastMove.piece);
+      this.isPlayAgainState = true;
+      this.lastMove = null;
+      this.updateMoveHistoryDisplay();
+      this.updateNextPlayerDisplay();
+      console.log("Move retracted, player turn reverted to:", this.currentPlayerTurn);
+  }
+},
+
+
     // Add this new function
     revertToPreviousPlayer: function () {
       const teams = ["brown", "yellow", "green"];
@@ -358,20 +366,25 @@ export function createGameStateManager(guiElements) {
       let previousIndex;
       do {
         previousIndex = (currentIndex - 1 + teams.length) % teams.length;
+        currentIndex = previousIndex;
       } while (teams[previousIndex] === this.knockedOutTeam);
-      
+
       this.currentPlayerTurn = teams[previousIndex];
     },
-    
-    updateMoveHistoryDisplay: function() {
-      const moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
-      
+
+    updateMoveHistoryDisplay: function () {
+      const moveHistoryText =
+        moveHistoryViewer.getChildByName("moveHistoryText");
+
       // Combine main moves and owlHalla moves
       const combinedHistory = [];
       let mainIndex = 0;
       let owlHallaIndex = 0;
-      
-      while (mainIndex < this.moveHistory.length || owlHallaIndex < this.owlHallaHistory.length) {
+
+      while (
+        mainIndex < this.moveHistory.length ||
+        owlHallaIndex < this.owlHallaHistory.length
+      ) {
         if (mainIndex < this.moveHistory.length) {
           combinedHistory.push(this.moveHistory[mainIndex]);
           mainIndex++;
@@ -381,15 +394,15 @@ export function createGameStateManager(guiElements) {
           owlHallaIndex++;
         }
       }
-    
+
       moveHistoryText.text = combinedHistory.join("\n");
     },
 
-    updateNextPlayerDisplay: function () {
+    updateNextPlayerDisplay: function() {
       if (nextPlayerText) {
-        advancedTexture.removeControl(nextPlayerText);
+          advancedTexture.removeControl(nextPlayerText);
       }
-
+  
       const nextPlayerRect = new Rectangle("nextPlayerRect");
       nextPlayerRect.width = "150px";
       nextPlayerRect.height = "40px";
@@ -402,21 +415,21 @@ export function createGameStateManager(guiElements) {
       nextPlayerRect.left = "20px";
       nextPlayerRect.top = "-20px";
       advancedTexture.addControl(nextPlayerRect);
-
-      const nextPlayerColor = this.currentPlayerTurn;
-
+  
+      const playerColor = this.currentPlayerTurn;
+  
       nextPlayerText = new TextBlock("nextPlayerText");
-      nextPlayerText.text = `${
-        nextPlayerColor.charAt(0).toUpperCase() + nextPlayerColor.slice(1)
-      } to play`;
+      nextPlayerText.text = this.isPlayAgainState
+          ? `${playerColor.charAt(0).toUpperCase() + playerColor.slice(1)} to play again`
+          : `${playerColor.charAt(0).toUpperCase() + playerColor.slice(1)} to play`;
       nextPlayerText.color = "white";
       nextPlayerText.fontSize = 16;
-      nextPlayerText.textHorizontalAlignment =
-        Control.HORIZONTAL_ALIGNMENT_CENTER;
+      nextPlayerText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
       nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
       nextPlayerRect.addControl(nextPlayerText);
-      console.log("Updated next player display:", nextPlayerText.text); // Add this for debugging
-    },
+  
+      console.log("Updated player turn display:", nextPlayerText.text);
+  },
 
     displayInfoMessage: displayInfoMessage,
   };

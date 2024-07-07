@@ -305,17 +305,7 @@ export default function createScene(engine, canvas) {
                   gameStateManager.piecePositions[selectedPiece.name] =
                     clickedCube.name;
 
-                  /*
-                // Update lastMove in gameStateManager
-                gameStateManager.lastMove = {
-                  piece: selectedPiece.name,
-                  sourceSquare: currentPosition,
-                  destinationSquare: clickedCube.name,
-                  capturedPiece: null // Update this if you implement piece capture
-                };
-
-                console.log("Last move updated:", gameStateManager.lastMove);
-*/
+                 
                   // Add the move to the move history
                   gameStateManager.addMoveToHistory(
                     selectedPiece.name,
@@ -470,34 +460,33 @@ export default function createScene(engine, canvas) {
   function handlePieceSingleClick(piece) {
     const pieceName = piece.name;
     const currentPosition = gameStateManager.piecePositions[pieceName];
-  
+
     console.log("Piece clicked:", pieceName);
     console.log("Current position:", currentPosition);
     console.log("Current lastMove:", gameStateManager.lastMove);
-  
+
     if (currentPosition && currentPosition.endsWith("--1")) {
-      selectedPiece = null;
-      console.log("Piece is on owlHalla square, deselected");
-    } else {
-      if (gameStateManager.isPotentialRetraction(pieceName)) {
-        console.log("Potential move retraction detected");
+        selectedPiece = null;
+        console.log("Piece is on owlHalla square, deselected");
+    } else if (gameStateManager.isPotentialRetraction(pieceName) && !gameStateManager.justCancelledRetraction) {
+        console.log("Potential move retraction detected, showing confirmation");
         gameStateManager.showRetractionConfirmation(
-          piece,
-          () =>
-            performRetraction(
-              piece,
-              getPositionFromCubeName,
-              getPositionFromOwlHallaCubeName,
-              getRotationFromCubeName
-            ),
-          () => console.log("Retraction cancelled")
+            piece,
+            () => {
+                performRetraction(piece);
+                gameStateManager.updateNextPlayerDisplay();
+                console.log("Retraction completed, player turn updated");
+            }
         );
-      } else {
+    } else {
         selectedPiece = piece;
         console.log("New piece selected:", pieceName);
-      }
+        gameStateManager.justCancelledRetraction = false;
+        console.log("justCancelledRetraction reset to false");
     }
-  }
+
+    console.log("Current player turn:", gameStateManager.currentPlayerTurn);
+}
 
   /*function performRetraction(
     piece,
@@ -550,128 +539,58 @@ export default function createScene(engine, canvas) {
   }
 */
 
-function performRetraction(piece, getPositionFromCubeName, getPositionFromOwlHallaCubeName, getRotationFromCubeName) {
+function performRetraction(piece) {
   const lastMove = gameStateManager.lastMove;
-  const currentPosition = gameStateManager.piecePositions[piece.name];
-  console.log("Attempting to retract move:", lastMove);
-
-  if (lastMove && lastMove.piece === piece.name) {
-    let sourcePosition;
-    let sourceRotation;
-
-    if (lastMove.sourceSquare === "owlHalla") {
-      // The piece is returning to owlHalla
-      const owlHallaCubeName = getOwlHallaCubeName(piece.name);
-      sourcePosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
-      const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
-      sourceRotation = owlHallaCube.rotation.clone();
-    } else {
-      // Normal retraction
-      sourcePosition = getPositionFromCubeName(lastMove.sourceSquare);
-      sourceRotation = getRotationFromCubeName(lastMove.sourceSquare);
-    }
-
-    console.log("Retracting to position:", sourcePosition);
-
-    animatePieceMovement(
-      piece,
-      sourcePosition,
-      sourceRotation,
-      30,
-      function() {
-        gameStateManager.retractMove();
-        
-        if (lastMove.capturedPiece) {
-          // If a piece was "captured" (sent to owlHalla), bring it back
-          const capturedPiece = scene.getMeshByName(lastMove.capturedPiece);
-          if (capturedPiece) {
-            const originalPosition = originalPositions[lastMove.capturedPiece];
-            const originalRotation = originalPositions[lastMove.capturedPiece + "Rotation"];
-            capturedPiece.position = originalPosition;
-            capturedPiece.rotation = originalRotation;
-            capturedPiece.visibility = true;
-            capturedPiece.isPickable = true;
-            gameStateManager.updatePiecePosition(lastMove.capturedPiece, originalPositions[lastMove.capturedPiece + "Name"]);
-          }
-        }
-
-        console.log("Move retracted");
+  if (lastMove && lastMove.piece === piece.name && lastMove.sourceSquare) {
+      let sourcePosition;
+      if (lastMove.sourceSquare.endsWith("--1")) {
+          sourcePosition = getPositionFromOwlHallaCubeName(lastMove.sourceSquare);
+      } else {
+          sourcePosition = getPositionFromCubeName(lastMove.sourceSquare);
       }
-    );
+      const sourceRotation = getRotationFromCubeName(lastMove.sourceSquare);
+
+      animatePieceMovement(
+          piece,
+          sourcePosition,
+          sourceRotation,
+          30,
+          function () {
+              gameStateManager.retractMove();
+
+              if (lastMove.capturedPiece) {
+                  const capturedPiece = scene.getMeshByName(lastMove.capturedPiece);
+                  if (capturedPiece) {
+                      capturedPiece.position = getPositionFromCubeName(lastMove.destinationSquare);
+                      capturedPiece.rotation = getRotationFromCubeName(lastMove.destinationSquare);
+                      capturedPiece.setEnabled(true);
+                  }
+              }
+
+              console.log("Move retracted");
+          }
+      );
   } else {
-    console.error("Cannot retract move. Invalid last move data:", lastMove);
+      console.error("Cannot retract move. Invalid last move data:", lastMove);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // Function to handle the double click event for a piece
   function handlePieceDoubleClick(piece) {
     const pieceName = piece.name;
     const originalPosition = originalPositions[pieceName];
-  
+
     if (originalPosition) {
       // The piece is on the owlHalla square, move it back to its original position
       piece.position = originalPosition;
       piece.rotation = originalPositions[pieceName + "Rotation"];
       piece.visibility = true;
       piece.isPickable = true;
-  
+
       const originalPositionName = originalPositions[pieceName + "Name"];
       gameStateManager.updatePiecePosition(pieceName, originalPositionName);
       gameStateManager.addOwlHallaMove(pieceName, false);
-  
+
       originalPositions[pieceName] = null;
       originalPositions[pieceName + "Rotation"] = null;
       originalPositions[pieceName + "Name"] = null;
@@ -681,10 +600,12 @@ function performRetraction(piece, getPositionFromCubeName, getPositionFromOwlHal
       // The piece is on the main board, move it to owlHalla
       originalPositions[pieceName] = piece.position.clone();
       originalPositions[pieceName + "Rotation"] = piece.rotation.clone();
-      originalPositions[pieceName + "Name"] = gameStateManager.piecePositions[pieceName];
+      originalPositions[pieceName + "Name"] =
+        gameStateManager.piecePositions[pieceName];
       const owlHallaCubeName = getOwlHallaCubeName(pieceName);
-      const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
-  
+      const owlHallaPosition =
+        getPositionFromOwlHallaCubeName(owlHallaCubeName);
+
       // Apply the offset based on the color of the piece
       if (pieceName.startsWith("brown")) {
         owlHallaPosition.y += 3.5;
@@ -693,11 +614,11 @@ function performRetraction(piece, getPositionFromCubeName, getPositionFromOwlHal
       } else if (pieceName.startsWith("green")) {
         owlHallaPosition.z += 3.5;
       }
-  
+
       piece.position = owlHallaPosition;
       const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
       piece.rotation = owlHallaCube.rotation.clone();
-  
+
       piece.visibility = false;
       gameStateManager.updatePiecePosition(pieceName, owlHallaCubeName);
       gameStateManager.addOwlHallaMove(pieceName, true);
@@ -705,48 +626,28 @@ function performRetraction(piece, getPositionFromCubeName, getPositionFromOwlHal
     }
   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
- /* function handlePieceDoubleClick(piece) {
+ 
+  /*function completeMove(piece, destinationSquare) {
+    const destinationName = destinationSquare.name;
+    
+    // Update the piece's 3D position
+    piece.position = destinationSquare.position.clone();
+    if (destinationName.startsWith('b')) {
+      piece.position.y += 3.75;
+    } else if (destinationName.startsWith('y')) {
+      piece.position.x += 3.75;
+    } else if (destinationName.startsWith('g')) {
+      piece.position.z += 3.75;
+    }
+    piece.rotation = destinationSquare.rotation.clone();
+    
+    // Update the game state
+    gameStateManager.updatePiecePosition(piece.name, destinationName);
+    gameStateManager.addMoveToHistory(piece.name, gameStateManager.piecePositions[piece.name], destinationName);
+    gameStateManager.displayInfoMessage(`${piece.name} moved to ${destinationName}`);
+  }
+*/
+  /* function handlePieceDoubleClick(piece) {
     const pieceName = piece.name;
     const originalPosition = originalPositions[pieceName];
 
@@ -812,8 +713,6 @@ function performRetraction(piece, getPositionFromCubeName, getPositionFromOwlHal
     }
   }
 */
-
-
 
   // Function to get the owlHalla cube name for a piece
   function getOwlHallaCubeName(pieceName) {
