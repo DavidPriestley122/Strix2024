@@ -432,7 +432,7 @@ export default function createScene(engine, canvas) {
     });
   }
 
-  //PIECE INTERACTION LOGIC 
+  //PIECE INTERACTION LOGIC
 
   // Object to store the original positions of the pieces
   const originalPositions = {
@@ -566,6 +566,10 @@ export default function createScene(engine, canvas) {
       gameStateManager.updatePiecePosition(pieceName, owlHallaCubeName);
       gameStateManager.addOwlHallaMove(pieceName, true);
       updatePiecesArrivingOnOwlHalla(pieceName);
+
+      // Record the capture along with the position of the captured piece
+      const capturePosition = gameStateManager.piecePositions[pieceName];
+      gameStateManager.recordCapture(pieceName, capturePosition);
     }
   }
 
