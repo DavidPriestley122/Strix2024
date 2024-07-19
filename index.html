@@ -44,52 +44,90 @@
     />
     <style>
       body {
-        font-family: Arial, sans-serif;
         margin: 0;
         padding: 0;
-        background-color: #2d572c;
         min-height: 100vh;
-        height: 5000px;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--dark-green);
       }
 
-      header,
+      :root {
+        --header-height: 300px;
+        --header-footer-height: 500px; /* Adjust this value to change both header and footer height */
+        --dark-chocolate: #3c280d; /* Dark chocolate brown color */
+        --dark-green: #1a3a1a;
+      }
+
+      header {
+        background-color: var(--dark-chocolate);
+        color: white;
+        text-align: center;
+        height: var(--header-height);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-shrink: 0;
+      }
+
       footer {
         background-color: #333;
         color: white;
         text-align: center;
-        padding: 0;
+        height: var(--footer-height);
         position: relative;
         overflow: hidden;
         flex-shrink: 0;
       }
+
       .game-banner {
         width: 100%;
-        height: 500px;
+        height: 100%;
         object-fit: cover;
         object-position: center;
       }
+
       .game-title {
         font-family: "IM Fell English", serif;
-        font-size: 2.5em;
+        font-size: 3.5em; /* Increased font size */
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
         margin: 0;
-        z-index: 1;
+        padding: 20px;
+        background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
+        border-radius: 10px;
       }
 
       #game-container {
+        border: 2px solid #333;
         width: 800px;
         height: 600px;
-        margin: 20px auto;
-        position: relative;
-        border: 2px solid #333;
-        resize: both;
-        overflow: hidden;
-        max-width: calc(100vw - 40px);
-        max-height: calc(100vh - 520px);
+        margin: 0 auto; /* This ensures horizontal centering */
+        position: relative; 
+        background-color: #000; /* Set a black background for the game container itself */
+      }
+
+      footer p {
+        margin: 0;
+        padding: 10px 0;
+        background-color: rgba(
+          0,
+          0,
+          0,
+          0.5
+        ); /* Semi-transparent background for text */
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+
+      main {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--dark-green);
+        padding: 100px 0;
       }
 
       #renderCanvas {
@@ -98,64 +136,62 @@
         display: block;
       }
 
-      #restartButton,
-      #smallButton,
-      #largeButton,
-      #fullscreenButton {
+      #button-container {
         position: absolute;
-        z-index: 100;
-        padding: 10px;
-        background-color: #4caf50;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      #button-container button {
+        margin-bottom: 5px;
+        padding: 6px 12px;
+        font-size: 0.9em;
+        background-color: #8b008b; /* Dark magenta */
         color: white;
-        border: none;
+        border: 1px solid white;
+        border-radius: 5px;
         cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      #button-container button:hover {
+        background-color: #9400d3; /* Slightly lighter magenta on hover */
       }
 
       #restartButton {
-        top: 10px;
-        left: 10px;
-      }
-
-      #smallButton {
-        top: 10px;
-        left: 25%;
-        transform: translateX(-50%);
-      }
-
-      #largeButton {
-        top: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-      }
-
-      #fullscreenButton {
-        top: 10px;
-        right: 10px;
+        margin-top: 10px; /* Adds some space above the restart button */
       }
     </style>
   </head>
   <body>
     <header>
-      <img
-        src="../images/StrixInSolarUnsaturated.jpg"
-        alt="Strix: A game of Owls banner"
-        class="game-banner"
-      />
       <h1 class="game-title">
         STRIX <br />
         A game of Owls
       </h1>
     </header>
 
-    <div id="game-container">
-      <canvas id="renderCanvas"></canvas>
-      <button id="restartButton">Restart Game</button>
-      <button id="smallButton">Small Size</button>
-      <button id="largeButton">Large Size</button>
-      <button id="fullscreenButton">Fullscreen</button>
-    </div>
+    <main>
+      <div id="game-container">
+        <canvas id="renderCanvas"></canvas>
+        <div id="button-container">
+          <button id="smallButton">Small Size</button>
+          <button id="largeButton">Large Size</button>
+          <button id="fullscreenButton">Fullscreen</button>
+          <button id="restartButton">Restart Game</button>
+        </div>
+      </div>
+    </main>
 
     <footer>
+      <img
+        src="../images/StrixInSolarUnsaturated.jpg"
+        alt="Strix: A game of Owls banner"
+        class="game-banner"
+      />
       <p>&copy; 2024 Your Name. All rights reserved.</p>
     </footer>
 
@@ -177,13 +213,33 @@
       let currentWidth = SMALL_WIDTH;
       let currentHeight = SMALL_HEIGHT;
 
-      function resizeGame(width, height) {
-        container.style.width = width + "px";
-        container.style.height = height + "px";
-        canvas.width = width;
-        canvas.height = height;
-        currentWidth = width;
-        currentHeight = height;
+      function resizeGame(targetWidth, targetHeight) {
+        const headerHeight = 200; // Match this to your CSS var(--header-height)
+        const footerHeight = 300; // Match this to your CSS var(--footer-height)
+        const padding = 40;
+
+        const maxWidth = window.innerWidth - padding;
+        const maxHeight =
+          window.innerHeight - headerHeight - footerHeight - padding;
+
+        let newWidth = targetWidth;
+        let newHeight = targetHeight;
+
+        if (newWidth > maxWidth || newHeight > maxHeight) {
+          const scale = Math.min(
+            maxWidth / targetWidth,
+            maxHeight / targetHeight
+          );
+          newWidth = Math.floor(targetWidth * scale);
+          newHeight = Math.floor(targetHeight * scale);
+        }
+
+        container.style.width = newWidth + "px";
+        container.style.height = newHeight + "px";
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+        currentWidth = newWidth;
+        currentHeight = newHeight;
 
         if (window.engine) {
           window.engine.resize();
@@ -238,15 +294,7 @@
 
       function handleFullscreenChange() {
         if (document.fullscreenElement) {
-          const screenWidth = window.innerWidth;
-          const screenHeight = window.innerHeight;
-          const scale = Math.min(
-            screenWidth / currentWidth,
-            screenHeight / currentHeight
-          );
-          const width = Math.floor(currentWidth * scale);
-          const height = Math.floor(currentHeight * scale);
-          resizeGame(width, height);
+          resizeGame(window.innerWidth, window.innerHeight);
         } else {
           resizeGame(currentWidth, currentHeight);
         }
@@ -267,13 +315,9 @@
         }
       });
 
-      document.addEventListener("fullscreenchange", handleFullscreenChange);
-      document.addEventListener(
-        "webkitfullscreenchange",
-        handleFullscreenChange
-      );
-      document.addEventListener("mozfullscreenchange", handleFullscreenChange);
-      document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+      window.addEventListener("resize", function () {
+        resizeGame(currentWidth, currentHeight);
+      });
 
       // Initial size setup
       setSmallSize();
