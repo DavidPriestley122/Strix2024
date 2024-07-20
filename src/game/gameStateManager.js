@@ -10,10 +10,8 @@ import {
   Button,
 } from "@babylonjs/gui";
 
-import { ActionManager, ExecuteCodeAction } from "@babylonjs/core";
-
 //GUI CREATION FUNCTION
-export function createGUI(scene) {
+export function createGUI() {
   const advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
 
   //INFO TEXT CREATION
@@ -94,7 +92,6 @@ export function createGUI(scene) {
 export function createGameStateManager(guiElements) {
   const {
     moveHistoryViewer,
-    moveHistoryText,
     messageText,
     messageRect,
     advancedTexture,
@@ -437,10 +434,10 @@ export function createGameStateManager(guiElements) {
       let displayText = "";
       let captureIndex = 0;
       let retractionIndex = 0;
-    
+
       for (let i = 0; i < this.moveHistory.length; i++) {
         displayText += this.moveHistory[i] + "\n";
-        
+
         // Add capture if it exists for this move and it's not already included
         while (
           captureIndex < this.captureHistory.length &&
@@ -451,7 +448,7 @@ export function createGameStateManager(guiElements) {
           }
           captureIndex++;
         }
-    
+
         // Add retraction if it exists after this move
         if (
           retractionIndex < this.retractionHistory.length &&
@@ -461,14 +458,15 @@ export function createGameStateManager(guiElements) {
           retractionIndex++;
         }
       }
-    
+
       // Add any remaining captures that might occur after the last move
       while (captureIndex < this.captureHistory.length) {
         displayText += this.captureHistory[captureIndex].text + "\n";
         captureIndex++;
       }
-      
-      const moveHistoryText = moveHistoryViewer.getChildByName("moveHistoryText");
+
+     const moveHistoryText =
+        moveHistoryViewer.getChildByName("moveHistoryText");
       moveHistoryText.text = displayText;
     },
     updateNextPlayerDisplay: function () {
