@@ -22,6 +22,7 @@ import {
   ActionManager,
   ExecuteCodeAction,
   Matrix,
+  Texture,
 } from "@babylonjs/core";
 import { Animation, CubicEase, EasingFunction } from "@babylonjs/core";
 
@@ -78,10 +79,18 @@ export default function createScene(engine, canvas) {
   backgroundPlane.rotation.y = 0;
   backgroundPlane.rotation.z = 0;
 
-  const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
+  /*const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
   backgroundMaterial.diffuseColor = new Color3(0.1, 0.4, 0.6); // Set the color of the material
   backgroundMaterial.specularColor = new Color3(0, 0, 0);
   backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
+  backgroundPlane.material = backgroundMaterial;
+  */
+  const backgroundTexture = new Texture("./images/GreenyBrownBackground.jpg", scene);
+  backgroundTexture.uScale = .5;
+  backgroundTexture.vScale = .5;
+  const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
+  backgroundMaterial.diffuseTexture = backgroundTexture;
+  backgroundMaterial.specularColor = new Color3(0, 0, 0); // Remove shininess
   backgroundPlane.material = backgroundMaterial;
 
   //BOARD CONTAINER CREATION

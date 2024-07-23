@@ -191,9 +191,9 @@
         <div id="game-container">
           <canvas id="renderCanvas"></canvas>
           <div id="button-container">
-            <button id="smallButton">Small Size</button>
-            <button id="largeButton">Large Size</button>
-            <button id="veryLargeButton">Very Large Size</button>
+            <button id="smallButton">Small</button>
+            <button id="largeButton">Large</button>
+            <button id="veryLargeButton">Very Large</button>
             <button id="restartButton">Restart Game</button>
           </div>
         </div>
@@ -202,7 +202,7 @@
 
     <footer>
       <img
-        src="../images/StrixInSolarUnsaturated.jpg"
+        src="../images/StrixinSolarSmall.jpg"
         alt="Strix: A game of Owls banner"
         class="game-banner"
       />
@@ -228,6 +228,35 @@
 
       let currentSize = "SMALL";
 
+      /*function resizeGame(size) {
+        resetContainerPosition();
+
+        const targetWidth = SIZES[size].width;
+        const targetHeight = SIZES[size].height;
+
+        const wrapper = document.getElementById("game-wrapper");
+        wrapper.style.width = `${targetWidth}px`;
+        wrapper.style.height = `${targetHeight}px`;
+
+        container.style.width = `${targetWidth}px`;
+        container.style.height = `${targetHeight}px`;
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        currentSize = size;
+
+        if (window.engine) {
+          window.engine.resize();
+        }
+
+        // Calculate scale based on the new size
+        const scale = targetWidth / SIZES.SMALL.width;
+        adjustFontSizes(scale);
+
+        console.log(`Resizing game to ${size}`);
+        adjustFontSizes(size);
+      }
+        */
       function resizeGame(size) {
         resetContainerPosition();
 
@@ -255,6 +284,17 @@
         mainElement.style.padding = "";
         mainElement.style.overflow = "auto";
       }
+
+      /* const textElements = document.querySelectorAll(".babylonjs-gui-text");
+        textElements.forEach((element) => {
+          let newFontSize = Math.round(baseFontSize * scale);
+          newFontSize = Math.max(
+            minFontSize,
+            Math.min(newFontSize, maxFontSize)
+          );
+          element.style.fontSize = `${newFontSize}px`;
+        });
+        */
 
       function adjustFontSizes(scale) {
         const minFontSize = 12;

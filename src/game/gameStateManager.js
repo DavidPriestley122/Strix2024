@@ -90,12 +90,8 @@ export function createGUI() {
 
 //GAME STATE MANAGER CREATION
 export function createGameStateManager(guiElements) {
-  const {
-    moveHistoryViewer,
-    messageText,
-    messageRect,
-    advancedTexture,
-  } = guiElements;
+  const { moveHistoryViewer, messageText, messageRect, advancedTexture } =
+    guiElements;
 
   let nextPlayerText = null; // Variable to store the reference to nextPlayerText control
 
@@ -249,7 +245,7 @@ export function createGameStateManager(guiElements) {
       this.currentPlayerTurn = teams[previousIndex];
     },
 
-    recordCapture: function (capturedPiece) {
+    /*recordCapture: function (capturedPiece) {
       const abbreviatedPiece = this.abbreviatePiece(capturedPiece);
       this.lastCapture = abbreviatedPiece;
       this.lastCapturePosition = this.piecePositions[capturedPiece];
@@ -261,6 +257,15 @@ export function createGameStateManager(guiElements) {
       });
 
       this.updateMoveHistoryDisplay();
+    },
+*/
+
+    //this function updated 21.07.2024
+    recordCapture: function (capturedPiece) {
+      const abbreviatedPiece = this.abbreviatePiece(capturedPiece);
+      this.lastCapture = abbreviatedPiece;
+
+      // Don't add to captureHistory here
     },
 
     //PLAYER TURN MANAGEMENT
@@ -314,8 +319,20 @@ export function createGameStateManager(guiElements) {
         // Potentially reinstate the team when a piece returns from owlHalla
         this.reinstateTeam(piece);
       }
+      //this.updateMoveHistoryDisplay();
+      // Add the move to the main move history (lines below here new as of 21.07.2024)
+      this.moveHistory.push(moveText);
+
+      // Record the capture if a piece is going to owlHalla
+      if (isGoingToOwlHalla) {
+        this.captureHistory.push({
+          moveIndex: this.moveHistory.length - 1,
+          text: `(${abbreviatedPiece} captured)`,
+        });
+      }
 
       this.updateMoveHistoryDisplay();
+      this.updateNextPlayerDisplay();
     },
 
     //MOVE RETRACTION MANAGEMENT
@@ -401,83 +418,89 @@ export function createGameStateManager(guiElements) {
 
     retractMove: function () {
       if (this.lastMove) {
-        const retractedMove = this.moveHistory.pop();
-        const retractionText = `[${retractedMove} retracted]`;
-        this.retractionHistory.push({
-          moveIndex: this.moveHistory.length,
-          text: retractionText,
-        });
-
-        // Remove any associated capture
-        if (
-          this.captureHistory.length > 0 &&
-          this.captureHistory[this.captureHistory.length - 1].moveIndex ===
-            this.moveHistory.length
+        // Find the last regular move (non-owlHalla move)
+        let lastRegularMoveIndex = this.moveHistory.length - 1;
+        while (
+          lastRegularMoveIndex >= 0 &&
+          this.moveHistory[lastRegularMoveIndex].includes("owlHalla")
         ) {
-          this.captureHistory.pop();
+          lastRegularMoveIndex--;
         }
 
-        this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
-        this.currentPlayerTurn = this.getColorFromPieceName(
-          this.lastMove.piece
-        );
-        this.isPlayAgainState = true;
-        this.lastMove = null;
-        this.updateMoveHistoryDisplay();
-        this.updateNextPlayerDisplay();
+        if (lastRegularMoveIndex >= 0) {
+          const retractedMove = this.moveHistory[lastRegularMoveIndex];
+          const retractionText = `[${retractedMove} retracted]`;
+
+          // Remove all moves after and including the retracted move
+          this.moveHistory = this.moveHistory.slice(0, lastRegularMoveIndex);
+
+          // Add the retraction to the move history instead of a separate retractionHistory
+          this.moveHistory.push(retractionText);
+
+          // Remove any associated captures
+          this.captureHistory = this.captureHistory.filter(
+            (capture) => capture.moveIndex < lastRegularMoveIndex
+          );
+
+          // Remove any related owlHalla moves
+          this.owlHallaHistory = this.owlHallaHistory.filter((move) => {
+            const pieceAbbr = this.abbreviatePiece(this.lastMove.piece);
+            return !move.includes(pieceAbbr);
+          });
+
+          // Restore the piece position
+          this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
+
+          // If the captured piece was moved to owlHalla, restore its position
+          if (this.lastMove.capturedPiece) {
+            this.piecePositions[this.lastMove.capturedPiece] =
+              this.lastMove.destinationSquare;
+          }
+
+          this.revertToPreviousPlayer();
+
+          this.isPlayAgainState = true;
+          this.lastMove = null;
+          this.updateMoveHistoryDisplay();
+          this.updateNextPlayerDisplay();
+        }
       }
     },
-
     //DISPLAY UPDATE FUNCTIONS
 
     updateMoveHistoryDisplay: function () {
       let displayText = "";
       let captureIndex = 0;
-      let retractionIndex = 0;
 
       for (let i = 0; i < this.moveHistory.length; i++) {
-        displayText += this.moveHistory[i] + "\n";
+        if (!this.moveHistory[i].includes("owlHalla")) {
+          displayText += this.moveHistory[i] + "\n";
 
-        // Add capture if it exists for this move and it's not already included
-        while (
-          captureIndex < this.captureHistory.length &&
-          this.captureHistory[captureIndex].moveIndex <= i
-        ) {
-          if (!this.moveHistory[i].includes("captures")) {
+          // Add capture if it exists for this move
+          while (
+            captureIndex < this.captureHistory.length &&
+            this.captureHistory[captureIndex].moveIndex === i
+          ) {
             displayText += this.captureHistory[captureIndex].text + "\n";
+            captureIndex++;
           }
-          captureIndex++;
-        }
-
-        // Add retraction if it exists after this move
-        if (
-          retractionIndex < this.retractionHistory.length &&
-          this.retractionHistory[retractionIndex].moveIndex === i + 1
-        ) {
-          displayText += `${this.retractionHistory[retractionIndex].text}\n`;
-          retractionIndex++;
         }
       }
 
-      // Add any remaining captures that might occur after the last move
-      while (captureIndex < this.captureHistory.length) {
-        displayText += this.captureHistory[captureIndex].text + "\n";
-        captureIndex++;
-      }
-
-     const moveHistoryText =
+      const moveHistoryText =
         moveHistoryViewer.getChildByName("moveHistoryText");
       moveHistoryText.text = displayText;
     },
+
     updateNextPlayerDisplay: function () {
       if (nextPlayerText) {
         advancedTexture.removeControl(nextPlayerText);
       }
 
       const nextPlayerRect = new Rectangle("nextPlayerRect");
-      nextPlayerRect.width = "150px";
+      nextPlayerRect.width = "120px";
       nextPlayerRect.height = "40px";
-      nextPlayerRect.cornerRadius = 10;
+      nextPlayerRect.cornerRadius = 1;
       nextPlayerRect.color = "white";
       nextPlayerRect.thickness = 2;
       nextPlayerRect.background = "rgba(0, 0, 0, 0.7)";
