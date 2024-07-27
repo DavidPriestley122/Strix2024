@@ -185,54 +185,42 @@ export function createGameStateManager(guiElements) {
     retractionHistory: [],
     lastCapture: null,
     lastCapturePosition: null,
-    pendingCaptureByOwl: null,
+    //pendingCaptureByOwl: null,
+    pendingCapture: null,
+    captureJustRecorded: false,
+    lastMove: null,
 
-    addMoveToHistory: function (
-      piece,
-      sourceSquare,
-      destinationSquare,
-      capturedPiece
-    ) {
-      const abbreviatedPiece = this.abbreviatePiece(piece);
-      const moveText = `${abbreviatedPiece}-${destinationSquare.replace(
-        "-",
-        ""
-      )}`;
+    addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
+      const pieceNotation = this.abbreviatePiece(piece);
+      const moveText = `${pieceNotation}-${destinationSquare.replace("-", "")}`;
 
-      if (
-        piece.endsWith("Owl") &&
-        this.lastCapture &&
-        this.lastCapturePosition === destinationSquare
-      ) {
-        // This is an Owl capturing move
-        this.moveHistory.push(`${moveText} (captures ${this.lastCapture})`);
-        // Remove the pending capture from captureHistory
-        this.captureHistory.pop();
-      } else {
-        this.moveHistory.push(moveText);
-        if (capturedPiece) {
-          // This is a capture that occurred during the move (non-Owl capture)
-          const captureMoveText = `(captures ${this.abbreviatePiece(
-            capturedPiece.name
-          )})`;
-          this.captureHistory.push({
-            moveIndex: this.moveHistory.length - 1,
-            text: captureMoveText,
-          });
+      // Check if there was a capture recorded after the last move
+      if (this.lastCapture) {
+        if (
+          piece.toLowerCase().includes("owl") &&
+          destinationSquare === this.lastCapture.position
+        ) {
+          // This is a by-Owl capture, add the move first, then the capture
+          this.moveHistory.push(moveText);
+          this.moveHistory.push(`(${this.lastCapture.piece} captured by Owl)`);
+        } else {
+          // This is a not-by-Owl capture, add it before the current move
+          this.moveHistory.push(`(${this.lastCapture.piece} captured)`);
+          this.moveHistory.push(moveText);
         }
+        this.lastCapture = null;
+      } else {
+        // No capture, just add the move
+        this.moveHistory.push(moveText);
       }
 
-      // Reset capture info
-      this.lastCapture = null;
-      this.lastCapturePosition = null;
-
-      this.lastMove = { piece, sourceSquare, destinationSquare };
+      // Update game state
+      this.lastMove = { piece, sourceSquare, destinationSquare, moveText };
       this.isPlayAgainState = false;
       this.updateNextPlayer();
       this.updateMoveHistoryDisplay();
       this.updateNextPlayerDisplay();
     },
-
     revertToPreviousPlayer: function () {
       const teams = ["brown", "yellow", "green"];
       let currentIndex = teams.indexOf(this.currentPlayerTurn);
@@ -245,27 +233,20 @@ export function createGameStateManager(guiElements) {
       this.currentPlayerTurn = teams[previousIndex];
     },
 
-    /*recordCapture: function (capturedPiece) {
-      const abbreviatedPiece = this.abbreviatePiece(capturedPiece);
-      this.lastCapture = abbreviatedPiece;
-      this.lastCapturePosition = this.piecePositions[capturedPiece];
+    recordCapture: function (capturedPiece, capturedPosition) {
+      const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
+      console.log(
+        "Recording capture:",
+        abbreviatedCaptured,
+        "at",
+        capturedPosition
+      );
 
-      // Immediately add to captureHistory for all captures
-      this.captureHistory.push({
-        moveIndex: this.moveHistory.length,
-        text: `(${abbreviatedPiece} captured)`,
-      });
-
-      this.updateMoveHistoryDisplay();
-    },
-*/
-
-    //this function updated 21.07.2024
-    recordCapture: function (capturedPiece) {
-      const abbreviatedPiece = this.abbreviatePiece(capturedPiece);
-      this.lastCapture = abbreviatedPiece;
-
-      // Don't add to captureHistory here
+      // Store the capture information
+      this.lastCapture = {
+        piece: abbreviatedCaptured,
+        position: capturedPosition,
+      };
     },
 
     //PLAYER TURN MANAGEMENT
@@ -306,29 +287,18 @@ export function createGameStateManager(guiElements) {
 
     addOwlHallaMove: function (piece, isGoingToOwlHalla) {
       const abbreviatedPiece = this.abbreviatePiece(piece);
-      const moveText = isGoingToOwlHalla
+      const owlHallaText = isGoingToOwlHalla
         ? `${abbreviatedPiece} to owlHalla`
         : `${abbreviatedPiece} from owlHalla`;
-      this.owlHallaHistory.push(moveText);
+
+      // Only add to owlHallaHistory, not to moveHistory
+      this.owlHallaHistory.push(owlHallaText);
 
       if (isGoingToOwlHalla && piece.includes("Owl")) {
-        // Remove the knocked-out team from the sequence of moves
         this.knockedOutTeam = piece.split("Owl")[0];
         console.log(`${this.knockedOutTeam} team knocked out of turn sequence`);
       } else if (!isGoingToOwlHalla) {
-        // Potentially reinstate the team when a piece returns from owlHalla
         this.reinstateTeam(piece);
-      }
-      //this.updateMoveHistoryDisplay();
-      // Add the move to the main move history (lines below here new as of 21.07.2024)
-      this.moveHistory.push(moveText);
-
-      // Record the capture if a piece is going to owlHalla
-      if (isGoingToOwlHalla) {
-        this.captureHistory.push({
-          moveIndex: this.moveHistory.length - 1,
-          text: `(${abbreviatedPiece} captured)`,
-        });
       }
 
       this.updateMoveHistoryDisplay();
@@ -467,23 +437,20 @@ export function createGameStateManager(guiElements) {
       }
     },
     //DISPLAY UPDATE FUNCTIONS
-
     updateMoveHistoryDisplay: function () {
       let displayText = "";
       let captureIndex = 0;
 
       for (let i = 0; i < this.moveHistory.length; i++) {
-        if (!this.moveHistory[i].includes("owlHalla")) {
-          displayText += this.moveHistory[i] + "\n";
+        displayText += this.moveHistory[i] + "\n";
 
-          // Add capture if it exists for this move
-          while (
-            captureIndex < this.captureHistory.length &&
-            this.captureHistory[captureIndex].moveIndex === i
-          ) {
-            displayText += this.captureHistory[captureIndex].text + "\n";
-            captureIndex++;
-          }
+        // Add captures associated with this move
+        while (
+          captureIndex < this.captureHistory.length &&
+          this.captureHistory[captureIndex].moveIndex === i
+        ) {
+          displayText += this.captureHistory[captureIndex].text + "\n";
+          captureIndex++;
         }
       }
 

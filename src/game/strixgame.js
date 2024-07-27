@@ -85,9 +85,12 @@ export default function createScene(engine, canvas) {
   backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
   backgroundPlane.material = backgroundMaterial;
   */
-  const backgroundTexture = new Texture("./images/GreenyBrownBackground.jpg", scene);
-  backgroundTexture.uScale = .5;
-  backgroundTexture.vScale = .5;
+  const backgroundTexture = new Texture(
+    "./images/GreenyBrownBackground.jpg",
+    scene
+  );
+  backgroundTexture.uScale = 0.5;
+  backgroundTexture.vScale = 0.5;
   const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
   backgroundMaterial.diffuseTexture = backgroundTexture;
   backgroundMaterial.specularColor = new Color3(0, 0, 0); // Remove shininess
