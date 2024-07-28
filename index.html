@@ -99,11 +99,13 @@
       }
 
       #game-wrapper {
-        position: relative;
-        margin: 0 auto;
+        width: 1024px;
+        height: 768px;
         max-width: 100%;
-        max-height: calc(100vh - 100px);
-        transition: width 0.3s, height 0.3s;
+        max-height: calc(
+          100vh - var(--header-height) - var(--footer-height) - 40px
+        );
+        aspect-ratio: 4 / 3;
       }
 
       #game-container {
@@ -113,7 +115,6 @@
         height: 100%;
         position: relative;
         overflow: hidden; /* Add this line */
-        transition: width 0.3s, height 0.3s;
       }
 
       footer p {
@@ -131,15 +132,12 @@
       }
 
       main {
-        flex-grow: 1;
         display: flex;
-        flex-direction: column;
         justify-content: center;
         align-items: center;
         background-color: var(--dark-green);
-        min-height: calc(100vh - var(--header-footer-height) * 2);
+        min-height: calc(100vh - var(--header-height) - var(--footer-height));
         padding: 20px 0;
-        overflow: auto; /* Add this line */
       }
 
       #renderCanvas {
@@ -153,8 +151,6 @@
         top: 10px;
         right: 10px;
         z-index: 10;
-        display: flex;
-        flex-direction: column;
       }
 
       #button-container button {
@@ -176,6 +172,13 @@
       #restartButton {
         margin-top: 10px; /* Adds some space above the restart button */
       }
+
+      @media (max-aspect-ratio: 4/3), (max-width: 1024px) {
+        #game-wrapper {
+          width: 100%;
+          height: auto;
+        }
+      }
     </style>
   </head>
   <body>
@@ -191,9 +194,6 @@
         <div id="game-container">
           <canvas id="renderCanvas"></canvas>
           <div id="button-container">
-            <button id="smallButton">Small</button>
-            <button id="largeButton">Large</button>
-            <button id="veryLargeButton">Very Large</button>
             <button id="restartButton">Restart Game</button>
           </div>
         </div>
@@ -214,27 +214,15 @@
       const container = document.getElementById("game-container");
       const canvas = document.getElementById("renderCanvas");
       const restartButton = document.getElementById("restartButton");
-      const smallButton = document.getElementById("smallButton");
-      const largeButton = document.getElementById("largeButton");
-      const veryLargeButton = document.getElementById("veryLargeButton");
 
-      const ASPECT_RATIO = 4 / 3;
-
-      const SIZES = {
-        SMALL: { width: 800, height: 600 },
-        LARGE: { width: 1024, height: 768 },
-        VERY_LARGE: { width: 1600, height: 1200 },
-      };
-
-      let currentSize = "SMALL";
-
-      /*function resizeGame(size) {
+      function resizeGame() {
+        const wrapper = document.getElementById("game-wrapper");
+        const aspectRatio = 4 / 3;
         resetContainerPosition();
 
-        const targetWidth = SIZES[size].width;
-        const targetHeight = SIZES[size].height;
+        const targetWidth = 1600;
+        const targetHeight = 1200;
 
-        const wrapper = document.getElementById("game-wrapper");
         wrapper.style.width = `${targetWidth}px`;
         wrapper.style.height = `${targetHeight}px`;
 
@@ -242,37 +230,6 @@
         container.style.height = `${targetHeight}px`;
         canvas.width = targetWidth;
         canvas.height = targetHeight;
-
-        currentSize = size;
-
-        if (window.engine) {
-          window.engine.resize();
-        }
-
-        // Calculate scale based on the new size
-        const scale = targetWidth / SIZES.SMALL.width;
-        adjustFontSizes(scale);
-
-        console.log(`Resizing game to ${size}`);
-        adjustFontSizes(size);
-      }
-        */
-      function resizeGame(size) {
-        resetContainerPosition();
-
-        const targetWidth = SIZES[size].width;
-        const targetHeight = SIZES[size].height;
-
-        const wrapper = document.getElementById("game-wrapper");
-        wrapper.style.width = `${targetWidth}px`;
-        wrapper.style.height = `${targetHeight}px`;
-
-        container.style.width = `${targetWidth}px`;
-        container.style.height = `${targetHeight}px`;
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-
-        currentSize = size;
 
         if (window.engine) {
           window.engine.resize();
@@ -285,50 +242,11 @@
         mainElement.style.overflow = "auto";
       }
 
-      /* const textElements = document.querySelectorAll(".babylonjs-gui-text");
-        textElements.forEach((element) => {
-          let newFontSize = Math.round(baseFontSize * scale);
-          newFontSize = Math.max(
-            minFontSize,
-            Math.min(newFontSize, maxFontSize)
-          );
-          element.style.fontSize = `${newFontSize}px`;
-        });
-        */
-
-      function adjustFontSizes(scale) {
-        const minFontSize = 12;
-        const maxFontSize = 24;
-        const baseFontSize = 16;
-
-        const textElements = document.querySelectorAll(".babylonjs-gui-text");
-        textElements.forEach((element) => {
-          let newFontSize = Math.round(baseFontSize * scale);
-          newFontSize = Math.max(
-            minFontSize,
-            Math.min(newFontSize, maxFontSize)
-          );
-          element.style.fontSize = `${newFontSize}px`;
-        });
-      }
-
       function restartGame() {
         location.reload();
       }
 
       restartButton.addEventListener("click", restartGame);
-
-      smallButton.addEventListener("click", () => {
-        resizeGame("SMALL");
-      });
-
-      largeButton.addEventListener("click", () => {
-        resizeGame("LARGE");
-      });
-
-      veryLargeButton.addEventListener("click", () => {
-        resizeGame("VERY_LARGE");
-      });
 
       document.addEventListener("keydown", function (event) {
         if (event.key === "r" || event.key === "R") {
@@ -337,11 +255,11 @@
       });
 
       window.addEventListener("resize", function () {
-        resizeGame(currentSize);
+        resizeGame();
       });
 
       // Initial size setup
-      resizeGame("SMALL");
+      resizeGame("");
     </script>
   </body>
 </html>

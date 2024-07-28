@@ -465,7 +465,7 @@ export function createGameStateManager(guiElements) {
       }
 
       const nextPlayerRect = new Rectangle("nextPlayerRect");
-      nextPlayerRect.width = "120px";
+      nextPlayerRect.width = "150px";
       nextPlayerRect.height = "40px";
       nextPlayerRect.cornerRadius = 1;
       nextPlayerRect.color = "white";

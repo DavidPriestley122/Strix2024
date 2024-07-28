@@ -86,11 +86,11 @@ export default function createScene(engine, canvas) {
   backgroundPlane.material = backgroundMaterial;
   */
   const backgroundTexture = new Texture(
-    "./images/GreenyBrownBackground.jpg",
+    "./images/BlueField1.jpg",
     scene
   );
-  backgroundTexture.uScale = 0.5;
-  backgroundTexture.vScale = 0.5;
+  backgroundTexture.uScale = 3.0;
+  backgroundTexture.vScale = 3.0;
   const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
   backgroundMaterial.diffuseTexture = backgroundTexture;
   backgroundMaterial.specularColor = new Color3(0, 0, 0); // Remove shininess
