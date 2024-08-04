@@ -184,13 +184,24 @@ export function createGameStateManager(guiElements) {
     captureHistory: [],
     retractionHistory: [],
     lastMove: null,
+    gameOver: false,
 
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
       const pieceNotation = this.abbreviatePiece(piece);
       const moveText = `${pieceNotation}-${destinationSquare.replace("-", "")}`;
-
       this.moveHistory.push(moveText);
 
+      // Check for winning conditions
+      const winningMessage = this.checkWinningConditions(
+        piece,
+        destinationSquare
+      );
+      if (winningMessage) {
+        this.moveHistory.push(winningMessage);
+        this.gameOver = true;
+      }
+
+      // Update game state
       this.lastMove = { piece, sourceSquare, destinationSquare, moveText };
       this.isPlayAgainState = false;
       this.updateNextPlayer();
@@ -200,11 +211,34 @@ export function createGameStateManager(guiElements) {
 
     recordCapture: function (capturedPiece) {
       const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
-      const captureText = `(${abbreviatedCaptured} removed)`;
+      const captureText = `(${abbreviatedCaptured} captured)`;
 
-      this.moveHistory.push(captureText);
+      // Add to captureHistory
+      this.captureHistory.push({
+        moveIndex: this.moveHistory.length - 1, // Associate with the last move
+        text: captureText,
+      });
+
+      // Update the piece positions
+      this.piecePositions[capturedPiece] = "captured";
+
+      // Check for winning condition after capture
+      const winningMessage = this.checkWinningConditions(
+        capturedPiece,
+        "captured"
+      );
+      if (winningMessage) {
+        this.moveHistory.push(winningMessage);
+        this.gameOver = true;
+      }
+
+      // Update the last move to include the capture information
+      if (this.lastMove) {
+        this.lastMove.capturedPiece = capturedPiece;
+      }
 
       this.updateMoveHistoryDisplay();
+      this.updateNextPlayerDisplay();
     },
 
     revertToPreviousPlayer: function () {
@@ -246,6 +280,38 @@ export function createGameStateManager(guiElements) {
       ) {
         this.knockedOutTeam = null;
       }
+    },
+
+    checkWinningConditions: function (piece, destinationSquare) {
+      console.log("Checking win condition:", piece, destinationSquare);
+
+      // Check if an Owl has reached the center
+      if (
+        piece.endsWith("Owl") &&
+        ["b7-7", "y7-7", "g7-7"].includes(destinationSquare)
+      ) {
+        console.log("Win condition met: Owl reached center");
+        const team =
+          piece.split("Owl")[0].charAt(0).toUpperCase() +
+          piece.split("Owl")[0].slice(1);
+        return `${team} wins`;
+      }
+
+      // Check for last Owl standing
+      const remainingOwls = Object.keys(this.piecePositions).filter(
+        (p) => p.endsWith("Owl") && this.piecePositions[p] !== "captured"
+      );
+      console.log("Remaining Owls:", remainingOwls);
+
+      if (remainingOwls.length === 1) {
+        const lastOwlTeam =
+          remainingOwls[0].split("Owl")[0].charAt(0).toUpperCase() +
+          remainingOwls[0].split("Owl")[0].slice(1);
+        console.log("Win condition met: Last Owl standing");
+        return `${lastOwlTeam} wins`;
+      }
+
+      return null;
     },
 
     //OWLHALLA MANAGEMENT
@@ -392,7 +458,21 @@ export function createGameStateManager(guiElements) {
     },
     //DISPLAY UPDATE FUNCTIONS
     updateMoveHistoryDisplay: function () {
-      let displayText = this.moveHistory.join("\n");
+      let displayText = "";
+      let captureIndex = 0;
+
+      for (let i = 0; i < this.moveHistory.length; i++) {
+        displayText += this.moveHistory[i] + "\n";
+
+        // Add captures associated with this move
+        while (
+          captureIndex < this.captureHistory.length &&
+          this.captureHistory[captureIndex].moveIndex === i
+        ) {
+          displayText += this.captureHistory[captureIndex].text + "\n";
+          captureIndex++;
+        }
+      }
 
       const moveHistoryText =
         moveHistoryViewer.getChildByName("moveHistoryText");
@@ -417,24 +497,28 @@ export function createGameStateManager(guiElements) {
       nextPlayerRect.top = "-20px";
       advancedTexture.addControl(nextPlayerRect);
 
-      const playerColor = this.currentPlayerTurn;
-
       nextPlayerText = new TextBlock("nextPlayerText");
-      nextPlayerText.text = this.isPlayAgainState
-        ? `${
-            playerColor.charAt(0).toUpperCase() + playerColor.slice(1)
-          } to play again`
-        : `${
-            playerColor.charAt(0).toUpperCase() + playerColor.slice(1)
-          } to play`;
+      if (this.gameOver) {
+        nextPlayerText.text = this.moveHistory[this.moveHistory.length - 1]; // Display winning message
+      } else {
+        const playerColor = this.currentPlayerTurn;
+        nextPlayerText.text = this.isPlayAgainState
+          ? `${
+              playerColor.charAt(0).toUpperCase() + playerColor.slice(1)
+            } to play again`
+          : `${
+              playerColor.charAt(0).toUpperCase() + playerColor.slice(1)
+            } to play`;
+      }
       nextPlayerText.color = "white";
       nextPlayerText.fontSize = 16;
       nextPlayerText.textHorizontalAlignment =
         Control.HORIZONTAL_ALIGNMENT_CENTER;
       nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
       nextPlayerRect.addControl(nextPlayerText);
-    },
 
+      console.log("New next player text:", nextPlayerText.text);
+    },
     //UTILITY FUNCTIONS
 
     abbreviatePiece: function (piece) {
