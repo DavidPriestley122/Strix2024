@@ -85,10 +85,7 @@ export default function createScene(engine, canvas) {
   backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
   backgroundPlane.material = backgroundMaterial;
   */
-  const backgroundTexture = new Texture(
-    "./images/BlueField1.jpg",
-    scene
-  );
+  const backgroundTexture = new Texture("./images/BlueField1.jpg", scene);
   backgroundTexture.uScale = 3.0;
   backgroundTexture.vScale = 3.0;
   const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
@@ -315,15 +312,6 @@ export default function createScene(engine, canvas) {
                     capturedPiece
                   );
 
-                  console.log(
-                    "Move completed:",
-                    selectedPiece.name,
-                    "from",
-                    currentPosition,
-                    "to",
-                    clickedCube.name
-                  );
-
                   // Store the selected piece name before setting it to null
                   const movedPieceName = selectedPiece.name;
                   selectedPiece = null;
@@ -463,31 +451,21 @@ export default function createScene(engine, canvas) {
     const pieceName = piece.name;
     const currentPosition = gameStateManager.piecePositions[pieceName];
 
-    console.log("Piece clicked:", pieceName);
-    console.log("Current position:", currentPosition);
-    console.log("Current lastMove:", gameStateManager.lastMove);
-
     if (currentPosition && currentPosition.endsWith("--1")) {
       selectedPiece = null;
-      console.log("Piece is on owlHalla square, deselected");
     } else if (
       gameStateManager.isPotentialRetraction(pieceName) &&
       !gameStateManager.justCancelledRetraction
     ) {
-      console.log("Potential move retraction detected, showing confirmation");
       gameStateManager.showRetractionConfirmation(piece, () => {
         performRetraction(piece);
         gameStateManager.updateNextPlayerDisplay();
-        console.log("Retraction completed, player turn updated");
       });
     } else {
       selectedPiece = piece;
-      console.log("New piece selected:", pieceName);
-      gameStateManager.justCancelledRetraction = false;
-      console.log("justCancelledRetraction reset to false");
-    }
 
-    console.log("Current player turn:", gameStateManager.currentPlayerTurn);
+      gameStateManager.justCancelledRetraction = false;
+    }
   }
 
   function performRetraction(piece) {
@@ -521,8 +499,6 @@ export default function createScene(engine, canvas) {
               capturedPiece.setEnabled(true);
             }
           }
-
-          console.log("Move retracted");
         }
       );
     } else {

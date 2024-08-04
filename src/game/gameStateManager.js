@@ -183,44 +183,30 @@ export function createGameStateManager(guiElements) {
     moveHistory: [],
     captureHistory: [],
     retractionHistory: [],
-    lastCapture: null,
-    lastCapturePosition: null,
-    //pendingCaptureByOwl: null,
-    pendingCapture: null,
-    captureJustRecorded: false,
     lastMove: null,
 
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
       const pieceNotation = this.abbreviatePiece(piece);
       const moveText = `${pieceNotation}-${destinationSquare.replace("-", "")}`;
 
-      // Check if there was a capture recorded after the last move
-      if (this.lastCapture) {
-        if (
-          piece.toLowerCase().includes("owl") &&
-          destinationSquare === this.lastCapture.position
-        ) {
-          // This is a by-Owl capture, add the move first, then the capture
-          this.moveHistory.push(moveText);
-          this.moveHistory.push(`(${this.lastCapture.piece} captured by Owl)`);
-        } else {
-          // This is a not-by-Owl capture, add it before the current move
-          this.moveHistory.push(`(${this.lastCapture.piece} captured)`);
-          this.moveHistory.push(moveText);
-        }
-        this.lastCapture = null;
-      } else {
-        // No capture, just add the move
-        this.moveHistory.push(moveText);
-      }
+      this.moveHistory.push(moveText);
 
-      // Update game state
       this.lastMove = { piece, sourceSquare, destinationSquare, moveText };
       this.isPlayAgainState = false;
       this.updateNextPlayer();
       this.updateMoveHistoryDisplay();
       this.updateNextPlayerDisplay();
     },
+
+    recordCapture: function (capturedPiece) {
+      const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
+      const captureText = `(${abbreviatedCaptured} removed)`;
+
+      this.moveHistory.push(captureText);
+
+      this.updateMoveHistoryDisplay();
+    },
+
     revertToPreviousPlayer: function () {
       const teams = ["brown", "yellow", "green"];
       let currentIndex = teams.indexOf(this.currentPlayerTurn);
@@ -231,22 +217,6 @@ export function createGameStateManager(guiElements) {
       } while (teams[previousIndex] === this.knockedOutTeam);
 
       this.currentPlayerTurn = teams[previousIndex];
-    },
-
-    recordCapture: function (capturedPiece, capturedPosition) {
-      const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
-      console.log(
-        "Recording capture:",
-        abbreviatedCaptured,
-        "at",
-        capturedPosition
-      );
-
-      // Store the capture information
-      this.lastCapture = {
-        piece: abbreviatedCaptured,
-        position: capturedPosition,
-      };
     },
 
     //PLAYER TURN MANAGEMENT
@@ -265,7 +235,7 @@ export function createGameStateManager(guiElements) {
       } while (teams[nextTeamIndex] === this.knockedOutTeam);
 
       this.currentPlayerTurn = teams[nextTeamIndex];
-      console.log("Updated to next player:", this.currentPlayerTurn);
+
       this.updateNextPlayerDisplay();
     },
 
@@ -275,9 +245,6 @@ export function createGameStateManager(guiElements) {
         this.knockedOutTeam === piece.split("Owl")[0]
       ) {
         this.knockedOutTeam = null;
-        console.log(
-          `${piece.split("Owl")[0]} team reinstated in turn sequence`
-        );
       }
     },
 
@@ -296,7 +263,6 @@ export function createGameStateManager(guiElements) {
 
       if (isGoingToOwlHalla && piece.includes("Owl")) {
         this.knockedOutTeam = piece.split("Owl")[0];
-        console.log(`${this.knockedOutTeam} team knocked out of turn sequence`);
       } else if (!isGoingToOwlHalla) {
         this.reinstateTeam(piece);
       }
@@ -316,16 +282,7 @@ export function createGameStateManager(guiElements) {
         this.lastMove &&
         this.lastMove.piece === pieceName &&
         !this.justCancelledRetraction;
-      console.log(
-        "isPotentialRetraction check for",
-        pieceName,
-        ":",
-        isPotential
-      );
-      console.log(
-        "Current justCancelledRetraction value:",
-        this.justCancelledRetraction
-      );
+
       return isPotential;
     },
 
@@ -377,10 +334,7 @@ export function createGameStateManager(guiElements) {
       cancelButton.onPointerUpObservable.add(() => {
         advancedTexture.removeControl(confirmationRect);
         this.justCancelledRetraction = true; // Set the flag
-        console.log(
-          "Retraction cancelled. justCancelledRetraction set to:",
-          this.justCancelledRetraction
-        );
+
         // Do nothing else, just close the window
       });
       confirmationRect.addControl(cancelButton);
@@ -438,21 +392,7 @@ export function createGameStateManager(guiElements) {
     },
     //DISPLAY UPDATE FUNCTIONS
     updateMoveHistoryDisplay: function () {
-      let displayText = "";
-      let captureIndex = 0;
-
-      for (let i = 0; i < this.moveHistory.length; i++) {
-        displayText += this.moveHistory[i] + "\n";
-
-        // Add captures associated with this move
-        while (
-          captureIndex < this.captureHistory.length &&
-          this.captureHistory[captureIndex].moveIndex === i
-        ) {
-          displayText += this.captureHistory[captureIndex].text + "\n";
-          captureIndex++;
-        }
-      }
+      let displayText = this.moveHistory.join("\n");
 
       const moveHistoryText =
         moveHistoryViewer.getChildByName("moveHistoryText");
@@ -493,8 +433,6 @@ export function createGameStateManager(guiElements) {
         Control.HORIZONTAL_ALIGNMENT_CENTER;
       nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
       nextPlayerRect.addControl(nextPlayerText);
-
-      console.log("Updated player turn display:", nextPlayerText.text);
     },
 
     //UTILITY FUNCTIONS
@@ -528,7 +466,7 @@ export function createGameStateManager(guiElements) {
       if (pieceName.startsWith("brown")) return "brown";
       if (pieceName.startsWith("yellow")) return "yellow";
       if (pieceName.startsWith("green")) return "green";
-      console.error("Unknown piece color:", pieceName);
+
       return "unknown";
     },
 

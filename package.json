@@ -15,8 +15,6 @@
     "@babylonjs/core": "^7.6.1",
     "@babylonjs/gui": "^7.5.0",
     "@babylonjs/loaders": "^7.4.0",
-    "babylonjs": "^7.4.0",
-    "babylonjs-gui": "^7.4.0",
     "earcut": "^2.2.4"
   },
   "devDependencies": {
