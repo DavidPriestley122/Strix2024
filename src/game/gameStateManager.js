@@ -442,10 +442,12 @@ export function createGameStateManager(guiElements) {
           this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
 
           // If the captured piece was moved to owlHalla, restore its position
-          if (this.lastMove.capturedPiece) {
+         /* if (this.lastMove.capturedPiece) {
             this.piecePositions[this.lastMove.capturedPiece] =
               this.lastMove.destinationSquare;
           }
+
+          */
 
           this.revertToPreviousPlayer();
 

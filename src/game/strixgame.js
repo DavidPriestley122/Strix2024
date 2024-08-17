@@ -487,7 +487,7 @@ export default function createScene(engine, canvas) {
         function () {
           gameStateManager.retractMove();
 
-          if (lastMove.capturedPiece) {
+         /* if (lastMove.capturedPiece) {
             const capturedPiece = scene.getMeshByName(lastMove.capturedPiece);
             if (capturedPiece) {
               capturedPiece.position = getPositionFromCubeName(
@@ -498,7 +498,7 @@ export default function createScene(engine, canvas) {
               );
               capturedPiece.setEnabled(true);
             }
-          }
+          }*/
         }
       );
     } else {
@@ -640,3 +640,4 @@ export default function createScene(engine, canvas) {
 
   return scene;
 }
+    
