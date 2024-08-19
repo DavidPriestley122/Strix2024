@@ -1,4 +1,5 @@
-import { Engine } from "@babylonjs/core";
+//import { Engine } from "@babylonjs/core";
+import {Engine} from "@babylonjs/core/Engines/engine.js";
 import createScene from "./src/game/strixGame.js";
 
 
