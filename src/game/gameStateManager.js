@@ -222,6 +222,15 @@ export function createGameStateManager(guiElements) {
       // Update the piece positions
       this.piecePositions[capturedPiece] = "captured";
 
+      // Check if the captured piece is an Owl
+      if (capturedPiece.includes("Owl")) {
+        // Set the knocked out team
+        this.knockedOutTeam = this.getColorFromPieceName(capturedPiece);
+
+        // Update the next player, skipping the knocked-out team
+        this.updateNextPlayer();
+      }
+
       // Check for winning condition after capture
       const winningMessage = this.checkWinningConditions(
         capturedPiece,
@@ -442,7 +451,7 @@ export function createGameStateManager(guiElements) {
           this.piecePositions[this.lastMove.piece] = this.lastMove.sourceSquare;
 
           // If the captured piece was moved to owlHalla, restore its position
-         /* if (this.lastMove.capturedPiece) {
+          /* if (this.lastMove.capturedPiece) {
             this.piecePositions[this.lastMove.capturedPiece] =
               this.lastMove.destinationSquare;
           }
