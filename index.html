@@ -49,165 +49,49 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
-        background-color: var(--dark-green);
-      }
-
-      :root {
-        --header-height: 300px;
-        --header-footer-height: 500px; /* Adjust this value to change both header and footer height */
-        --dark-chocolate: #3c280d; /* Dark chocolate brown color */
-        --dark-green: #1a3a1a;
-      }
-
-      header {
-        background-color: var(--dark-chocolate);
+        background-color: #1a3a1a; /* Dark green background */
         color: white;
-        text-align: center;
-        height: var(--header-height);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-shrink: 0;
-      }
-
-      footer {
-        background-color: #333;
-        color: white;
-        text-align: center;
-        height: var(--footer-height);
-        position: relative;
-        overflow: hidden;
-        flex-shrink: 0;
-        margin-top: auto;
-      }
-
-      .game-banner {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        object-position: center;
-      }
-
-      .game-title {
         font-family: "IM Fell English", serif;
-        font-size: 3.5em; /* Increased font size */
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        margin: 0;
-        padding: 20px;
-        background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent background */
-        border-radius: 10px;
       }
 
-      #game-wrapper {
-        width: 1024px;
-        height: 768px;
-        max-width: 100%;
-        max-height: calc(
-          100vh - var(--header-height) - var(--footer-height) - 40px
-        );
-        aspect-ratio: 4 / 3;
-      }
-
-      #game-container {
-        border: 5px solid #333;
-        background-color: var(--dark-green);
-        width: 100%;
-        height: 100%;
-        position: relative;
-        overflow: hidden; /* Add this line */
-      }
-
-      footer p {
-        margin: 0;
-        padding: 10px 0;
-        background-color: rgba(
-          0,
-          0,
-          0,
-          0.5
-        ); /* Semi-transparent background for text */
-        position: absolute;
-        bottom: 0;
-        width: 100%;
-      }
-
-      main {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: var(--dark-green);
-        min-height: calc(100vh - var(--header-height) - var(--footer-height));
-        padding: 20px 0;
-      }
-
-      #renderCanvas {
-        width: 100%;
-        height: 100%;
-        display: block;
-      }
-
-      #button-container {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        z-index: 10;
-      }
-
-      #button-container button {
-        margin-bottom: 5px;
-        padding: 6px 12px;
-        font-size: 0.9em;
-        background-color: #7e0b28;
-        color: white;
-        border: 1px solid white;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-
-      #button-container button:hover {
-        background-color: #9400d3;
-      }
-
-      #restartButton {
-        margin-top: 10px; /* Adds some space above the restart button */
-      }
-
-      @media (max-aspect-ratio: 4/3), (max-width: 1024px) {
-        #game-wrapper {
-          width: 100%;
-          height: auto;
-        }
-      }
       #loadingScreen {
-        position: absolute;
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
-        background-color: rgba(26, 58, 26, 0.9); /* Dark green with opacity */
-        z-index: 1000;
+        background-color: #1a3a1a;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        color: white;
-        font-family: "IM Fell English", serif;
+        z-index: 9999;
       }
+
       #loadingBar {
         width: 300px;
         height: 30px;
-        background-color: #3c280d; /* Dark chocolate */
+        background-color: #3c280d;
         border-radius: 15px;
         overflow: hidden;
       }
+
       #loadingProgress {
         width: 0%;
         height: 100%;
-        background-color: #7e0b28; /* Your button color */
+        background-color: #7e0b28;
         transition: width 0.3s ease;
       }
+
       #loadingText {
         margin-top: 10px;
         font-size: 1.5em;
+      }
+
+      .game-title {
+        text-align: center;
+        font-size: 2.5em;
+        margin: 20px 0;
       }
     </style>
   </head>
@@ -247,10 +131,16 @@
     </footer>
 
     <script src="dist/bundle.js"></script>
+
     <script>
       const container = document.getElementById("game-container");
       const canvas = document.getElementById("renderCanvas");
       const restartButton = document.getElementById("restartButton");
+      const loadingScreen = document.getElementById("loadingScreen");
+      const loadingProgress = document.getElementById("loadingProgress");
+      const loadingText = document.getElementById("loadingText");
+
+      let currentProgress = 0;
 
       function resizeGame() {
         const wrapper = document.getElementById("game-wrapper");
@@ -283,18 +173,40 @@
         location.reload();
       }
 
-      const loadingScreen = document.getElementById("loadingScreen");
-      const loadingProgress = document.getElementById("loadingProgress");
-      const loadingText = document.getElementById("loadingText");
+     
 
       function updateLoadingBar(progress) {
-        loadingProgress.style.width = `${progress}%`;
-        loadingText.textContent = `Loading... ${progress}%`;
+        currentProgress = Math.min(100, Math.max(currentProgress, progress));
+        loadingProgress.style.width = `${currentProgress}%`;
+        loadingText.textContent = `Loading... ${Math.round(currentProgress)}%`;
+
+        if (currentProgress >= 100) {
+          setTimeout(hideLoadingScreen, 500); // Slight delay for smooth transition
+        }
       }
 
       function hideLoadingScreen() {
-        loadingScreen.style.display = "none";
+        loadingScreen.style.opacity = "0";
+        loadingScreen.style.transition = "opacity 0.5s ease";
+        setTimeout(() => {
+          loadingScreen.style.display = "none";
+        }, 500);
       }
+
+      // Simulate initial loading progress
+      let initialLoadingInterval = setInterval(() => {
+        if (currentProgress < 90) {
+          updateLoadingBar(currentProgress + 1);
+        } else {
+          clearInterval(initialLoadingInterval);
+        }
+      }, 50);
+
+      // This function should be called from your main game script when assets are loaded
+      window.finalizeLoading = function () {
+        clearInterval(initialLoadingInterval);
+        updateLoadingBar(100);
+      };
 
       restartButton.addEventListener("click", restartGame);
 

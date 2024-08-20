@@ -20,29 +20,27 @@ function main() {
 // Call the main function when the window is loaded
 window.addEventListener("load", main);
 */
+
+
 import { Engine } from "@babylonjs/core/Engines/engine.js";
 import { AssetsManager } from "@babylonjs/core/Misc/assetsManager.js";
-import createScene from "./src/game/strixGame.js";
+import createScene from "./game/strixGame.js";
+import './css/styles.css';
+console.log('CSS should be loaded')
 
 function main() {
   const canvas = document.getElementById("renderCanvas");
   const engine = new Engine(canvas, true);
 
-  // Loading bar functionality
-  let loadingScreen = document.getElementById('loadingScreen');
-  let loadingProgress = document.getElementById('loadingProgress');
-  let loadingText = document.getElementById('loadingText');
-
   function updateLoadingBar(progress) {
-    if (loadingProgress && loadingText) {
-      loadingProgress.style.width = `${progress}%`;
-      loadingText.textContent = `Loading... ${progress}%`;
+    if (window.updateLoadingBar) {
+      window.updateLoadingBar(progress);
     }
   }
 
   function hideLoadingScreen() {
-    if (loadingScreen) {
-      loadingScreen.style.display = 'none';
+    if (window.finalizeLoading) {
+      window.finalizeLoading();
     }
   }
 
@@ -75,3 +73,5 @@ function main() {
 
 // Call the main function when the window is loaded
 window.addEventListener("load", main);
+
+
