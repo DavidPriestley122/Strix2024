@@ -1,77 +1,63 @@
-/*//import { Engine } from "@babylonjs/core";
-import {Engine} from "@babylonjs/core/Engines/engine.js";
-import createScene from "./src/game/strixGame.js";
-
-
-function main() {
-  const canvas = document.getElementById("renderCanvas");
-  const engine = new Engine(canvas, true);
-  const scene = createScene(engine, canvas);
-
-  engine.runRenderLoop(function () {
-    scene.render();
-  });
-
-  window.addEventListener("resize", function () {
-    engine.resize();
-  });
-}
-
-// Call the main function when the window is loaded
-window.addEventListener("load", main);
-*/
-
-
 import { Engine } from "@babylonjs/core/Engines/engine.js";
 import { AssetsManager } from "@babylonjs/core/Misc/assetsManager.js";
 import createScene from "./game/strixGame.js";
-import './css/styles.css';
-console.log('CSS should be loaded')
+import { sidebar } from "./sidebar/sidebar.js";
+import { initLoadingScreen, updateLoadingBar, hideLoadingScreen } from "./loadingScreen.js";
+import { initResizeHandler } from "./resizeHandler.js";
+import "./css/styles.css";
 
-function main() {
+let engine, scene;
+
+function initGame() {
   const canvas = document.getElementById("renderCanvas");
-  const engine = new Engine(canvas, true);
+  engine = new Engine(canvas, true);
+  scene = createScene(engine, canvas);
 
-  function updateLoadingBar(progress) {
-    if (window.updateLoadingBar) {
-      window.updateLoadingBar(progress);
-    }
-  }
+  sidebar.init();
+  initLoadingScreen();
+  initResizeHandler(engine);
 
-  function hideLoadingScreen() {
-    if (window.finalizeLoading) {
-      window.finalizeLoading();
-    }
-  }
+  loadAssets();
+}
 
-  const scene = createScene(engine, canvas);
-
-  // Set up asset manager
+function loadAssets() {
   const assetsManager = new AssetsManager(scene);
 
-  // Add your assets here
-  // Example: assetsManager.addMeshTask("stand", "", "path/to/", "stand.babylon");
-
-  assetsManager.onProgress = function(remainingCount, totalCount, lastFinishedTask) {
+  assetsManager.onProgress = (remainingCount, totalCount) => {
     const progress = ((totalCount - remainingCount) / totalCount) * 100;
     updateLoadingBar(Math.round(progress));
   };
 
-  assetsManager.onFinish = function(tasks) {
+  assetsManager.onFinish = (tasks) => {
     hideLoadingScreen();
-    engine.runRenderLoop(function () {
-      scene.render();
-    });
+    sidebar.updateInfo("Game started!");
+    startRenderLoop();
   };
 
   assetsManager.load();
+}
 
-  window.addEventListener("resize", function () {
-    engine.resize();
+function startRenderLoop() {
+  engine.runRenderLoop(() => {
+    scene.render();
   });
 }
 
-// Call the main function when the window is loaded
-window.addEventListener("load", main);
+function restartGame() {
+  location.reload();
+}
 
+// Event Listeners
+window.addEventListener("load", initGame);
 
+document.addEventListener("keydown", (event) => {
+  if (event.key === "r" || event.key === "R") {
+    restartGame();
+  }
+});
+
+// Expose necessary functions to global scope
+window.updateLoadingBar = updateLoadingBar;
+window.finalizeLoading = () => updateLoadingBar(100);
+
+export { updateLoadingBar, hideLoadingScreen };
