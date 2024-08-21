@@ -10,12 +10,17 @@ export function initResizeHandler(engine) {
 function resizeGame(engine) {
   const targetWidth = 1600;
   const targetHeight = 1200;
+  const sidebarWidth = 200; // Width of the sidebar
 
-  wrapper.style.width = `${targetWidth}px`;
+  wrapper.style.width = `${targetWidth + sidebarWidth}px`;
   wrapper.style.height = `${targetHeight}px`;
 
-  container.style.width = `${targetWidth}px`;
+  container.style.width = `${targetWidth + sidebarWidth}px`;
   container.style.height = `${targetHeight}px`;
+  container.style.position = 'relative';  // Ensure it's a positioning context
+
+  canvas.style.position = 'absolute';
+  canvas.style.left = `${sidebarWidth}px`;
   canvas.width = targetWidth;
   canvas.height = targetHeight;
 

@@ -11,16 +11,26 @@ export const sidebar = {
     sidebarElement.style.cssText = `
       position: absolute;
       top: 0;
-      right: 0;
+      left: -100px;
       width: 200px;
       height: 100%;
       background-color: rgba(0, 0, 0, 0.7);
       color: white;
       padding: 20px;
       box-sizing: border-box;
+      z-index: 1000;
+      overflow-y: auto;
     `;
     sidebarElement.innerHTML = '<h2>Game Sidebar</h2><p>Game information will appear here.</p>';
-    document.body.appendChild(sidebarElement);
+    
+    // Append the sidebar to the game container instead of the body
+    const gameContainer = document.getElementById('game-container');
+    if (gameContainer) {
+      gameContainer.style.position = 'relative';  // Ensure the container is a positioning context
+      gameContainer.appendChild(sidebarElement);
+    } else {
+      console.error('Game container not found. Sidebar could not be appended.');
+    }
   },
 
   setupEventListeners: function() {
@@ -35,3 +45,8 @@ export const sidebar = {
     }
   }
 };
+
+
+
+
+
