@@ -209,6 +209,8 @@ export function createGameStateManager(guiElements) {
       this.updateNextPlayerDisplay();
     },
 
+    /*
+
     recordCapture: function (capturedPiece) {
       const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
       const captureText = `(${abbreviatedCaptured} captured)`;
@@ -249,6 +251,89 @@ export function createGameStateManager(guiElements) {
       this.updateMoveHistoryDisplay();
       this.updateNextPlayerDisplay();
     },
+*/
+
+    recordCapture: function (capturedPiece) {
+      console.log("Capturing piece:", capturedPiece);
+      console.log("Current player before capture:", this.currentPlayerTurn);
+
+      const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
+      const captureText = `(${abbreviatedCaptured} captured)`;
+
+      // Add to captureHistory
+      this.captureHistory.push({
+        moveIndex: this.moveHistory.length - 1,
+        text: captureText,
+      });
+
+      // Update the piece positions
+      this.piecePositions[capturedPiece] = "captured";
+
+      // Check if the captured piece is an Owl
+      if (capturedPiece.includes("Owl")) {
+        const capturedTeam = this.getColorFromPieceName(capturedPiece);
+        this.knockedOutTeam = capturedTeam;
+        console.log("Owl captured. Knocked out team:", capturedTeam);
+
+        const teams = ["brown", "yellow", "green"];
+        const capturingTeam =
+          teams[(teams.indexOf(this.currentPlayerTurn) - 1 + 3) % 3];
+
+        // Explicitly handle Owl capture scenarios
+        if (capturingTeam === "yellow" && capturedTeam === "green") {
+          console.log(
+            "Yellow captured Green Owl. Setting next player to Brown."
+          );
+          this.currentPlayerTurn = "brown";
+        } else if (capturingTeam === "brown" && capturedTeam === "yellow") {
+          console.log(
+            "Brown captured Yellow Owl. Setting next player to Green."
+          );
+          this.currentPlayerTurn = "green";
+        } else if (capturingTeam === "green" && capturedTeam === "brown") {
+          console.log(
+            "Green captured Brown Owl. Setting next player to Yellow."
+          );
+          this.currentPlayerTurn = "yellow";
+        } else {
+          console.log("Owl capture did not result in player change.");
+        }
+
+        console.log(
+          "Current player after Owl capture logic:",
+          this.currentPlayerTurn
+        );
+        this.updateNextPlayerDisplay();
+      }
+
+      // Check for winning condition after capture
+      const winningMessage = this.checkWinningConditions(
+        capturedPiece,
+        "captured"
+      );
+      if (winningMessage) {
+        this.moveHistory.push(winningMessage);
+        this.gameOver = true;
+        console.log("Game over:", winningMessage);
+      }
+
+      // Update the last move to include the capture information
+      if (this.lastMove) {
+        this.lastMove.capturedPiece = capturedPiece;
+      }
+
+      this.updateMoveHistoryDisplay();
+      console.log(
+        "recordCapture completed. Current player:",
+        this.currentPlayerTurn
+      );
+    },
+
+    getNextPlayerColor: function (currentColor) {
+      const colors = ["brown", "yellow", "green"];
+      const currentIndex = colors.indexOf(currentColor);
+      return colors[(currentIndex + 1) % 3];
+    },
 
     revertToPreviousPlayer: function () {
       const teams = ["brown", "yellow", "green"];
@@ -267,6 +352,8 @@ export function createGameStateManager(guiElements) {
     knockedOutTeam: null,
     currentPlayerTurn: "brown",
 
+    /*
+
     updateNextPlayer: function () {
       const teams = ["brown", "yellow", "green"];
       let currentTeamIndex = teams.indexOf(this.currentPlayerTurn);
@@ -279,6 +366,20 @@ export function createGameStateManager(guiElements) {
 
       this.currentPlayerTurn = teams[nextTeamIndex];
 
+      this.updateNextPlayerDisplay();
+    },
+*/
+    updateNextPlayer: function () {
+      const teams = ["brown", "yellow", "green"];
+      let currentIndex = teams.indexOf(this.currentPlayerTurn);
+      let nextIndex = (currentIndex + 1) % teams.length;
+
+      // Skip the knocked-out team if there is one
+      if (teams[nextIndex] === this.knockedOutTeam) {
+        nextIndex = (nextIndex + 1) % teams.length;
+      }
+
+      this.currentPlayerTurn = teams[nextIndex];
       this.updateNextPlayerDisplay();
     },
 
@@ -491,6 +592,10 @@ export function createGameStateManager(guiElements) {
     },
 
     updateNextPlayerDisplay: function () {
+      console.log(
+        "Updating next player display. Current player:",
+        this.currentPlayerTurn
+      );
       if (nextPlayerText) {
         advancedTexture.removeControl(nextPlayerText);
       }
@@ -529,6 +634,7 @@ export function createGameStateManager(guiElements) {
       nextPlayerRect.addControl(nextPlayerText);
 
       console.log("New next player text:", nextPlayerText.text);
+      console.log("Next player display updated.");
     },
     //UTILITY FUNCTIONS
 
