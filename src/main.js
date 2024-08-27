@@ -30,7 +30,7 @@ function loadAssets() {
 
   assetsManager.onFinish = (tasks) => {
     hideLoadingScreen();
-    sidebar.updateInfo("Game started!");
+    sidebar.updateInfo("");
     startRenderLoop();
   };
 
