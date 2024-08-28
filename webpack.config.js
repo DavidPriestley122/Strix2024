@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default {
-  mode: "development", // Set the mode to 'development' or 'production'
+  mode: "production", // Set the mode to 'development' or 'production'
   entry: "./src/main.js", // Update the entry point to './main.js'
   output: {
     filename: "bundle.js",
