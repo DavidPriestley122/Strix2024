@@ -5,7 +5,7 @@ export const content = {
   },
   history: {
     title: "History of Strix",
-    body: "Strix was invented in 1984 by David Priestley, and was developed over the following years with long-time schoolfriend, Jonathan Moody.",
+    body: "Strix was invented in 1984 by David Priestley and was developed over the following years with his long-time school friend, Jonathan Moody.",
   },
   purchase: {
     title: "Purchase Game Set",
