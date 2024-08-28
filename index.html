@@ -63,10 +63,25 @@
   </head>
   <body>
     <header>
-      <h1 class="game-title">
-        STRIX <br />
-        A game of Owls
-      </h1>
+      <div class="owl-logo">
+        <div class="owl-diamond dark top-left"></div>
+        <div class="owl-diamond dark top-center-left"></div>
+        <div class="owl-diamond dark top-center-right"></div>
+        <div class="owl-diamond light middle-left"></div>
+        <div class="owl-diamond light middle-center-left">
+          <div class="owl-eye"><div class="owl-pupil"></div></div>
+        </div>
+        <div class="owl-diamond light middle-center-right">
+          <div class="owl-eye"><div class="owl-pupil"></div></div>
+        </div>
+        <div class="owl-diamond light middle-right"></div>
+        <div class="owl-diamond dark bottom">
+          <div class="owl-beak"></div>
+        </div>
+        <div class="owl-half-diamond left-wing"></div>
+        <div class="owl-half-diamond right-wing"></div>
+      </div>
+      <h1 class="game-title">STRIX<br />A game of Owls</h1>
     </header>
 
     <main>
@@ -84,7 +99,6 @@
       </aside>
       <div id="game-wrapper">
         <div id="game-container">
-         
           <div id="loadingScreen">
             <div id="loadingBar">
               <div id="loadingProgress"></div>
@@ -151,8 +165,6 @@
         location.reload();
       }
 
-     
-
       function updateLoadingBar(progress) {
         currentProgress = Math.min(100, Math.max(currentProgress, progress));
         loadingProgress.style.width = `${currentProgress}%`;
@@ -203,6 +215,3 @@
     </script>
   </body>
 </html>
-
-
-
