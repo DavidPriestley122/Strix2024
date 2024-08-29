@@ -5,12 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Babylon.js Game</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
-      <link rel="stylesheet" href="src/css/main.css">
-      <link rel="stylesheet" href="src/css/header.css">
-      <link rel="stylesheet" href="src/css/sidebar.css">
-      <link rel="stylesheet" href="src/css/game.css">
-      <link rel="stylesheet" href="src/css/footer.css">
+      href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="src/css/main.css" />
+    <link rel="stylesheet" href="src/css/header.css" />
+    <link rel="stylesheet" href="src/css/sidebar.css" />
+    <link rel="stylesheet" href="src/css/game.css" />
+    <link rel="stylesheet" href="src/css/footer.css" />
     <style>
       body {
         margin: 0;
@@ -89,22 +91,20 @@
 
     <main>
       <aside id="game-sidebar" class="sidebar">
-        <div class="tabs">
-          <button class="tab-button" data-tab="introduction">Introduction</button>
-          <button class="tab-button" data-tab="instructions">Instructions</button>
-          <button class="tab-button" data-tab="rules">Rules</button>
-          <button class="tab-button" data-tab="history">History</button>
-          <button class="tab-button" data-tab="miscellaneous">Miscellaneous</button>
-          <button class="tab-button" data-tab="purchase">Purchase</button>
+        <div class="main-categories">
+          <button class="category-button" data-category="game-intro">
+            Game Info
+          </button>
+          <button class="category-button" data-category="gameplay">
+            How to Play
+          </button>
+          <button class="category-button" data-category="extras">
+            Lore & Community
+          </button>
+          <button class="category-button" data-category="shop">Shop</button>
         </div>
-        <div class="tab-content" id="introduction">
-          <h2>Introduction</h2>
-          <p>Introduction content goes here.</p>
-        </div>
-        <div class="tab-content" id="instructions">
-          <h2>Instructions</h2>
-          <p>Instructions content goes here.</p>
-        </div>
+        <div class="sub-categories"></div>
+        <div class="content-area"></div>
       </aside>
       <div id="game-wrapper">
         <div id="game-container">

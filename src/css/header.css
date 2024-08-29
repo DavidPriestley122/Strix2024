@@ -11,7 +11,7 @@ header {
   
   .owl-logo {
     position: absolute;
-    left: 20px;
+    left: 50px;
     top: 50%;
     transform: translateY(-50%);
     width: var(--sidebar-width);

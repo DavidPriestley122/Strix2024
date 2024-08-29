@@ -14,36 +14,40 @@
 };
 */
 export const content = {
-  "game-info": {
-    introduction: {
-      title: "Introduction to Strix",
-      body: "Your introduction content here..."
+  "game-intro": {
+    "what-is-strix": {
+      title: "What is Strix?",
+      body: "Strix is a 3D chess-like game featuring rod-like pieces representing birds: Owls, Kites, and Ravens. It is played on three checkerboards at right angles to each other...",
     },
-    history: {
+    "game-history": {
       title: "History of Strix",
-      body: "Your history content here..."
-    }
+      body: "Strix was first conceived in... [Add your game's history here]",
+    },
   },
-  "how-to-play": {
-    "gui-instructions": {
-      title: "How to Use the Strix Interface",
-      body: "Your GUI instructions here..."
+  gameplay: {
+    "ui-guide": {
+      title: "3D Interface Guide",
+      body: "To interact with the Strix game board... [Add instructions for using the 3D interface]",
     },
     "game-rules": {
-      title: "Rules of Strix",
-      body: "Your game rules here..."
-    }
+      title: "Official Rules",
+      body: "The rules of Strix are as follows... [Add your game rules here]",
+    },
+  },
+  extras: {
+    "strix-lore": {
+      title: "Strix Lore",
+      body: "The world of Strix is rich with stories and poems... [Add your lore content here]",
+    },
+    "community-corner": {
+      title: "Community Corner",
+      body: "Welcome to the Strix community! Here, players can share their thoughts and suggestions... [Add community content or instructions here]",
+    },
   },
   shop: {
-    purchase: {
-      title: "Purchase Strix Game Sets",
-      body: "Your purchase information here..."
-    }
+    "order-sets": {
+      title: "Order Game Sets",
+      body: "Strix game sets are currently in limited production... [Add information about ordering game sets]",
+    },
   },
-  more: {
-    miscellaneous: {
-      title: "Miscellaneous Information",
-      body: "Your miscellaneous content here..."
-    }
-  }
 };
