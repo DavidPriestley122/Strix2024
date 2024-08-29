@@ -4,7 +4,12 @@ import createScene from "./game/strixGame.js";
 import { sidebar } from "./sidebar/sidebar.js";
 import { initLoadingScreen, updateLoadingBar, hideLoadingScreen } from "./loadingScreen.js";
 import { initResizeHandler } from "./resizeHandler.js";
-import "./css/styles.css";
+//import "./css/styles.css";
+import "./css/main.css";
+import "./css/header.css";
+import "./css/sidebar.css";
+import "./css/game.css";
+import "./css/footer.css";
 
 let engine, scene;
 
@@ -30,7 +35,6 @@ function loadAssets() {
 
   assetsManager.onFinish = (tasks) => {
     hideLoadingScreen();
-    sidebar.updateInfo("");
     startRenderLoop();
   };
 

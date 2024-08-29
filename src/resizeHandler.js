@@ -27,9 +27,7 @@ function resizeGame(engine) {
 
   wrapper.style.marginLeft = `${leftMargin - sidebarWidth}px`;
 
-  // Adjust main padding to account for sidebar
-  main.style.paddingLeft = `${sidebarWidth}px`;
-
+ 
   // Adjust sidebar height
   if (sidebar) {
     const header = document.querySelector('header');

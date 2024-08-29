@@ -5,9 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>My Babylon.js Game</title>
     <link
-      href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap"
-      rel="stylesheet"
-    />
+      href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+      <link rel="stylesheet" href="src/css/main.css">
+      <link rel="stylesheet" href="src/css/header.css">
+      <link rel="stylesheet" href="src/css/sidebar.css">
+      <link rel="stylesheet" href="src/css/game.css">
+      <link rel="stylesheet" href="src/css/footer.css">
     <style>
       body {
         margin: 0;
@@ -86,16 +89,22 @@
 
     <main>
       <aside id="game-sidebar" class="sidebar">
-        <!-- Sidebar content will be dynamically inserted here -->
-        <h2>Sidebar Test</h2>
-        <p>This is a test paragraph.</p>
-        <ul>
-          <li>Item 1</li>
-          <li>Item 2</li>
-          <li>Item 3</li>
-        </ul>
-        <p>Another paragraph here.</p>
-        <p>And one more for good measure.</p>
+        <div class="tabs">
+          <button class="tab-button" data-tab="introduction">Introduction</button>
+          <button class="tab-button" data-tab="instructions">Instructions</button>
+          <button class="tab-button" data-tab="rules">Rules</button>
+          <button class="tab-button" data-tab="history">History</button>
+          <button class="tab-button" data-tab="miscellaneous">Miscellaneous</button>
+          <button class="tab-button" data-tab="purchase">Purchase</button>
+        </div>
+        <div class="tab-content" id="introduction">
+          <h2>Introduction</h2>
+          <p>Introduction content goes here.</p>
+        </div>
+        <div class="tab-content" id="instructions">
+          <h2>Instructions</h2>
+          <p>Instructions content goes here.</p>
+        </div>
       </aside>
       <div id="game-wrapper">
         <div id="game-container">
