@@ -21,7 +21,7 @@ export const content = {
     },
     "game-history": {
       title: "History of Strix",
-      body: "Strix was first conceived in... [Add your game's history here]",
+      body: "Strix, the brainchild of David Priestley, appeared in its earliest form in 1984. Over the subsequent years, he collaborated with his long-time schoolfriend Jonathan Moody to refine and develop the game. Happy Birthday, Jonathan!",
     },
   },
   gameplay: {
