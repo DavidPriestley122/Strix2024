@@ -54,6 +54,8 @@ export default function createScene(engine, canvas) {
     currentTarget.z
   );
   camera.attachControl(canvas, true);
+  
+  
 
   //LIGHTING SETUP
 
@@ -79,19 +81,21 @@ export default function createScene(engine, canvas) {
   backgroundPlane.rotation.y = 0;
   backgroundPlane.rotation.z = 0;
 
-  /*const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
-  backgroundMaterial.diffuseColor = new Color3(0.1, 0.4, 0.6); // Set the color of the material
+ /* const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
+  backgroundMaterial.diffuseColor = new Color3(0.7, .9, 0.8); // Set the color of the material
   backgroundMaterial.specularColor = new Color3(0, 0, 0);
   backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
   backgroundPlane.material = backgroundMaterial;
   */
-  const backgroundTexture = new Texture("./images/BlueField1.jpg", scene);
+
+  const backgroundTexture = new Texture("./images/PaleGreenField.jpg", scene);
   backgroundTexture.uScale = 3.0;
   backgroundTexture.vScale = 3.0;
   const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
   backgroundMaterial.diffuseTexture = backgroundTexture;
   backgroundMaterial.specularColor = new Color3(0, 0, 0); // Remove shininess
   backgroundPlane.material = backgroundMaterial;
+  
 
   //BOARD CONTAINER CREATION
   const boardContainer = new TransformNode("boardContainer", scene);
