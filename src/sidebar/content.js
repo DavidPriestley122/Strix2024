@@ -33,7 +33,7 @@ export const content = {
       title: "Official Rules",
       body: `
         <p>The official rules for Strix are available as a PDF document, exactly as they appear in the printed booklet included with the physical game.</p>
-        <p><a href="StrixRules.pdf" target="_blank" class="rules-link">View Strix Rules (PDF)</a></p>
+        <p><a href="assets/StrixRules.pdf" target="_blank" class="rules-link">View Strix Rules (PDF)</a></p>
       `
     },
   },
