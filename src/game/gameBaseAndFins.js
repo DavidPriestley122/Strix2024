@@ -1,4 +1,4 @@
-import {
+/*import {
   Mesh,
   Vector3,
   Color3,
@@ -186,4 +186,123 @@ export function createBaseAndFins(scene) {
       finOffset * Math.sin(Math.PI / 3)
     )
   );
+}
+  */
+
+
+import {
+  Mesh,
+  Vector3,
+  Color3,
+  StandardMaterial,
+  ActionManager,
+  ExecuteCodeAction,
+  MeshBuilder,
+  VertexData
+} from "@babylonjs/core";
+
+export function createBaseAndFins(scene) {
+  // THE BASE
+  function createHexagonalBase(scene, sideLength = 3.91, height = 0.5) {
+    const diameter = sideLength * 2;
+    const baseMesh = MeshBuilder.CreateCylinder("hexBase", {
+      diameter: diameter,
+      height: height,
+      tessellation: 6
+    }, scene);
+
+    const baseMaterial = new StandardMaterial("baseMaterial", scene);
+    baseMaterial.diffuseColor = Color3.FromHexString("#583623");
+    baseMaterial.specularColor = new Color3(0.1, 0.1, 0.1);
+    baseMesh.material = baseMaterial;
+
+    return baseMesh;
+  }
+
+  const baseMesh = createHexagonalBase(scene);
+  baseMesh.position.y = 0.51; // Raise the base just above the ground plane
+
+  // THE FINS FOR THE BASE
+  const finHeight = 4.79;
+  const finBaseLength = 3.386;
+  const finThickness = 0.5;
+
+  const finMaterial = new StandardMaterial("finMaterial", scene);
+  finMaterial.diffuseColor = Color3.FromHexString("#583623");
+  finMaterial.specularColor = new Color3(0.1, 0.1, 0.1);
+  finMaterial.specularPower = 64;
+
+  function createFin(name, rotation, translation) {
+    const finVertices = [
+      0, 0, 0,
+      finBaseLength, 0, 0,
+      finBaseLength, 0, finHeight,
+      0, -finThickness, 0,
+      finBaseLength, -finThickness, 0,
+      finBaseLength, -finThickness, finHeight,
+    ];
+
+    const finIndices = [
+      0, 1, 2,
+      3, 4, 0,
+      4, 1, 0,
+      4, 5, 2,
+      4, 2, 1,
+      5, 3, 2,
+      2, 3, 0,
+      3, 5, 4,
+    ];
+
+    const normals = [];
+    VertexData.ComputeNormals(finVertices, finIndices, normals);
+
+    const fin = new Mesh(name, scene);
+    const finVertexData = new VertexData();
+    finVertexData.positions = finVertices;
+    finVertexData.indices = finIndices;
+    finVertexData.normals = normals;
+    finVertexData.applyToMesh(fin);
+    fin.material = finMaterial;
+
+    fin.rotation.x = -Math.PI / 2;
+    fin.rotation.y = rotation;
+    fin.parent = baseMesh;
+    fin.position.addInPlace(translation);
+    return fin;
+  }
+
+  const finOffset = finThickness / 2;
+  const fin1 = createFin("fin1", Math.PI / 2, new Vector3(-finOffset, 0, 0));
+  const fin2 = createFin(
+    "fin2",
+    -Math.PI / 6,
+    new Vector3(
+      finOffset * Math.cos(Math.PI / 3),
+      0,
+      -finOffset * Math.sin(Math.PI / 3)
+    )
+  );
+  const fin3 = createFin(
+    "fin3",
+    (-5 * Math.PI) / 6,
+    new Vector3(
+      finOffset * Math.cos(Math.PI / 3),
+      0,
+      finOffset * Math.sin(Math.PI / 3)
+    )
+  );
+
+  // Visibility toggle
+  baseMesh.actionManager = new ActionManager(scene);
+  baseMesh.actionManager.registerAction(
+    new ExecuteCodeAction(ActionManager.OnPickTrigger, function () {
+      const isVisible = baseMesh.visibility === 1;
+      baseMesh.visibility = isVisible ? 0 : 1;
+      fin1.visibility = isVisible ? 0 : 1;
+      fin2.visibility = isVisible ? 0 : 1;
+      fin3.visibility = isVisible ? 0 : 1;
+    })
+  );
+
+  return { baseMesh, fin1, fin2, fin3 };
 }
