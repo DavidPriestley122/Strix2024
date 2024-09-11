@@ -51,7 +51,7 @@
 
 .sidebar {
   width: var(--sidebar-width);
-  height: 1200px; /* Fixed height as discussed */
+  height: calc(100vh - var(--header-height));
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
   position: fixed;
@@ -134,8 +134,41 @@
   font-size: 1.5em;
   margin-bottom: 15px;
 }
+.sidebar .content-area img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 15px 0;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
 
 .sidebar .content-area p {
   line-height: 1.6;
   margin-bottom: 15px;
+}
+
+.lightbox-overlay {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+  align-items: center;
+}
+
+.lightbox-image {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.sidebar .content-area img:hover {
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.3s ease;
 }

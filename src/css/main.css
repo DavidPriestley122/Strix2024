@@ -1,31 +1,36 @@
+
 :root {
-    --header-height: 300px;
-    --footer-height: 1000px;
-    --dark-chocolate: #3c280d;
-    --dark-green: #1a3a1a;
-    --sidebar-width: 250px;
-    --diamond-size: calc(var(--sidebar-width) / 5 / 1.414);
-    --diamond-diagonal: calc(var(--diamond-size) * 1.414);
-    --owl-dark: #000000;
-    --owl-light: #d2b48c;
-    --owl-eye: #228b22;
-    --owl-beak: #ffd700;
-  }
-  
-  body {
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    background-color: var(--dark-green);
-    color: white;
-    font-family: "IM Fell English", serif;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  main {
-    display: flex;
+  --header-height: 200px;
+  --footer-height: 60px;
+  --dark-chocolate: #3c280d;
+  --dark-green: #1a3a1a;
+  --sidebar-width: 250px;
+  --diamond-size: calc(var(--sidebar-width) / 5 / 1.414);
+  --diamond-diagonal: calc(var(--diamond-size) * 1.414);
+  --owl-dark: #000000;
+  --owl-light: #d2b48c;
+  --owl-eye: #228b22;
+  --owl-beak: #ffd700;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--dark-green);
+  color: white;
+  font-family: "IM Fell English", serif;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  display: flex;
     flex-grow: 1;
     position: relative;
     padding-left: var(--sidebar-width);
-  }
+    padding-top: var(--header-height);
+    padding-bottom: var(--footer-height);
+}
+    
+   

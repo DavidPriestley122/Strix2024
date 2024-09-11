@@ -101,6 +101,9 @@
           <button class="category-button" data-category="extras">
             Lore & Community
           </button>
+          <button class="category-button" data-category="gallery">
+            Gallery
+          </button>
           <button class="category-button" data-category="shop">Shop</button>
         </div>
         <div class="sub-categories"></div>
@@ -123,104 +126,70 @@
     </main>
 
     <footer>
-      <img
-        src="images/StrixInSolarUnsaturatedSmall.jpg"
-        alt="Strix: A game of Owls banner"
-        class="game-banner"
-      />
-      <p>&copy; 2024 Your Name. All rights reserved.</p>
+      <p>&copy; 2024 David Priestley. All rights reserved.</p>
     </footer>
 
     <script src="dist/bundle.js"></script>
 
     <script>
-      const container = document.getElementById("game-container");
-      const canvas = document.getElementById("renderCanvas");
-      const restartButton = document.getElementById("restartButton");
-      const loadingScreen = document.getElementById("loadingScreen");
-      const loadingProgress = document.getElementById("loadingProgress");
-      const loadingText = document.getElementById("loadingText");
+      document.addEventListener("DOMContentLoaded", function () {
+        const container = document.getElementById("game-container");
+        const canvas = document.getElementById("renderCanvas");
+        const restartButton = document.getElementById("restartButton");
+        const loadingScreen = document.getElementById("loadingScreen");
+        const loadingProgress = document.getElementById("loadingProgress");
+        const loadingText = document.getElementById("loadingText");
 
-      let currentProgress = 0;
+        let currentProgress = 0;
 
-      function resizeGame() {
-        const wrapper = document.getElementById("game-wrapper");
-        const aspectRatio = 4 / 3;
-        resetContainerPosition();
+        function updateLoadingBar(progress) {
+          currentProgress = Math.min(100, Math.max(currentProgress, progress));
+          loadingProgress.style.width = `${currentProgress}%`;
+          loadingText.textContent = `Loading... ${Math.round(
+            currentProgress
+          )}%`;
 
-        const targetWidth = 1600;
-        const targetHeight = 1200;
-
-        wrapper.style.width = `${targetWidth}px`;
-        wrapper.style.height = `${targetHeight}px`;
-
-        container.style.width = `${targetWidth}px`;
-        container.style.height = `${targetHeight}px`;
-        canvas.width = targetWidth;
-        canvas.height = targetHeight;
-
-        if (window.engine) {
-          window.engine.resize();
+          if (currentProgress >= 100) {
+            setTimeout(hideLoadingScreen, 500);
+          }
         }
-      }
 
-      function resetContainerPosition() {
-        const mainElement = document.querySelector("main");
-        mainElement.style.padding = "";
-        mainElement.style.overflow = "auto";
-      }
-
-      function restartGame() {
-        location.reload();
-      }
-
-      function updateLoadingBar(progress) {
-        currentProgress = Math.min(100, Math.max(currentProgress, progress));
-        loadingProgress.style.width = `${currentProgress}%`;
-        loadingText.textContent = `Loading... ${Math.round(currentProgress)}%`;
-
-        if (currentProgress >= 100) {
-          setTimeout(hideLoadingScreen, 500); // Slight delay for smooth transition
+        function hideLoadingScreen() {
+          loadingScreen.style.opacity = "0";
+          loadingScreen.style.transition = "opacity 0.5s ease";
+          setTimeout(() => {
+            loadingScreen.style.display = "none";
+          }, 500);
         }
-      }
 
-      function hideLoadingScreen() {
-        loadingScreen.style.opacity = "0";
-        loadingScreen.style.transition = "opacity 0.5s ease";
-        setTimeout(() => {
-          loadingScreen.style.display = "none";
-        }, 500);
-      }
+        let initialLoadingInterval = setInterval(() => {
+          if (currentProgress < 90) {
+            updateLoadingBar(currentProgress + 1);
+          } else {
+            clearInterval(initialLoadingInterval);
+          }
+        }, 50);
 
-      // Simulate initial loading progress
-      let initialLoadingInterval = setInterval(() => {
-        if (currentProgress < 90) {
-          updateLoadingBar(currentProgress + 1);
-        } else {
+        window.finalizeLoading = function () {
           clearInterval(initialLoadingInterval);
+          updateLoadingBar(100);
+        };
+
+        function restartGame() {
+          console.log("Game restarting...");
+          // Add your game restart logic here
+          // For now, let's just reload the page
+          location.reload();
         }
-      }, 50);
 
-      // This function should be called from your main game script when assets are loaded
-      window.finalizeLoading = function () {
-        clearInterval(initialLoadingInterval);
-        updateLoadingBar(100);
-      };
+        restartButton.addEventListener("click", restartGame);
 
-      restartButton.addEventListener("click", restartGame);
-
-      document.addEventListener("keydown", function (event) {
-        if (event.key === "r" || event.key === "R") {
-          restartGame();
-        }
+        document.addEventListener("keydown", function (event) {
+          if (event.key === "r" || event.key === "R") {
+            restartGame();
+          }
+        });
       });
-
-      window.addEventListener("resize", function () {
-        resizeGame();
-      });
-
-      // Initial size setup
-      resizeGame("");
     </script>
   </body>
 </html>

@@ -1,4 +1,4 @@
-const wrapper = document.getElementById("game-wrapper");
+/*const wrapper = document.getElementById("game-wrapper");
 const container = document.getElementById("game-container");
 const canvas = document.getElementById("renderCanvas");
 const sidebar = document.getElementById("game-sidebar");
@@ -39,4 +39,53 @@ function resizeGame(engine) {
   if (engine) {
     engine.resize();
   }
+}
+ */
+const wrapper = document.getElementById("game-wrapper");
+const container = document.getElementById("game-container");
+const canvas = document.getElementById("renderCanvas");
+const sidebar = document.getElementById("game-sidebar");
+
+export function initResizeHandler(engine) {
+  function resizeGame() {
+    const aspectRatio = 1600 / 1200; // Original width / height
+    const sidebarWidth = 250;
+    const maxWidth = window.innerWidth - sidebarWidth;
+    const maxHeight = window.innerHeight - 300; // Adjust for header/footer
+
+    let newWidth, newHeight;
+
+    if (maxWidth / maxHeight > aspectRatio) {
+      newHeight = maxHeight;
+      newWidth = newHeight * aspectRatio;
+    } else {
+      newWidth = maxWidth;
+      newHeight = newWidth / aspectRatio;
+    }
+
+    wrapper.style.width = `${newWidth}px`;
+    wrapper.style.height = `${newHeight}px`;
+    container.style.width = `${newWidth}px`;
+    container.style.height = `${newHeight}px`;
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+
+    // Center the game wrapper
+    const leftMargin = Math.max(sidebarWidth, (window.innerWidth - newWidth) / 2);
+    wrapper.style.marginLeft = `${leftMargin - sidebarWidth}px`;
+
+    // Adjust sidebar height
+    if (sidebar) {
+      const header = document.querySelector('header');
+      sidebar.style.top = `${header.offsetHeight}px`;
+      sidebar.style.height = `${newHeight}px`;
+    }
+
+    if (engine) {
+      engine.resize();
+    }
+  }
+
+  window.addEventListener("resize", resizeGame);
+  resizeGame(); // Initial size setup
 }

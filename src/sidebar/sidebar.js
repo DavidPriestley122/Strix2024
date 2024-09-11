@@ -103,6 +103,9 @@ export const sidebar = {
         return [
           { id: "ui-guide", title: "3D Interface Guide" },
           { id: "game-rules", title: "Official Rules" },
+          { id: "board-notation", title: "Board Notation" },
+          { id: "two-player-variant", title: "Two-Player Strix" },
+          { id: "sample-games", title: "Sample Games" },
           { id: "animated-tutorial", title: "Animated Tutorial" },
         ];
       case "extras":
@@ -110,6 +113,10 @@ export const sidebar = {
           { id: "strix-lore", title: "Strix Lore" },
           { id: "community-corner", title: "Community Corner" },
         ];
+
+      case "gallery":
+        return [{ id: "strix-images", title: "Pictures of Strix" }];
+
       case "shop":
         return [{ id: "purchase", title: "Order Game Sets" }];
       default:

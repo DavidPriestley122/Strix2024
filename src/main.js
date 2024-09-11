@@ -4,6 +4,7 @@ import createScene from "./game/strixGame.js";
 import { sidebar } from "./sidebar/sidebar.js";
 import { initLoadingScreen, updateLoadingBar, hideLoadingScreen } from "./loadingScreen.js";
 import { initResizeHandler } from "./resizeHandler.js";
+import { initLightbox } from "./utils/lightbox.js";  // New import for lightbox
 //import "./css/styles.css";
 import "./css/main.css";
 import "./css/header.css";
@@ -21,6 +22,7 @@ function initGame() {
   sidebar.init();
   initLoadingScreen();
   initResizeHandler(engine);
+  initLightbox();
 
   loadAssets();
 }
