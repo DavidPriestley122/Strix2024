@@ -76,8 +76,8 @@ export const content = {
       title: "Pictures of Strix",
       body: `
         <p>Strix in a medieval study</p>
-          <a href="images/StrixinSolarUnsaturated.jpg" class="lightbox-image">
-          <img src="images/StrixinSolarUnsaturated.jpg" alt="Strix in Solar" style="max-width: 100%; height: auto; margin-top: 15px;">
+          <a href="images/StrixInSolarUnsaturated.jpg" class="lightbox-image">
+          <img src="images/StrixInSolarUnsaturated.jpg" alt="Strix in Solar" style="max-width: 100%; height: auto; margin-top: 15px;">
          </a>
         <p></p>
         `,
