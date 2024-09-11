@@ -75,16 +75,12 @@ export const content = {
     "strix-images": {
       title: "Pictures of Strix",
       body: `
-        <p>Strix in a medieval study</p>`+
-        
-        // <a href="images/StrixinSolarUnsaturated.jpg" class="lightbox-image">
-        //  <img src="images/StrixinSolarUnsaturated.jpg" alt="Strix in Solar" style="max-width: 100%; height: auto; margin-top: 15px;">
-        
-       // </a>`
-        `<img src="images/StrixinSolarUnsaturated.jpg" alt="Strix in Solar" style="max-width: 100%; height: auto; margin-top: 15px;">
+        <p>Strix in a medieval study</p>
+          <a href="images/StrixinSolarUnsaturated.jpg" class="lightbox-image">
+          <img src="images/StrixinSolarUnsaturated.jpg" alt="Strix in Solar" style="max-width: 100%; height: auto; margin-top: 15px;">
+         </a>
         <p></p>
-        
-      `,
+        `,
     },
   },
 
