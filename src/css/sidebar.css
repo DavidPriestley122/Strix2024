@@ -63,7 +63,28 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease, left 0.3s ease;
 }
+
+.sidebar.expanded {
+  width: 500px; /* Adjust this value as needed */
+}
+
+.sidebar.expanded ~ #game-wrapper {
+  left: 500px; /* This should match the width of the expanded sidebar */
+}
+
+@media (max-width: 1200px) { /* Adjust this breakpoint as needed */
+  .sidebar.expanded {
+    width: 400px; /* Smaller expansion for narrower screens */
+  }
+}
+
+.content-area {
+  display: block; /* Show the content area */
+  /* ... other styles ... */
+}
+
 
 .sidebar .main-categories {
   display: flex;
@@ -171,4 +192,37 @@
   cursor: pointer;
   opacity: 0.8;
   transition: opacity 0.3s ease;
+}
+
+/* Styles for the sample game content */
+.sidebar .content-area .sample-game h2 {
+  font-size: 1.5em;
+  color: var(--owl-eye);
+  margin-bottom: 10px;
+}
+
+.sidebar .content-area .sample-game h3 {
+  font-size: 1.2em;
+  color: var(--owl-light);
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
+
+.sidebar .content-area .sample-game ul {
+  list-style-type: none;
+  padding-left: 20px;
+}
+
+.sidebar .content-area .sample-game .game-moves p {
+  margin-bottom: 0.5em; /* Space between moves */
+}
+
+.sidebar .content-area .sample-game .game-moves br {
+  display: block;
+  margin-bottom: 1em; /* Space between groups of moves */
+  content: "";
+}
+
+.sidebar .content-area .sample-game .game-moves strong {
+  color: var(--owl-beak);
 }

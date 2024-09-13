@@ -1,4 +1,4 @@
-
+/*
 :root {
   --header-height: 200px;
   --footer-height: 60px;
@@ -28,9 +28,122 @@ main {
   display: flex;
     flex-grow: 1;
     position: relative;
-    padding-left: var(--sidebar-width);
     padding-top: var(--header-height);
     padding-bottom: var(--footer-height);
+    padding-left: var(--sidebar-width);
 }
-    
-   
+
+.sidebar {
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--header-height) - var(--footer-height));
+  position: fixed;
+  left: 0;
+  top: var(--header-height);
+  overflow-y: auto;
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: 20px;
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+  background-color: var(--owl-light); 
+}
+
+.content-area {
+  display: none; 
+}
+
+.main-content h2 {
+  font-size: 2em;
+  color: var(--owl-eye);
+  margin-bottom: 20px;
+}
+
+.main-content p {
+  font-size: 1.1em;
+  line-height: 1.6;
+  color: #333;
+}
+ */
+:root {
+  --header-height: 200px;
+  --footer-height: 60px;
+  --dark-chocolate: #3c280d;
+  --dark-green: #1a3a1a;
+  --sidebar-width: 250px;
+  --diamond-size: calc(var(--sidebar-width) / 5 / 1.414);
+  --diamond-diagonal: calc(var(--diamond-size) * 1.414);
+  --owl-dark: #000000;
+  --owl-light: #d2b48c;
+  --owl-eye: #228b22;
+  --owl-beak: #ffd700;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--dark-green);
+  color: white;
+  font-family: "IM Fell English", serif;
+  display: flex;
+  flex-direction: column;
+}
+
+/*main {
+  display: flex;
+  flex-grow: 1;
+  position: relative;
+  padding-left: var(--sidebar-width);
+  padding-top: var(--header-height);
+  padding-bottom: var(--footer-height);
+}
+*/
+main {
+  display: flex;
+  flex-grow: 1;
+  position: relative;
+}
+
+.sidebar.expanded ~ #game-wrapper {
+  left: 500px; /* Should match the expanded sidebar width */
+}
+
+@media (max-width: 1200px) {
+  .sidebar.expanded ~ #game-wrapper {
+    left: 400px; /* Should match the expanded sidebar width for narrower screens */
+  }
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: var(--header-height);
+  overflow-y: auto;
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  padding: 20px;
+  height: calc(100vh - var(--header-height));
+  overflow-y: auto;
+}
+
+.content-area {
+  display: none; /* Hide the content area in the sidebar */
+}
+
+.main-content h2 {
+  font-size: 2em;
+  color: var(--owl-eye);
+  margin-bottom: 20px;
+}
+
+.main-content p {
+  font-size: 1.1em;
+  line-height: 1.6;
+  color: #333;
+}

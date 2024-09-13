@@ -9,7 +9,7 @@ export const sidebar = {
       return;
     }
     this.createNavigation();
-    this.showCategory("game-intro"); // Show Game Introduction category by default
+    this.showCategory("about-strix"); // Show About Strix category by default
   },
 
   createNavigation: function () {
@@ -23,6 +23,7 @@ export const sidebar = {
   },
 
   showCategory: function (categoryId) {
+    console.log("showCategory called with:", categoryId);
     // Update active category button
     const categoryButtons =
       this.sidebarElement.querySelectorAll(".category-button");
@@ -61,19 +62,22 @@ export const sidebar = {
     });
   },
 
-  showContent: function (categoryId, subCategoryId) {
-    const contentArea = this.sidebarElement.querySelector(".content-area");
+  /*showContent: function (categoryId, subCategoryId) {
+    console.log("showContent called with:", categoryId, subCategoryId);
+    const mainContentArea = document.getElementById("main-content-area");
+    console.log("mainContentArea:", mainContentArea);
     const subCategoryContent = content[categoryId]?.[subCategoryId];
+    console.log("subCategoryContent:", subCategoryContent);
 
-    if (subCategoryContent) {
-      contentArea.innerHTML = `
-        <h2>${subCategoryContent.title}</h2>
-        <div>${subCategoryContent.body}</div>
-      `;
+    if (subCategoryContent && mainContentArea) {
+      mainContentArea.innerHTML = `
+      <h2>${subCategoryContent.title}</h2>
+      <div>${subCategoryContent.body}</div>
+    `;
+      console.log("Content set to mainContentArea");
     } else {
-      contentArea.innerHTML = "<p>Content not available.</p>";
-      console.warn(
-        `Content not found for category: ${categoryId}, subcategory: ${subCategoryId}`
+      console.log(
+        "Failed to set content. mainContentArea or subCategoryContent is null/undefined"
       );
     }
 
@@ -87,35 +91,69 @@ export const sidebar = {
         button.dataset.subcategory === subCategoryId
       );
     });
+  },
+*/
+  showContent: function (categoryId, subCategoryId) {
+    console.log("showContent called with:", categoryId, subCategoryId);
+    const sidebarContent = this.sidebarElement.querySelector(".content-area");
+    const subCategoryContent = content[categoryId]?.[subCategoryId];
+    console.log("subCategoryContent:", subCategoryContent);
 
-    // Re-add event listeners to ensure they're always active
-    this.addSubCategoryListeners();
+    if (subCategoryContent && sidebarContent) {
+      sidebarContent.innerHTML = `
+      <h2>${subCategoryContent.title}</h2>
+      <div>${subCategoryContent.body}</div>
+    `;
+      console.log("Content set to sidebarContent");
+
+      // Expand sidebar for sample games
+      if (subCategoryId === "sample-games") {
+        this.sidebarElement.classList.add("expanded");
+      } else {
+        this.sidebarElement.classList.remove("expanded");
+      }
+    } else {
+      console.log(
+        "Failed to set content. sidebarContent or subCategoryContent is null/undefined"
+      );
+    }
+
+    // Update active subcategory button
+    const subCategoryButtons = this.sidebarElement.querySelectorAll(
+      ".sub-category-button"
+    );
+    subCategoryButtons.forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.subcategory === subCategoryId
+      );
+    });
   },
 
   getSubCategories: function (categoryId) {
     switch (categoryId) {
-      case "game-intro":
+      case "about-strix":
         return [
           { id: "what-is-strix", title: "What is Strix?" },
           { id: "game-history", title: "History of Strix" },
         ];
       case "gameplay":
         return [
-          { id: "ui-guide", title: "3D Interface Guide" },
-          { id: "game-rules", title: "Official Rules" },
+          { id: "online-strix", title: "Online Strix" },
+          { id: "official-rules", title: "The Rules of Strix" },
           { id: "board-notation", title: "Board Notation" },
-          { id: "two-player-variant", title: "Two-Player Strix" },
           { id: "sample-games", title: "Sample Games" },
-          { id: "animated-tutorial", title: "Animated Tutorial" },
-        ];
-      case "extras":
-        return [
-          { id: "strix-lore", title: "Strix Lore" },
-          { id: "community-corner", title: "Community Corner" },
+          { id: "two-player-variant", title: "Two-Player Strix" },
         ];
 
       case "gallery":
-        return [{ id: "strix-images", title: "Pictures of Strix" }];
+        return [{ id: "strix-sightings", title: "Sightings of Strix" }];
+
+      case "quill":
+        return [
+          { id: "strix-lore", title: "Strix Lore" },
+          { id: "parliament", title: "Parliament" },
+        ];
 
       case "shop":
         return [{ id: "purchase", title: "Order Game Sets" }];

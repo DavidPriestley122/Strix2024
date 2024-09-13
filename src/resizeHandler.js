@@ -49,7 +49,8 @@ const sidebar = document.getElementById("game-sidebar");
 export function initResizeHandler(engine) {
   function resizeGame() {
     const aspectRatio = 1600 / 1200; // Original width / height
-    const sidebarWidth = 250;
+    const sidebarWidth = sidebar.offsetWidth; 
+    const headerHeight = document.querySelector('header').offsetHeight;
     const maxWidth = window.innerWidth - sidebarWidth;
     const maxHeight = window.innerHeight - 300; // Adjust for header/footer
 
@@ -69,6 +70,10 @@ export function initResizeHandler(engine) {
     container.style.height = `${newHeight}px`;
     canvas.width = newWidth;
     canvas.height = newHeight;
+
+     // Update the left and top positions of the game wrapper
+     wrapper.style.left = `${sidebarWidth}px`;
+     wrapper.style.top = `${headerHeight}px`;
 
     // Center the game wrapper
     const leftMargin = Math.max(sidebarWidth, (window.innerWidth - newWidth) / 2);
