@@ -12,7 +12,78 @@ export const content = {
   gameplay: {
     "online-strix": {
       title: "3D Interface Guide",
-      body: "To interact with the Strix game board, use your mouse to rotate the view. Left-click on a piece to select it, and then click on a valid destination square to move. The board can be rotated to view all three faces. Hover over pieces to see their possible moves. The central nest is highlighted for easy identification.",
+      body: `
+<h1>HOW TO PLAY STRIX USING THE ONLINE THREE-DIMENSIONAL INTERFACE</h1>
+
+<ol>
+  <li>
+    <h2>The Game Board:</h2>
+    <ul>
+      <li>The 3D interface closely resembles a physical Strix gameset, simplified by omitting the cylindrical sockets for pieces.</li>
+      <li>The gameset appears with pieces in their starting positions, set on its stand.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h2>Board Navigation:</h2>
+    <ul>
+      <li>Click and drag anywhere around the gameset to rotate it in two directions.</li>
+      <li>For optimal play, tilt the board towards the active player, making their face the "ground" and presenting the board as an approximate hexagon.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h2>Making Moves:</h2>
+    <ul>
+      <li>To select a piece, click anywhere along its length, including the cap and shaft.</li>
+      <li>Click on the destination square to complete the move. The foot of the piece will move to the selected square.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h2>Capturing Pieces:</h2>
+    <ul>
+      <li>Move your piece to the appropriate square to initiate a capture.</li>
+      <li>Double-click the piece to be captured to remove it from the board.</li>
+      <li>For Owl captures, where the Owl replaces the captured piece, double-click the victim off the board before moving the Owl into its square.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h2>Captured Pieces Management:</h2>
+    <ul>
+      <li>Captured pieces move to an invisible holding area for their team.</li>
+      <li>Click anywhere on the green edging around the board to toggle visibility of the holding areas.</li>
+      <li>To return a piece to its original position on the board, double-click it in the holding area.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h2>Handling Third Bird Fouls:</h2>
+    <ul>
+      <li>If a Third Bird Foul occurs, click on the offending piece again.</li>
+      <li>A pop-up window will appear with an option to take back the move.</li>
+      <li>Selecting this option automatically returns the piece to its original position before the foul move.</li>
+      <li>If the foul move involved a capture, double-click the wrongfully taken piece in the holding area to return it to its original square.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h2>Board Visibility Options:</h2>
+    <ul>
+      <li>The board and fins can be toggled invisible/visible by clicking on the base.</li>
+    </ul>
+  </li>
+
+  <li>
+    <h2>Troubleshooting:</h2>
+    <ul>
+      <li>If you're having trouble selecting a piece, it may be obscured by other pieces. Try rotating the board along the other rotational axis to get a clear line of sight before attempting to click.</li>
+      <li>Remember that you can click anywhere along a piece's length to select it, which can help when only part of the piece is visible.</li>
+      <li>You can zoom in or out to get a better view. This is typically done using the mouse wheel or pinch gestures on touch-sensitive screens, but may vary depending on your device.</li>
+    </ul>
+  </li>
+</ol`,
     },
     "official-rules": {
       title: "Official Rules",

@@ -93,7 +93,7 @@ export const sidebar = {
     });
   },
 */
-  showContent: function (categoryId, subCategoryId) {
+  /*showContent: function (categoryId, subCategoryId) {
     console.log("showContent called with:", categoryId, subCategoryId);
     const sidebarContent = this.sidebarElement.querySelector(".content-area");
     const subCategoryContent = content[categoryId]?.[subCategoryId];
@@ -107,7 +107,7 @@ export const sidebar = {
       console.log("Content set to sidebarContent");
 
       // Expand sidebar for sample games
-      if (subCategoryId === "sample-games") {
+      if (subCategoryId === "what-is-strix" || subCategoryId === "sample-games") {
         this.sidebarElement.classList.add("expanded");
       } else {
         this.sidebarElement.classList.remove("expanded");
@@ -129,6 +129,79 @@ export const sidebar = {
       );
     });
   },
+
+  */
+  showCategory: function (categoryId) {
+    console.log("showCategory called with:", categoryId);
+    // Update active category button
+    const categoryButtons = this.sidebarElement.querySelectorAll(".category-button");
+    categoryButtons.forEach((button) => {
+      button.classList.toggle("active", button.dataset.category === categoryId);
+    });
+
+    // Show subcategories for the selected category
+    const subCategories = this.getSubCategories(categoryId);
+    const subCategoriesElement = this.sidebarElement.querySelector(".sub-categories");
+    subCategoriesElement.innerHTML = subCategories
+      .map(
+        (sub) =>
+          `<button class="sub-category-button" data-category="${categoryId}" data-subcategory="${sub.id}">${sub.title}</button>`
+      )
+      .join("");
+
+    // Add event listeners to subcategory buttons
+    this.addSubCategoryListeners();
+
+    // Collapse sidebar when showing main category
+    this.sidebarElement.classList.remove("expanded");
+
+    // Clear content area
+    const contentArea = this.sidebarElement.querySelector(".content-area");
+    contentArea.innerHTML = "";
+  },
+
+  showContent: function (categoryId, subCategoryId) {
+    console.log("showContent called with:", categoryId, subCategoryId);
+    const sidebarContent = this.sidebarElement.querySelector(".content-area");
+    const subCategoryContent = content[categoryId]?.[subCategoryId];
+    console.log("subCategoryContent:", subCategoryContent);
+
+    if (subCategoryContent && sidebarContent) {
+      sidebarContent.innerHTML = `
+        <h2>${subCategoryContent.title}</h2>
+        <div>${subCategoryContent.body}</div>
+      `;
+      console.log("Content set to sidebarContent");
+
+      // Expand sidebar for all subcategories
+      this.sidebarElement.classList.add("expanded");
+    } else {
+      console.log(
+        "Failed to set content. sidebarContent or subCategoryContent is null/undefined"
+      );
+      this.sidebarElement.classList.remove("expanded");
+    }
+
+    // Update active subcategory button
+    const subCategoryButtons = this.sidebarElement.querySelectorAll(
+      ".sub-category-button"
+    );
+    subCategoryButtons.forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.subcategory === subCategoryId
+      );
+    });
+
+    // Call resizeGame to adjust game wrapper position
+    if (window.resizeGame) {
+      window.resizeGame();
+    }
+  },
+
+
+
+
 
   getSubCategories: function (categoryId) {
     switch (categoryId) {
