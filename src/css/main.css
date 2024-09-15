@@ -86,9 +86,14 @@ body {
   min-height: 100vh;
   background-color: var(--dark-green);
   color: white;
-  font-family: "IM Fell English", serif;
+  font-family: "Libre Baskerville", serif;
   display: flex;
   flex-direction: column;
+}
+
+body > header,
+body > header * {
+  font-family: "IM Fell English", serif;
 }
 
 /*main {

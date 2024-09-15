@@ -11,6 +11,7 @@ header {
   left: 0;
   right: 0;
   z-index: 1001;
+  font-family: "IM Fell English", serif;
 }
 
 .owl-logo {
@@ -140,4 +141,9 @@ header {
   padding: 20px;
   background-color: rgba(0, 0, 0, 0.3);
   border-radius: 10px;
+  font-family: "IM Fell English", serif !important;
+}
+
+header * {
+  font-family: "IM Fell English", serif;
 }

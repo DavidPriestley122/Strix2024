@@ -6,7 +6,30 @@ export const content = {
     },
     "game-history": {
       title: "History of Strix",
-      body: "Strix, the brainchild of David Priestley, appeared in its earliest form in 1984. Over the subsequent years, he collaborated with his long-time schoolfriend Jonathan Moody to refine and develop the game. This unique board game has evolved through multiple iterations, each enhancing its strategic depth and player engagement.",
+      body: `
+       <h1>The Fledging of Strix</h1>
+
+        <p>Strix traces its origins to a serendipitous moment in late 1984. As David Priestley walked with friends from the Green Man pub in Muswell Hill towards Alexandra Palace, the incline of their route sparked an idea. The angle of the path, first descending then ascending, inspired the concept of game boards facing each other at angles. The friends, as they traversed this terrain, seemed to David like tall game pieces moving across these imagined planes.</p>
+
+        <h2>From Concept to Prototype</h2>
+        <p>Living in Blackheath, David experimented with various prototypes using folded cardboard and knitting needles. The first Strix set emerged from a sawn-up plank and a garden tile, embodying the game's unique 3D nature.</p>
+        <p>The theme of birds in a forest naturally evolved from the board's three-dimensional structure and the branch-like crisscrossed appearance of pieces during play. As the concept took shape, David enlisted his old school friend, Jonathan Moody, to help formalize the rules. Jonathan's incisive intellect transformed David's initial concepts into a robust and coherent ruleset, much of which still forms the backbone of the current official rulebook.</p>
+
+        <h2>Early Development and Production</h2>
+        <p>In 1986, on the advice of the proprietor of Just Games in London, David and Jonathan collaborated with Jeff Tye, a wooden games maker based in Kempston. Jeff undertook the production of 100 Strix sets, screen-printed on MDF with stained beech-rod pieces. The rules were hand-coloured, featuring cover art by Kate Giles, and the fully demountable sets were packaged in cardboard boxes.</p>
+
+        <h2>Public Debut and Recognition</h2>
+        <p>1987 marked Strix's public debut. Jeff Tye showcased a set at the British Craft Show, resulting in the game's first published image. Around the same time, David and Jonathan exhibited at the London Toy Fair in Olympia, garnering significant interest. The game caught the attention of David Pritchard, the renowned expert on chess variants, who included Strix in his "Classified Encyclopedia of Chess Variants."</p>
+        <p>Following successful exhibitions at various craft fairs, a large portion of the initial 100 sets were sold, eliciting appreciative letters from buyers.</p>
+
+        <h2>A Period of Dormancy and Revival</h2>
+        <p>Career demands and other business ventures led to Strix being temporarily set aside. One day, David was startled to hear his wife calling him to see Strix featured on television. This chance appearance of the game on an antiques show, set in Kentwell Hall, reignited David's passion for the project, confirming that people found the game set intriguing and attractive.</p>
+
+        <h2>Modern Renaissance</h2>
+        <p>In 2019, David partnered with Sam Carter, a skilled woodworker specializing in marquetry. Sam's craftsmanship elevated Strix sets to works of art, featuring rare wood inlays and a sophisticated magnetic assembly system.</p>
+        <p>Simultaneously, David began developing an online version of Strix, aiming to make the game accessible to a wider audience and provide a platform for ordering physical sets.</p>
+
+      `,
     },
   },
   gameplay: {
@@ -94,7 +117,45 @@ export const content = {
     },
     "board-notation": {
       title: "Board Notation",
-      body: "The Strix board notation system uses letters to denote faces (B for Brown, Y for Yellow, G for Green) followed by coordinates. For example, 'B3-5' refers to the square on the Brown face, 3rd row, 5th column. Moves are written as start-end, e.g., 'B7-1 to B6-2'. Special moves like ghosting are noted with 'gh', e.g., 'B7-1 gh Y1-7'.",
+      body: `<h1>STRIX NOTATION</h1>
+
+<p>This section explains how to record moves and positions in STRIX.</p>
+
+<h2>PIECES:</h2>
+<p>Pieces are denoted by their initial letters: O for Owl, K for Kite, and R for Raven. These letters are written as capitals. To specify which team a piece belongs to, precede the capital letter with a lowercase b (for Brown), y (for Yellow) or g (for Green). For example, 'gK' means 'Green's Kite'.</p>
+
+<h2>SQUARES:</h2>
+<p>Squares are identified by a lowercase letter (b, y, or g) followed by two numbers.</p>
+<ul>
+    <li>The letter indicates the starting face the square is on (b for Brown's, y for Yellow's, g for Green's).</li>
+    <li>The numbers provide the square's 'grid reference' on that face:
+        <ol>
+            <li>The first number gives the square's distance from the face's 'lefthand' outside edge (opposite the Owl Square).</li>
+            <li>The second number gives its distance from the face's 'righthand' outside edge (touching the Owl Square).</li>
+        </ol>
+    </li>
+</ul>
+<p>Example: Yellow's Owl Square would be 'y71': it's on Yellow's starting face, in the seventh row from the lefthand edge, and in the first row from the righthand edge.</p>
+
+<figure>
+    <img src="images/BoardNotation.png" alt="Diagram showing square numbering on Yellow's face" />
+    <figcaption>The diagram shows how squares would be numbered on a typical face (Yellow's in this case). The Nest is at the bottom of the picture and the Owl Square on the left.</figcaption>
+</figure
+
+<h2>RECORDING MOVES:</h2>
+<p>A move is recorded by identifying:</p>
+<ul>
+    <li>The piece being moved</li>
+    <li>The square it moves to</li>
+</ul>
+<p>Example: If Brown's Owl moves one square towards the Nest from its Owl Square, we record it as "bO-b72".</p>
+
+<h3>Additional Symbols:</h3>
+<ul>
+    <li>'x' indicates capturing (e.g., "bO x yK" means Brown's Owl captures Yellow's Kite)</li>
+    <li>'?' indicates a questionable move</li>
+    <li>'!' indicates a good move</li>
+</ul>`,
     },
 
     "sample-games": {
