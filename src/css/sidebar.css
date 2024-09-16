@@ -75,6 +75,10 @@
   left: 500px; /* This should match the width of the expanded sidebar */
 }
 
+.sidebar.expanded .content-area {
+  display: block;
+}
+
 @media (max-width: 1200px) { /* Adjust this breakpoint as needed */
   .sidebar.expanded {
     width: 400px; /* Smaller expansion for narrower screens */
@@ -143,6 +147,7 @@
 }
 
 .sidebar .content-area {
+  display:none;
   background-color: rgba(255, 255, 255, 0.1);
   padding: 20px;
   border-radius: 5px;
@@ -226,4 +231,37 @@
 
 .sidebar .content-area .sample-game .game-moves strong {
   color: var(--owl-beak);
+}
+
+/* Add this new class for the collapsible functionality */
+.hidden {
+  display: none;
+}
+
+/* You might also want to add some styles for the expanded state */
+.quill-entry .quill-header {
+  cursor: pointer;
+}
+
+.quill-entry .chevron {
+  transition: transform 0.3s ease;
+}
+
+.quill-entry .quill-header:not(.hidden) .chevron {
+  transform: rotate(180deg);
+}
+
+/* Add any other styles you need for the Quill entries */
+.quill-entry {
+  margin-bottom: 1rem;
+}
+
+.quill-content {
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 0 0 4px 4px;
+}
+
+.excerpt, .full-content {
+  margin-top: 0.5rem;
 }

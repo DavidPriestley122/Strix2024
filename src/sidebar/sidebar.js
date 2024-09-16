@@ -9,7 +9,7 @@ export const sidebar = {
       return;
     }
     this.createNavigation();
-    this.showCategory("about-strix"); // Show About Strix category by default
+    //this.showCategory("about-strix"); // Show About Strix category by default
   },
 
   createNavigation: function () {
@@ -45,10 +45,22 @@ export const sidebar = {
     // Add event listeners to subcategory buttons
     this.addSubCategoryListeners();
 
-    // Show the first subcategory content by default
-    if (subCategories.length > 0) {
-      this.showContent(categoryId, subCategories[0].id);
+    // Clear the content area
+    const contentArea = this.sidebarElement.querySelector(".content-area");
+    if (contentArea) {
+      contentArea.innerHTML = "";
     }
+
+    // Remove the expanded class from the sidebar
+    this.sidebarElement.classList.remove("expanded");
+
+    // Remove active class from all sub-category buttons
+    const subCategoryButtons = this.sidebarElement.querySelectorAll(
+      ".sub-category-button"
+    );
+    subCategoryButtons.forEach((button) => {
+      button.classList.remove("active");
+    });
   },
 
   addSubCategoryListeners: function () {
@@ -56,9 +68,13 @@ export const sidebar = {
       ".sub-category-button"
     );
     subCategoryButtons.forEach((button) => {
-      button.addEventListener("click", () =>
-        this.showContent(button.dataset.category, button.dataset.subcategory)
-      );
+      button.addEventListener("click", () => {
+        this.showContent(button.dataset.category, button.dataset.subcategory);
+
+        // Remove active class from all buttons and add to the clicked one
+        subCategoryButtons.forEach((btn) => btn.classList.remove("active"));
+        button.classList.add("active");
+      });
     });
   },
 
@@ -131,7 +147,7 @@ export const sidebar = {
   },
 
   */
-  showCategory: function (categoryId) {
+  /*showCategory: function (categoryId) {
     console.log("showCategory called with:", categoryId);
     // Update active category button
     const categoryButtons = this.sidebarElement.querySelectorAll(".category-button");
@@ -198,10 +214,53 @@ export const sidebar = {
       window.resizeGame();
     }
   },
+*/
+  showContent: function (categoryId, subCategoryId) {
+    console.log("showContent called with:", categoryId, subCategoryId);
+    const sidebarContent = this.sidebarElement.querySelector(".content-area");
+    const subCategoryContent = content[categoryId]?.[subCategoryId];
+    console.log("subCategoryContent:", subCategoryContent);
 
+    if (subCategoryContent && sidebarContent) {
+      sidebarContent.innerHTML = `
+      <h2>${subCategoryContent.title}</h2>
+      <div>${subCategoryContent.body}</div>
+    `;
+      console.log("Content set to sidebarContent");
 
+      // Expand sidebar for all subcategories
+      this.sidebarElement.classList.add("expanded");
 
+      // Call onRender function if it exists
+      if (typeof subCategoryContent.onRender === "function") {
+        console.log("Calling onRender function");
+        setTimeout(() => {
+          subCategoryContent.onRender();
+        }, 0);
+      }
+    } else {
+      console.log(
+        "Failed to set content. sidebarContent or subCategoryContent is null/undefined"
+      );
+      this.sidebarElement.classList.remove("expanded");
+    }
 
+    // Update active subcategory button
+    const subCategoryButtons = this.sidebarElement.querySelectorAll(
+      ".sub-category-button"
+    );
+    subCategoryButtons.forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.subcategory === subCategoryId
+      );
+    });
+
+    // Call resizeGame to adjust game wrapper position
+    if (window.resizeGame) {
+      window.resizeGame();
+    }
+  },
 
   getSubCategories: function (categoryId) {
     switch (categoryId) {

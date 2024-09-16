@@ -1,8 +1,24 @@
+import { createFromYourQuillSection } from "./fromYourQuill.js";
+
+const quillSection = createFromYourQuillSection();
+
 export const content = {
   "about-strix": {
     "what-is-strix": {
       title: "What is Strix?",
-      body: "Strix is a 3D chess-like game featuring rod-like pieces representing birds: Owls, Kites, and Ravens. It is played on three checkerboards at right angles to each other. The game combines strategy, spatial awareness, and diplomacy as three players compete to move their Owl to the central nest.",
+      body: `
+        <p>STRIX is a game for three players, played in three dimensions.</p>
+
+        <p>Inspired by the aerial agility of birds, the STRIX board and pieces represent a forest, dense but criss-crossed with sunlit glades, through which three teams of birds, each comprising an Owl, a Kite and a Raven vie to reach the Owl's nest at the centre of the board.</p>
+
+        <p>Each player – Brown, Yellow and Green – starts the game with three pieces – an 'Owl', a 'Kite' and a 'Raven' – and aims to move the Owl to the board's centre – the 'Owl's Nest'.</p>
+
+        <p>The physical version of STRIX is crafted with meticulous attention to detail, typically using high-quality materials to bring the game to life. The online version replicates this tactile experience in a digital format, allowing players to enjoy STRIX from anywhere in the world.</p>
+        
+        <p>Simple to learn and with only three pieces for each player to control, STRIX surprises in the speed with which positions of startling tactical and diplomatic complexity arise.</p>
+
+        <p>Does your Owl have the vision and wisdom to win?</p>
+      `,
     },
     "game-history": {
       title: "History of Strix",
@@ -253,11 +269,13 @@ export const content = {
   quill: {
     "strix-lore": {
       title: "Strix Lore",
-      body: "This is where Strix comes alive. Stories, poems, however the Muse inspires you. This is where to post it.",
+      body: quillSection.renderStrixLore(),
+      onRender: () => quillSection.initializeCollapsibles('.strix-lore-section')
     },
     parliament: {
       title: "Parliament",
-      body: "Thoughts, comments, reviews; ideas for improvements: this is where to post them.",
+      body: quillSection.renderParliament(),
+      onRender: () => quillSection.initializeCollapsibles('.parliament-section')
     },
   },
   gallery: {
