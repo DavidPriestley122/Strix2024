@@ -1,4 +1,4 @@
-header {
+/*header {
   height: var(--header-height);
   background-color: var(--dark-chocolate);
   color: white;
@@ -146,4 +146,219 @@ header {
 
 header * {
   font-family: "IM Fell English", serif;
+}
+*/
+header {
+  height: var(--header-height);
+  background-color: var(--dark-chocolate);
+  color: white;
+  display: flex;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1001;
+  font-family: "IM Fell English", serif;
+  overflow: hidden;
+}
+
+.logo-container {
+  width: var(--sidebar-width);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.owl-logo {
+  width: calc(var(--sidebar-width) * 0.8);
+  height: calc(var(--sidebar-width) * 0.4);
+  display: grid;
+  /*
+  grid-template-columns: repeat(4, var(--diamond-diagonal));
+  grid-template-rows: repeat(2, var(--diamond-diagonal));
+  */
+  transform-origin: center;
+  transform: scale(0.8);
+}
+
+.title-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+
+
+.owl-diamond {
+  width: var(--diamond-size);
+  height: var(--diamond-size);
+  transform: rotate(45deg);
+  position: absolute;
+  box-sizing: border-box;
+}
+
+.owl-diamond.dark {
+  background-color: var(--owl-dark);
+  z-index: 2;
+}
+
+.owl-diamond.light {
+  background-color: var(--owl-light);
+  z-index: 1;
+}
+
+.top-left {
+  top: 0;
+  left: calc(var(--diamond-diagonal) * 0.5);
+}
+.top-center-left {
+  top: 0;
+  left: calc(var(--diamond-diagonal) * 1.5);
+}
+.top-center-right {
+  top: 0;
+  left: calc(var(--diamond-diagonal) * 2.5);
+}
+.middle-left {
+  top: calc(var(--diamond-diagonal) * 0.5);
+  left: 0;
+}
+.middle-center-left {
+  top: calc(var(--diamond-diagonal) * 0.5);
+  left: var(--diamond-diagonal);
+}
+.middle-center-right {
+  top: calc(var(--diamond-diagonal) * 0.5);
+  left: calc(var(--diamond-diagonal) * 2);
+}
+.middle-right {
+  top: calc(var(--diamond-diagonal) * 0.5);
+  left: calc(var(--diamond-diagonal) * 3);
+}
+.bottom {
+  top: var(--diamond-diagonal);
+  left: calc(var(--diamond-diagonal) * 1.5);
+  transform: rotate(45deg);
+}
+.owl-eye {
+  width: calc(var(--diamond-size) * 0.6);
+  height: calc(var(--diamond-size) * 0.6);
+  border-radius: 50%;
+  background-color: var(--owl-eye);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.owl-pupil {
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  background-color: black;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.owl-beak {
+  width: 0;
+  height: 0;
+  border-left: calc(var(--diamond-size) * 0.2) solid transparent;
+  border-right: calc(var(--diamond-size) * 0.2) solid transparent;
+  border-top: calc(var(--diamond-size) * 0.3) solid var(--owl-beak);
+  position: absolute;
+  bottom: calc(var(--diamond-size) * 0.25);
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.owl-half-diamond {
+  width: calc(var(--diamond-size) * 0.5);
+  height: var(--diamond-size);
+  position: absolute;
+  top: calc(var(--diamond-diagonal) * 0.75);
+  background-color: var(--owl-dark);
+  overflow: hidden;
+}
+
+.left-wing {
+  left: 0;
+  top: calc(var(--diamond-diagonal) * 0.5);
+  transform: rotate(-45deg) translate(-175%, -15%);
+  transform-origin: top right;
+}
+
+.right-wing {
+  left: calc(var(--diamond-diagonal) * 4.6);  /* Adjust this value as needed */
+  top: calc(var(--diamond-diagonal) * 0.5);
+  transform: rotate(45deg) translate(-75%, 110%);
+  transform-origin: top left;
+}
+
+.game-title {
+  font-size: 3.5em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0;
+  padding: 20px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 10px;
+  font-family: "IM Fell English", serif !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .owl-logo {
+    transform: scale(0.7);
+  }
+  .game-title {
+    font-size: 3em;
+  }
+}
+
+@media (max-width: 992px) {
+  .owl-logo {
+    transform: scale(0.6);
+  }
+  .game-title {
+    font-size: 2.5em;
+  }
+}
+
+@media (max-width: 768px) {
+  header {
+    flex-direction: column;
+    height: auto;
+  }
+  .logo-container {
+    width: 100%;
+    padding: 10px 0;
+  }
+  .owl-logo {
+    width: calc(var(--sidebar-width) * 0.6);
+    height: calc(var(--sidebar-width) * 0.3);
+    transform: scale(0.5);
+  }
+  .title-container {
+    padding: 10px 0;
+  }
+  .game-title {
+    font-size: 2em;
+  }
+  .game-title br {
+    display: none;
+  }
+}
+
+@media (max-width: 576px) {
+  .owl-logo {
+    transform: scale(0.4);
+  }
+  .game-title {
+    font-size: 1.5em;
+  }
 }

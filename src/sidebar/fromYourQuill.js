@@ -57,7 +57,7 @@ export function createFromYourQuillSection() {
       `,
     },
 
-    {
+  /*  {
       title: "The Oak's Lament",
       author: "David Priestley",
       date: "2024-09-15",
@@ -105,6 +105,7 @@ export function createFromYourQuillSection() {
 </article>
     `,
     },
+    */
 
     {
       title: "The Call Goes Out",
