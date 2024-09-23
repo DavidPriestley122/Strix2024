@@ -1,5 +1,14 @@
 import { content } from "./content.js";
 
+// Add these variables at the top of your sidebar.js file
+let isDragging = false;
+let currentX;
+let currentY;
+let initialX;
+let initialY;
+let xOffset = 0;
+let yOffset = 0;
+
 export const sidebar = {
   init: function () {
     console.log("Sidebar initialized");
@@ -214,7 +223,7 @@ export const sidebar = {
       window.resizeGame();
     }
   },
-*/
+
   showContent: function (categoryId, subCategoryId) {
     console.log("showContent called with:", categoryId, subCategoryId);
     const sidebarContent = this.sidebarElement.querySelector(".content-area");
@@ -261,6 +270,60 @@ export const sidebar = {
       window.resizeGame();
     }
   },
+*/
+  // Modify your showContent function:
+  showContent: function (categoryId, subCategoryId) {
+    console.log("showContent called with:", categoryId, subCategoryId);
+    const mainContentArea = document.getElementById("main-content-area");
+    const subCategoryContent = content[categoryId]?.[subCategoryId];
+    console.log("subCategoryContent:", subCategoryContent);
+
+    if (subCategoryContent && mainContentArea) {
+      mainContentArea.innerHTML = `
+      <button class="close-button">&times;</button>
+      <h2>${subCategoryContent.title}</h2>
+      <div class="main-content-body">${subCategoryContent.body}</div>
+    `;
+      mainContentArea.classList.add("active");
+
+      // Add event listeners for dragging
+      const header = mainContentArea.querySelector("h2");
+      header.addEventListener("mousedown", this.dragStart.bind(this));
+      document.addEventListener("mousemove", this.drag.bind(this));
+      document.addEventListener("mouseup", this.dragEnd.bind(this));
+
+      // Add event listener for close button
+      const closeButton = mainContentArea.querySelector(".close-button");
+      closeButton.addEventListener("click", () => {
+        mainContentArea.classList.remove("active");
+      });
+
+      console.log("Content set to mainContentArea");
+
+      // Call onRender function if it exists
+      if (typeof subCategoryContent.onRender === "function") {
+        console.log("Calling onRender function");
+        setTimeout(() => {
+          subCategoryContent.onRender();
+        }, 0);
+      }
+    } else {
+      console.log(
+        "Failed to set content. mainContentArea or subCategoryContent is null/undefined"
+      );
+    }
+
+    // Update active subcategory button
+    const subCategoryButtons = this.sidebarElement.querySelectorAll(
+      ".sub-category-button"
+    );
+    subCategoryButtons.forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.subcategory === subCategoryId
+      );
+    });
+  },
 
   getSubCategories: function (categoryId) {
     switch (categoryId) {
@@ -301,5 +364,36 @@ export const sidebar = {
     } else {
       console.warn("Content area not found. Unable to update info.");
     }
+  },
+  // Add these new methods to your sidebar object
+  dragStart: function (e) {
+    const mainContentArea = document.getElementById("main-content-area");
+    initialX = e.clientX - xOffset;
+    initialY = e.clientY - yOffset;
+
+    if (e.target === mainContentArea.querySelector("h2")) {
+      isDragging = true;
+    }
+  },
+
+  drag: function (e) {
+    if (isDragging) {
+      e.preventDefault();
+      const mainContentArea = document.getElementById("main-content-area");
+      currentX = e.clientX - initialX;
+      currentY = e.clientY - initialY;
+
+      xOffset = currentX;
+      yOffset = currentY;
+
+      mainContentArea.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+    }
+  },
+
+  dragEnd: function (e) {
+    initialX = currentX;
+    initialY = currentY;
+
+    isDragging = false;
   },
 };

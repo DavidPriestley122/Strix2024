@@ -1,4 +1,3 @@
-/*
 :root {
   --header-height: 200px;
   --footer-height: 60px;
@@ -12,73 +11,6 @@
   --owl-eye: #228b22;
   --owl-beak: #ffd700;
 }
-
-body {
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-  background-color: var(--dark-green);
-  color: white;
-  font-family: "IM Fell English", serif;
-  display: flex;
-  flex-direction: column;
-}
-
-main {
-  display: flex;
-    flex-grow: 1;
-    position: relative;
-    padding-top: var(--header-height);
-    padding-bottom: var(--footer-height);
-    padding-left: var(--sidebar-width);
-}
-
-.sidebar {
-  width: var(--sidebar-width);
-  height: calc(100vh - var(--header-height) - var(--footer-height));
-  position: fixed;
-  left: 0;
-  top: var(--header-height);
-  overflow-y: auto;
-}
-
-.main-content {
-  margin-left: var(--sidebar-width);
-  padding: 20px;
-  height: calc(100vh - var(--header-height));
-  overflow-y: auto;
-  background-color: var(--owl-light); 
-}
-
-.content-area {
-  display: none; 
-}
-
-.main-content h2 {
-  font-size: 2em;
-  color: var(--owl-eye);
-  margin-bottom: 20px;
-}
-
-.main-content p {
-  font-size: 1.1em;
-  line-height: 1.6;
-  color: #333;
-}
- */
-:root {
-  --header-height: 200px;
-  --footer-height: 60px;
-  --dark-chocolate: #3c280d;
-  --dark-green: #1a3a1a;
-  --sidebar-width: 250px;
-  --diamond-size: calc(var(--sidebar-width) / 5 / 1.414);
-  --diamond-diagonal: calc(var(--diamond-size) * 1.414);
-  --owl-dark: #000000;
-  --owl-light: #d2b48c;
-  --owl-eye: #228b22;
-  --owl-beak: #ffd700;
- }
 
 body {
   margin: 0;
@@ -96,28 +28,20 @@ body > header * {
   font-family: "IM Fell English", serif;
 }
 
-/*main {
-  display: flex;
-  flex-grow: 1;
-  position: relative;
-  padding-left: var(--sidebar-width);
-  padding-top: var(--header-height);
-  padding-bottom: var(--footer-height);
-}
-*/
 main {
   display: flex;
   flex-grow: 1;
   position: relative;
 }
 
+/*
 .sidebar.expanded ~ #game-wrapper {
-  left: 500px; /* Should match the expanded sidebar width */
+  left: 500px; 
 }
 
 @media (max-width: 1200px) {
   .sidebar.expanded ~ #game-wrapper {
-    left: 400px; /* Should match the expanded sidebar width for narrower screens */
+    left: 400px; 
   }
 }
 
@@ -136,19 +60,102 @@ main {
   height: calc(100vh - var(--header-height));
   overflow-y: auto;
 }
+*/
+
+.main-content {
+  position: absolute;
+  top: calc(var(--header-height) + 20px);
+  left: calc(var(--sidebar-width) + 20px);
+  width: 600px;
+  height: 70vh;
+  background-color: var(--dark-green);
+  color: var(--owl-light);
+  border-radius: 10px;
+  padding: 20px;
+  overflow: hidden;
+  display: none;
+  z-index: 1001;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.main-content.active {
+  display: block;
+}
 
 .content-area {
   display: none; /* Hide the content area in the sidebar */
 }
 
+.main-content .main-content-body h1,
+.main-content .main-content-body h3,
+.main-content .main-content-body h4,
+.main-content .main-content-body h5,
+.main-content .main-content-body h6 {
+    color: var(--owl-beak);
+}
+
 .main-content h2 {
-  font-size: 2em;
-  color: var(--owl-eye);
-  margin-bottom: 20px;
+  cursor: move;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--owl-light);
+  margin-bottom: 15px;
+  color: var(--owl-beak);
+  font-family: "IM Fell English", serif;
+}
+
+.main-content-body {
+  height: calc(100% - 50px);
+  overflow-y: auto;
+}
+
+.main-content-body p {
+  color: var(--owl-light);
+  line-height: 1.6;
 }
 
 .main-content p {
   font-size: 1.1em;
   line-height: 1.6;
-  color: #333;
+  color:var(--owl-light);
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: var(--owl-light);
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  color: var(--owl-beak);
+}
+
+.main-content .main-content-body a {
+  color: var(--owl-eye);
+  text-decoration: underline;
+}
+
+.main-content .main-content-body a:hover {
+  color: var(--owl-beak);
+}
+.main-content-body img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 15px 0;
+}
+
+.main-content-body figure {
+  margin: 20px 0;
+}
+
+.main-content-body figcaption {
+  font-style: italic;
+  font-size: 0.9em;
+  color: var(--owl-light);
+  margin-top: 10px;
 }
