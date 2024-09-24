@@ -10,6 +10,8 @@
   --owl-light: #d2b48c;
   --owl-eye: #228b22;
   --owl-beak: #ffd700;
+  --kite-color: #4B0000; /* Kite color in hexadecimal format */
+  --kite-color-light: #8B0000;
 }
 
 body {
@@ -83,8 +85,8 @@ main {
 }
 
 .content-area {
-  display: none; /* Hide the content area in the sidebar */
-}
+  display: none; 
+ }
 
 .main-content .main-content-body h1,
 .main-content .main-content-body h3,

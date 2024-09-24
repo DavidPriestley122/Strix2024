@@ -179,17 +179,33 @@ header {
   grid-template-rows: repeat(2, var(--diamond-diagonal));
   */
   transform-origin: center;
-  transform: scale(0.8);
+  transform: scale(1);
 }
 
+/*
 .title-container {
-  flex: 1;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   justify-content: center;
   align-items: center;
+  pointer-events: none; 
 }
-
-
+*/
+header .title-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
 
 .owl-diamond {
   width: var(--diamond-size);
@@ -254,8 +270,8 @@ header {
 }
 
 .owl-pupil {
-  width: 50%;
-  height: 50%;
+  width: 60%;
+  height: 60%;
   border-radius: 50%;
   background-color: black;
   position: absolute;
@@ -293,12 +309,13 @@ header {
 }
 
 .right-wing {
-  left: calc(var(--diamond-diagonal) * 4.6);  /* Adjust this value as needed */
+  left: calc(var(--diamond-diagonal) * 4.6); /* Adjust this value as needed */
   top: calc(var(--diamond-diagonal) * 0.5);
   transform: rotate(45deg) translate(-75%, 110%);
   transform-origin: top left;
 }
 
+/*
 .game-title {
   font-size: 3.5em;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
@@ -309,6 +326,21 @@ header {
   font-family: "IM Fell English", serif !important;
   text-align: center;
   white-space: nowrap;
+}
+*/
+.game-title {
+  font-size: 3.5em;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0;
+  padding: 20px;
+  font-family: "IM Fell English", serif !important;
+  text-align: center;
+  white-space: nowrap;
+  color: #ffffff; /* White text for contrast against the red background */
+  pointer-events: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3); /* Subtle glow effect */
+  background-color: var(--owl-dark); 
 }
 
 @media (max-width: 1200px) {
