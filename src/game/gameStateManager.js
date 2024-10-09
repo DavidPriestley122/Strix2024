@@ -56,10 +56,11 @@ export function createGUI() {
   moveHistoryContainer.width = "120px";
   moveHistoryContainer.height = "220px";
   moveHistoryContainer.background = "rgba(0, 0, 0, 0.7)";
-  moveHistoryContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-  moveHistoryContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-  moveHistoryContainer.top = "80px";
-  moveHistoryContainer.left = "20px";
+  moveHistoryContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+  moveHistoryContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+  moveHistoryContainer.top = "0px";
+  moveHistoryContainer.left = "0px";
+  moveHistoryContainer.paddingRight = "20px";
   advancedTexture.addControl(moveHistoryContainer);
 
   const moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
@@ -602,15 +603,17 @@ export function createGameStateManager(guiElements) {
 
       const nextPlayerRect = new Rectangle("nextPlayerRect");
       nextPlayerRect.width = "150px";
-      nextPlayerRect.height = "40px";
+      nextPlayerRect.height = "60px";
       nextPlayerRect.cornerRadius = 1;
       nextPlayerRect.color = "white";
       nextPlayerRect.thickness = 2;
       nextPlayerRect.background = "rgba(0, 0, 0, 0.7)";
       nextPlayerRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
       nextPlayerRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_BOTTOM;
-      nextPlayerRect.left = "20px";
-      nextPlayerRect.top = "-20px";
+      nextPlayerRect.left = "0px";
+      nextPlayerRect.top = "0px";
+      nextPlayerRect.paddingLeft = "20px";
+      nextPlayerRect.paddingBottom = "20px";
       advancedTexture.addControl(nextPlayerRect);
 
       nextPlayerText = new TextBlock("nextPlayerText");
@@ -628,6 +631,7 @@ export function createGameStateManager(guiElements) {
       }
       nextPlayerText.color = "white";
       nextPlayerText.fontSize = 16;
+
       nextPlayerText.textHorizontalAlignment =
         Control.HORIZONTAL_ALIGNMENT_CENTER;
       nextPlayerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;

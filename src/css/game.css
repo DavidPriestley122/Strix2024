@@ -28,18 +28,17 @@
 #button-container {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 20px;
   z-index: 10;
 }
 
 #button-container button {
   margin-bottom: 5px;
-  padding: 6px 12px;
   font-size: 0.9em;
   background-color: var(--kite-color-light);
   color: white;
   border: 1px solid white;
-  border-radius: 5px;
+  border-radius: 0px;
   cursor: pointer;
   transition: background-color 0.3s;
 }
@@ -49,7 +48,10 @@
 }
 
 #restartButton {
+  width:100px;
   margin-top: 10px;
+  box-sizing: border-box;
+  padding: 6px 12px;
 }
 
 #loadingScreen {
