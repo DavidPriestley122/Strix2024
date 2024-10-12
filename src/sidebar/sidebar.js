@@ -334,8 +334,9 @@ export const sidebar = {
         ];
       case "gameplay":
         return [
-          { id: "online-strix", title: "Online Strix" },
-          { id: "official-rules", title: "The Rules of Strix" },
+          { id: "interface-guide", title: "Interface Guide" },
+          { id: "official-rules-pdf", title: "Official Rules(PDF)" },
+          { id: "online-rules-guide", title: "Online Rules Guide" },
           { id: "board-notation", title: "Board Notation" },
           { id: "sample-games", title: "Sample Games" },
           { id: "two-player-variant", title: "Two-Player Strix" },

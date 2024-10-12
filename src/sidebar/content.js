@@ -49,8 +49,8 @@ export const content = {
     },
   },
   gameplay: {
-    "online-strix": {
-      title: "3D Interface Guide",
+    "interface-guide": {
+      title: "Interface Guide",
       body: `
 <h1>HOW TO PLAY STRIX USING THE ONLINE THREE-DIMENSIONAL INTERFACE</h1>
 
@@ -124,6 +124,8 @@ export const content = {
   </li>
 </ol`,
     },
+
+    /*
     "official-rules": {
       title: "Official Rules",
       body: `
@@ -131,6 +133,97 @@ export const content = {
         <p><a href="assets/The Rules of Strix.pdf" target="_blank" class="rules-link">View Strix Rules (PDF)</a></p>
       `,
     },
+    */
+    "official-rules-pdf": {
+        title: "Official Rules (PDF)",
+        body: `
+          <h2>Official Strix Rulebook</h2>
+          <p>This is the official, copyrighted rulebook for Strix, identical to the printed version included with the physical game.</p>
+          <p><a href="assets/The Rules of Strix.pdf" target="_blank" class="rules-link">View or Download Official Strix Rules (PDF)</a></p>
+          <p><small>© 2024 David Priestley. All rights reserved.</small></p>
+        `
+      },
+      "online-rules-guide": {
+        title: "Online Rules Guide",
+        body: `
+          <h2>Strix Online Rules Guide</h2>
+          <p>Welcome to the web-friendly version of the Strix rules. This guide covers all aspects of gameplay and is based on the official rulebook.</p>
+          
+          <h3>Table of Contents</h3>
+          <ul>
+            <li><a href="#introduction">Section 1: Introduction</a></li>
+            <li><a href="#the-game">Section 2: Game Setup</a></li>
+            <li><a href="#fundamentals">Fundamentals</a></li>
+            <!-- Add more sections as needed -->
+          </ul>
+    
+          <section id="introduction">
+        <h3>Introduction</h3>
+        <img src="images/guiIntroduction.png" alt="Strix Game Board" style="max-width: 100%; height: auto; margin: 20px 0;">
+        <p>STRIX is a game for three players, played in three dimensions.</p>
+        <p>Inspired by the aerial agility of birds, the STRIX board and pieces represent a forest, dense but criss-crossed with sunlit glades, through which three teams of birds, each comprising an Owl, a Kite and a Raven vie to reach the Owl's nest at the centre of the board.</p>
+        <p>Each player – Brown, Yellow and Green – starts the game with three pieces – an 'Owl', a 'Kite' and a 'Raven' – and aims to move the Owl to the board's centre – the 'Owl's Nest'.</p>
+        <p>Simple to learn and with only three pieces for each player to control, STRIX surprises in the speed with which positions of startling tactical and diplomatic complexity arise.</p>
+        <p>Does your Owl have the vision and wisdom to win?</p>
+      </section>
+    
+         <section id="the-game">
+        <h3>The Game</h3>
+        <p>STRIX consists of a three-dimensional Board and three sets of three Pieces. The Board rests on a stand from which it may be removed for ease of viewing.</p>
+        
+        <h4>The Board</h4>
+        <p>The STRIX board consists of three 7 x 7 chequer boards joined at right angles. One corner square on each face is marked with a coloured circle – brown on Brown's starting face, yellow on Yellow's, and green on Green's. These are the Owl Squares; they mark the positions of the three Owls when a game begins. The faces and Owl Squares are shown in Figure 1.</p>
+        <p>In the physical version of the game, the squares have sockets to receive the feet of the pieces.</p>
+        
+        <figure>
+          <img src="images/guiBoardFig1.png" alt="Strix Game Board" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 1: The Strix game board showing the three faces and Owl Squares</figcaption>
+        </figure>
+        
+        <h4>The Pieces</h4>
+        <p>Each player – Brown, Yellow and Green – has three pieces: an Owl, a Kite and a Raven. These are distinguished by their coloured bodies: an Owl's body is a tawny brown; a Kite's is red and a Raven's black. Pieces' heads reflect their team colours – Brown, Yellow or Green. Pieces stand head outward, with their feet pressed into the sockets in the board. Figure 2 shows a complete set of Strix pieces, arranged into their teams. (Note: this is not the starting position.)</p>
+        
+        <figure>
+          <img src="images/guiPiecesFig2.png" alt="Strix Game Pieces" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 2: A complete set of Strix pieces arranged by team</figcaption>
+        </figure>
+      </section> 
+
+        <section id="fundamentals">
+        <h3>Fundamentals</h3>
+        <p>IN THE FOLLOWING RULES, "STANDARD STRIX" REFERS TO THE RECOMMENDED VERSION OF THE GAME FOR NORMAL PLAY.</p>
+
+        <h4>Rule 1: The Object of the Game</h4>
+        <p>A player wins by moving his or her Owl, the chief piece of the team, into any of the three central black squares that make up the Nest (marked in purple in Figure 3). The game ends when one of the following occurs:</p>
+        <ul>
+          <li>An Owl reaches the Nest.</li>
+          <li>Only one Owl is left standing on the board.</li>
+          <li>A draw or stalemate is declared (as defined later in these Rules).</li>
+        </ul>
+
+        <figure>
+          <img src="images/guiNestFig3.png" alt="Strix Game Board showing the Nest" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 3: The Strix game board showing the Nest (purple squares)</figcaption>
+        </figure>
+
+        <h4>Rule 2: Starting Position</h4>
+        <p>Each player starts the game with all three pieces on his or her own Starting Face (as designated by the colour of its Owl Square). The Owl starts in the Owl Square, the Kite in the black square diagonally adjacent to it, and the Raven one square on along the same diagonal. The set-up is shown in Figure 4</p>
+
+        <figure>
+          <img src="images/guiStartingPositionFig4.png" alt="Strix Starting Position" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 4: The starting position in Strix</figcaption>
+        </figure>
+
+        <h4>Rule 3: Order of Play</h4>
+        <p>The order of play is as follows: Brown, Yellow, Green, Brown, Yellow, Green, and so on.</p>
+      </section>
+
+    
+          <!-- Add more sections as needed -->
+    
+          <p><small>This online guide is based on the official Strix rulebook. © 2024 David Priestley. All rights reserved.</small></p>
+        `
+      },
     "board-notation": {
       title: "Board Notation",
       body: `<h1>STRIX NOTATION</h1>
