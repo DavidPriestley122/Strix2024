@@ -135,17 +135,17 @@ export const content = {
     },
     */
     "official-rules-pdf": {
-        title: "Official Rules (PDF)",
-        body: `
+      title: "Official Rules (PDF)",
+      body: `
           <h2>Official Strix Rulebook</h2>
           <p>This is the official, copyrighted rulebook for Strix, identical to the printed version included with the physical game.</p>
           <p><a href="assets/The Rules of Strix.pdf" target="_blank" class="rules-link">View or Download Official Strix Rules (PDF)</a></p>
           <p><small>© 2024 David Priestley. All rights reserved.</small></p>
-        `
-      },
-      "online-rules-guide": {
-        title: "Online Rules Guide",
-        body: `
+        `,
+    },
+    "online-rules-guide": {
+      title: "Online Rules Guide",
+      body: `
           <h2>Strix Online Rules Guide</h2>
           <p>Welcome to the web-friendly version of the Strix rules. This guide covers all aspects of gameplay and is based on the official rulebook.</p>
           
@@ -154,6 +154,8 @@ export const content = {
             <li><a href="#introduction">Section 1: Introduction</a></li>
             <li><a href="#the-game">Section 2: Game Setup</a></li>
             <li><a href="#fundamentals">Fundamentals</a></li>
+            <li><a href="#moves">Moves</a></li>
+             <li><a href="#pathways">Pathways</a></li>
             <!-- Add more sections as needed -->
           </ul>
     
@@ -218,12 +220,94 @@ export const content = {
         <p>The order of play is as follows: Brown, Yellow, Green, Brown, Yellow, Green, and so on.</p>
       </section>
 
+       <section id="moves">
+        <h3>Moves</h3>
+        <p>A player's turn consists in moving one of his or her pieces to a new square on any of the Board's three faces. All pieces travel orthogonally (i.e. like Rooks in Chess); their different powers are explained in detail later. The following two rules set limits on where a moving piece can stop.</p>
+
+        <h4>Rule 4: The Nest</h4>
+        <p>Only an Owl can stop in the Nest, in the act of ending the game. As a result, Owls never need to pass through the Nest, but Kites and Ravens may pass through it on their way to other squares.</p>
+
+        <h4>Rule 5: Shadowing – The Fundamental Rule of Strix</h4>
+        <p>Pieces must be able to stand freely upright in their squares.</p>
+        <p>This fundamental rule means that for every piece standing on a particular face there is a row of unavailable squares on each of the other faces. These squares are said to be "SHADOWED".</p>
+        <p>Figure 5 shows the shadowed squares for Yellow's Owl shaded in blue. With respect to a piece wishing to cross a row of shadowed squares, like those in Figure 5, Yellow's Owl is called a "CROSSPIECE".</p>
+
+        <figure>
+          <img src="images/guiShadowedRowsFig5.png" alt="Strix Board showing shadowed squares" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 5: Shadowed squares (blue) created by Yellow's Owl (crosspiece)</figcaption>
+        </figure>
+      </section>
+
+       <section id="pathways">
+        <h3>Pathways</h3>
+        <p>Like Rooks in Chess, all pieces in Strix can move orthogonally; their feet follow orthogonal paths across the board. They may follow paths onto a new face. Figure 6 shows the paths radiating from a typical square for a Raven (shown) or a Kite. Owls (see Rule 7 below) follow the same paths but may only move one square at a time.</p>
+
+        <figure>
+          <img src="images/guiPathwaysFig6.png" alt="Strix Board showing pathways for Raven or Kite" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 6: Pathways for a Raven or Kite from a typical square</figcaption>
+        </figure>
+
+        <h4>Rule 6: Kites' and Ravens' Moves</h4>
+        <p>Kites and Ravens may travel orthogonally through any number of unoccupied squares.</p>
+        <p>They cannot cross squares other pieces are standing on. However, they can cross squares other pieces are merely 'shadowing'. In other words, Kites and Ravens can pass through crosspieces.</p>
+        <p>In the position shown in Figure 7, from Green's Kite's perspective, Yellow's Owl is a crosspiece through which it may pass.</p>
+        <p>In Figure 7, Green's Kite can reach Brown's Owl Square (marked with the brown circle, next to where Brown's Owl is actually standing), even though its path (shown in turquoise) crosses the line of squares shadowed by Yellow's Owl (shown as the deeper blue squares). However, Brown's Raven cannot reach Brown's Owl Square, as its path (also shown in turquoise) is blocked by the foot of Brown's Owl.</p>
+
+        <figure>
+          <img src="images/guiKiteAndRavenMovesFig7.png" alt="Strix Board showing Kite and Raven moves" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 7: Kite and Raven moves, demonstrating passing through a crosspiece</figcaption>
+        </figure>
+
+        <h4>Rule 7: Owls' Moves (i)</h4>
+        <p>In general, an Owl moves one square at a time orthogonally. As shown in Fig.8, an Owl could move to any of the four orthogonally adjacent squares. Note that, because the Owl is standing adjacent to another face, one of the adjacent squares is located on the second face. To reach this square, the Owl must move "around the corner" onto that face.</p>
+
+        <figure>
+          <img src="images/guiOwlsMovesFig8.png" alt="Strix Board showing Owl moves" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 8: Possible moves for an Owl</figcaption>
+        </figure>
+
+        <h4>Rule 8: Owls' Moves (ii) - Ghosting</h4>
+        <p>Instead of moving to an adjacent square, an Owl, as if flying silently through the trees, may be able to 'GHOST' onto one of the other two faces of the board.</p>
+        <p>To ghost, the Owl must first be standing next to a crosspiece (Owl, Kite or Raven, from any team) so that their shafts almost touch but are at right angles, as in Figure 9a. When in this position, the pieces are described as being "CROSS-ADJACENT".</p>
+        <p>Using this crosspiece as a sort of axle, the Owl pivots so that it ends up at right angles to its original position, still cross-adjacent to the crosspiece, with its foot on a square on the adjacent face next to the row of squares shadowed by the crosspiece. The Owl's foot must travel through unoccupied squares.</p>
+        <p>Figure 9b shows the final position.</p>
+
+        <figure>
+        <img src="images/guiOwlGhostingFig9a.png" alt="Strix Board showing position before outward ghosting" style="max-width: 100%; height: auto;">
+        <figcaption>Figure 9a: Position before Yellow's Owl ghosts outward around Brown's Raven</figcaption>
+        </figure>
+
+        <figure>
+        <img src="images/guiOwlGhostingFig9b.png" alt="Strix Board showing position after outward ghosting" style="max-width: 100%; height: auto;">
+        <figcaption>Figure 9b: Position after Yellow's Owl has ghosted outward around Brown's Raven</figcaption>
+        </figure>
+
+        <p>Figures 9a and 9b show the before and after positions of Yellow's Owl ghosting around Brown's Raven. The rows of squares shadowed by the Raven are shaded in blue, and the target position of Yellow's Owl is marked in bright green.</p>
+        <p>In Figures 9a and 9b, the Owl ghosts "outwards", meaning that it moves from in between the pair of shadowed rows of squares to a square outside them.</p>
+
+        <p>An Owl may also – in fact, a more common move - ghost "inwards".</p>
+
+        <figure>
+        <img src="images/guiOwlGhostingFig10a.png" alt="Strix Board showing position before inward ghosting" style="max-width: 100%; height: auto;">
+        <figcaption>Figure 10a: Position before Yellow's Owl ghosts inward around Brown's Raven</figcaption>
+        </figure>
+
+        <figure>
+        <img src="images/guiOwlGhostingFig10b.png" alt="Strix Board showing position after inward ghosting" style="max-width: 100%; height: auto;">
+        <figcaption>Figure 10b: Position after Yellow's Owl has ghosted inward around Brown's Raven</figcaption>
+        </figure>
+
+        <p>Figures 10a and 10b show the before and after positions of Yellow's Owl ghosting "inwards" around Brown's Raven. Note that the Owl moves from outside the pair of shadowed rows of squares to a square between them.</p>
+
+        <p>Inward ghosting is one of the most direct ways for Owls to reach the Nest.</p>
+      </section>
+
     
           <!-- Add more sections as needed -->
     
           <p><small>This online guide is based on the official Strix rulebook. © 2024 David Priestley. All rights reserved.</small></p>
-        `
-      },
+        `,
+    },
     "board-notation": {
       title: "Board Notation",
       body: `<h1>STRIX NOTATION</h1>
@@ -363,12 +447,14 @@ export const content = {
     "strix-lore": {
       title: "Strix Lore",
       body: quillSection.renderStrixLore(),
-      onRender: () => quillSection.initializeCollapsibles('.strix-lore-section')
+      onRender: () =>
+        quillSection.initializeCollapsibles(".strix-lore-section"),
     },
     parliament: {
       title: "Parliament",
       body: quillSection.renderParliament(),
-      onRender: () => quillSection.initializeCollapsibles('.parliament-section')
+      onRender: () =>
+        quillSection.initializeCollapsibles(".parliament-section"),
     },
   },
   gallery: {
