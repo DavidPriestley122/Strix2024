@@ -155,7 +155,12 @@ export const content = {
             <li><a href="#the-game">Section 2: Game Setup</a></li>
             <li><a href="#fundamentals">Fundamentals</a></li>
             <li><a href="#moves">Moves</a></li>
-             <li><a href="#pathways">Pathways</a></li>
+            <li><a href="#pathways">Pathways</a></li>
+            <li><a href="#taking">Taking</a></li>
+            <li><a href="#third-bird-foul">Third Bird Foul</a></li>
+            <li><a href="#further-rules">Further Rules</a></li>
+            <li><a href="#additional-considerations">Additional Considerations</a></li>
+            <li><a href="#final-word">A Final Word</a></li>
             <!-- Add more sections as needed -->
           </ul>
     
@@ -302,6 +307,244 @@ export const content = {
         <p>Inward ghosting is one of the most direct ways for Owls to reach the Nest.</p>
       </section>
 
+       <section id="taking">
+        <h3>Taking</h3>
+        <p>All pieces can capture others, and all pieces – including Owls – can be captured. When a piece is captured, it is removed from the board and plays no further part in the game, unless reinstated as part of a take-back (see Rule 17 (iii)).</p>
+
+        <h4>Rule 9: How Owls Capture</h4>
+        <p>Owls capture by moving into a victim's square. In practice this means an Owl can only capture a piece standing next to it; the geometry of the board stops Owls from taking by Ghosting or from face to face.</p>
+        <p>In Figure 11, Brown's Owl could capture Yellow's, and vice versa.</p>
+        <p>Note that Yellow's Owl, standing on a black square, is only vulnerable to attacks by other Owls, as explained in Rule 15.</p>
+
+        <figure>
+          <img src="images/guiOwlsCaptureFig11.png" alt="Strix Board showing Owl capture" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 11: Owl capture possibilities</figcaption>
+        </figure>
+
+        <h4>Rule 10: How Kites Capture</h4>
+        <p>Following real kites, the Kites in STRIX capture by 'SWOOPING'. The Kite descends from one board face to another, landing beside the victim and snatching it. After the capture is completed the Kite remains where it landed, beside the now vacant square. Kites may only capture pieces on faces other than the one from which they launched their attack.</p>
+        <p>In Figure 12a, Green's Kite has a choice of capturing Brown's or Yellow's Raven by landing on one of the squares marked in bright green.</p>
+
+        <figure>
+          <img src="images/guiKiteCaptureFig12a.png" alt="Strix Board showing Kite capture options" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 12a: Kite capture options</figcaption>
+        </figure>
+
+        <p>In Figure 12b, Green's Kite has made its choice and has captured Yellow's Raven. Note that the Kite remains where it "landed" and does not occupy the Raven's former square.</p>
+
+        <figure>
+          <img src="images/guiKiteCaptureFig12b.png" alt="Strix Board showing completed Kite capture" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 12b: Completed Kite capture</figcaption>
+        </figure>
+
+        <h4>Rule 11: Kites' Choice of Capture</h4>
+        <p>Sometimes a Kite moves so that it lands between two opponent pieces. In this case, the Kite can choose which of the pieces to capture but cannot capture both. In Figure 13, Green's Kite can choose whether to capture Brown's Kite or Yellow's Raven.</p>
+
+        <figure>
+          <img src="images/guiKitesChoiceOfCaptureFig13.png" alt="Strix Board showing Kite's choice of capture" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 13: Kite's choice of capture</figcaption>
+        </figure>
+
+        <h4>Rule 12: How Ravens Capture</h4>
+        <p>Ravens capture in pairs, by 'MOBBING' another piece: they must sandwich it between them in the way shown in Figures 14 a-c. Ravens cannot Mob a piece on the same face as themselves. They must be parallel to each other and cross-adjacent to their victim, on opposite sides of a square shadowed by it.</p>
+        <p>A Raven cannot capture single-handedly. It must have the passive aid of a second Raven already standing cross-adjacent to the piece under attack. To capture the piece, the attacking Raven also moves cross-adjacent to it, directly across it from the passive Raven.</p>
+        <p>In Figure 14a, if Brown's Raven moves to the square marked in bright green, it can enlist the support of Green's Raven to mob Yellow's Kite.</p>
+
+        <figure>
+          <img src="images/guiRavensCaptureFig14a.png" alt="Strix Board showing Raven mobbing setup" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 14a: Raven mobbing setup</figcaption>
+        </figure>
+
+        <p>Figure 14b shows the intermediate position, as the two Ravens trap the Kite between them, like pincers.</p>
+
+        <figure>
+          <img src="images/guiRavensCaptureFig14b.png" alt="Strix Board showing Raven mobbing in progress" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 14b: Raven mobbing in progress</figcaption>
+        </figure>
+
+        <p>Figure 14c shows the position at the end of Brown's Raven's move, with Yellow's Kite removed from the board.</p>
+
+        <figure>
+          <img src="images/guiRavensCaptureFig14c.png" alt="Strix Board showing completed Raven mobbing" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 14c: Completed Raven mobbing</figcaption>
+        </figure>
+
+        <p>Note that any Raven can play the passive role in Mobbing, even one belonging to the victim's team or one which is no longer active, its Owl having been captured earlier in the game (see Rule 16).</p>
+
+        <h4>Rule 13: Attacker's Choice in Mobbing</h4>
+        <p>An attacking Raven that finds itself mobbing multiple pieces at once may capture as many of them as it chooses: all, some or none. The same principle applies when only one piece is being mobbed: the attacking Raven can choose whether or not to capture it.</p>
+
+        <h4>Rule 14: Stopping Between Two Ravens</h4>
+        <p>Mobbing captures occur when a Raven arrives in the square opposite its partner. If the Ravens are in place already, a piece that stops in a mobbed position is not committing suicide; capturing it would require a separate act of mobbing by the Ravens.</p>
+
+        <h4>Rule 15: Owls' Safety on Black Squares</h4>
+        <p>Just as at night the owl reigns supreme and is invulnerable to attacks from other birds, in STRIX, when an Owl is standing on a black square, it cannot be taken by a Kite or mobbed by Ravens. It can, however, be captured by another Owl.</p>
+
+        <h4>Rule 16: When Owls are Captured</h4>
+        <p>When a player's Owl is captured, it is removed from play. Without the Owl, the team's chief piece, that player may take no further moves.</p>
+        <p>In all other ways, the game continues as before. The Owl-less player's remaining pieces stay on the board as debris, paralysed, but blocking or facilitating the remaining players' moves as normal. Paralysed pieces can still be captured or used passively for ghosting or (in a Raven's case) mobbing. The two survivors continue to fight on, making moves alternately.</p>
+        <p>If two players have lost their Owls and have dropped out, the game ends with the surviving Owl's team victorious.</p>
+      </section>
+
+        <section id="third-bird-foul">
+        <h3>Third Bird Foul</h3>
+
+        <h4>Rule 17: "Third Bird Foul"</h4>
+        <p>A "Third Bird Foul" occurs when a player makes a move that unintentionally allows another player to win within a pre-determined number of turns (the "Thicket"), while the third player ("the Third Bird") is left helpless to prevent the impending victory, despite the existence of an alternative move that would not have led to this outcome.</p>
+        <p>The Third Bird Foul is an integral part of the game of Strix. This unique rule adds depth to strategic planning, encourages vigilant gameplay, and promotes balance among all three players. It transforms Strix from a mere race to the Nest into a complex dance of moves and countermoves, where players must constantly consider the implications of their actions on all opponents.</p>
+        <p>An example is the best way to understand the circumstance when a Third Bird foul arises.</p>
+
+        <p>Figures 15a, 15b and 15c show a typical example of a Third Bird Foul in progress.</p>
+
+        <figure>
+          <img src="images/guiThirdBirdFoulFig15a.png" alt="Third Bird Foul Example - Initial Position" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 15a: Initial position before Third Bird Foul</figcaption>
+        </figure>
+
+        <p>In Figure 15a, Brown (to move), having failed to notice that Green's Owl, by its previous move, has opened a path for Yellow's Owl to ghost into the nest, determines to capture Yellow's Kite with the Brown Kite.</p>
+
+        <figure>
+          <img src="images/guiThirdBirdFoulFig15b.png" alt="Third Bird Foul Example - After Brown's Move" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 15b: Situation after Brown's capture of Yellow's Kite</figcaption>
+        </figure>
+
+        <p>Figure 15b shows the situation after Brown's capture of Yellow's Kite.</p>
+
+        <p>Green, seeing that Yellow's Owl has only to ghost around Brown's Owl to gain the Nest, and win, calls "Third Bird Foul!"</p>
+
+        <figure>
+          <img src="images/guiThirdBirdFoulFig15c.png" alt="Third Bird Foul Example - After Resolution" style="max-width: 100%; height: auto;">
+          <figcaption>Figure 15c: Aftermath of the Third Bird Foul</figcaption>
+        </figure>
+
+        <p>Figure 15c shows the aftermath of the Third Bird Foul. Brown's foul move has been retracted, replacing Yellow's Kite and returning the Brown Kite to its original square. A replacement move has been made, placing the Brown Raven in a square that prevents Yellow's Owl from ghosting into the Nest.</p>
+        <p>If Brown has takebacks remaining, Brown makes this replacement move. However, if Brown has no takebacks left, Brown is eliminated from the game. In this case, Green, who called the Foul, makes the replacement move on behalf of the now-eliminated Brown.</p>
+
+        <p>The sub-rules of Rule 17 dealing with this important part of the game are grouped under the following headings:</p>
+        <ul>
+          <li>Basics (i-iii)</li>
+          <li>Resolution (iv-v)</li>
+          <li>Special Cases (vi-xi)</li>
+        </ul>
+
+        <h5>Rule 17 (i): Thicket Depth</h5>
+        <p>Before the game begins, players must agree on the "Thicket" depth – the number of complete turns (cycles of moves by all players) from the current player's move within which a potential Third Bird Foul can be identified. The recommended Thicket depth for each version of Strix is as follows:</p>
+        <ul>
+          <li>Simple STRIX: 1 turn (the next player's move and the third player's move)</li>
+          <li>Standard STRIX: 2 turns (the next two players' moves, the current player's next move, and the next two players' moves again)</li>
+          <li>Advanced STRIX: 3 turns</li>
+        </ul>
+
+        <h5>Rule 17 (ii): Move Confirmation</h5>
+        <p>After making a move, the active player shall invite the player on their left (the preceding player in turn order) to examine the new board position.</p>
+        <p>The preceding player shall then either: a) Accept the move by saying "Move confirmed" or a similar phrase, or b) Call "Third Bird Foul" if they believe one has occurred.</p>
+        <p>The move is not considered complete, and the following player may not begin their turn, until this confirmation or foul call has been made.</p>
+        <p>Players may agree on a reasonable time limit for the preceding player to confirm or call a foul.</p>
+
+        <h5>Rule 17 (iii): Calling and Demonstrating a Foul</h5>
+        <p>Both the preceding player and the following player have the right to call a Third Bird Foul.</p>
+        <p>The preceding player must call the foul during the move confirmation process (see Rule 17(ii)).</p>
+        <p>The following player must call the foul before making their own move.</p>
+        <p>When a Third Bird Foul is called, the caller must demonstrate the sequence of moves leading to the other player's inevitable victory within the Thicket depth.</p>
+
+        <h5>Rule 17 (iv): Takebacks</h5>
+        <p>Each player has a limited number of "take-backs" to retract and replay a move that would lead to a Third Bird Foul within the Thicket depth. The number of takebacks depends on the game version:</p>
+        <ul>
+          <li>Simple STRIX: 3 takebacks per player</li>
+          <li>Standard STRIX: 2 takebacks per player</li>
+          <li>Advanced STRIX: 1 takeback per player</li>
+        </ul>
+
+        <h5>Rule 17 (v): Resolving the Foul</h5>
+        <p>If the player who committed the foul has takebacks remaining, they must use one to retract and replay their move. If they have no takebacks left:</p>
+        <ul>
+          <li>The player is eliminated from the game.</li>
+          <li>The player's move that occasioned the foul is retracted.</li>
+          <li>The player who successfully called the foul makes an alternative legal move on behalf of their behalf.</li>
+          <li>The game continues with the remaining two players.</li>
+        </ul>
+
+        <h5>Rule 17 (vi): Self-Preservation Not Sufficient Justification</h5>
+        <p>Self-preservation does not justify committing a Third Bird Foul. Players may need to sacrifice their Owl to avoid committing this foul.</p>
+
+        <h5>Rule 17 (vii): Taking the Caller's Owl</h5>
+        <p>Third Bird Foul rules apply even when the move in question captures the Owl of the player calling the foul.</p>
+
+        <h5>Rule 17 (viii): Only One Act of Calling</h5>
+        <p>Only one Third Bird Foul call can be considered at a time. Players cannot call a Third Bird Foul based on a scenario that includes an earlier, successful foul call and its resulting takeback.</p>
+
+        <h5>Rule 17 (ix): False or Mistaken Calling of the Foul</h5>
+        <p>If a player calls a Third Bird Foul that, upon analysis, proves to be baseless:</p>
+        <ul>
+          <li>If the caller has takebacks remaining, they lose one takeback.</li>
+          <li>If the caller has no takebacks remaining:
+            <ol type="a">
+              <li>The false caller is eliminated from the game (loses).</li>
+              <li>The original move stands, and the game continues with the remaining two players.</li>
+            </ol>
+          </li>
+        </ul>
+
+        <h5>Rule 17 (x): Takeback and Replay Considered One Move</h5>
+        <p>When counting game moves, a takeback due to a successful Third Bird Foul call cancels out the original move. The replacement move takes its place in the move sequence.</p>
+
+        <h5>Rule 17 (xi): Unavoidable Foul</h5>
+        <p>If a player faces a situation where any move (including not moving, see Rule 18) would result in a Third Bird Foul:</p>
+        <ul>
+          <li>That player loses the game.</li>
+          <li>The remaining two players continue play.</li>
+        </ul>
+      </section>
+
+       <section id="further-rules">
+        <h3>Further Rules</h3>
+
+        <h4>Rule 18: Stalemate</h4>
+        <p>A situation may arise in STRIX when all of one player's pieces are blocked, making any move impossible. In this case, the game is declared to be draw: a three-way draw if three players are still at the board; or a two-way draw if only two remain.</p>
+        <p>The exception to this (see Rule 17(xi)) is if the player's inability to make a move brings about a situation resulting in a Third Bird Foul, in which case the player loses the game and the remaining players continue.</p>
+
+        <h4>Rule 19: Resignation</h4>
+        <p>When all three players are still active, a player wishing to resign should give a round's notice. In other words, they should announce that their current move is their penultimate one. The pieces belonging to the resigned player remain on the board.</p>
+        <p>In a situation where a player's position appears hopeless – for example, if avoidance of a Third Bird Foul means that the player's Owl is left <em>en prise</em> – etiquette requires that the player move as if the <em>coup de grâce</em> might not fall (as indeed it might not, depending on the tactical thinking of the other players).</p>
+        <p>If victory is inevitable for one player and no Third Bird Foul is detected, the two remaining players may jointly resign.</p>
+        <p>If a player has been eliminated already and one of the remaining two players finds his or her position hopeless, he or she may resign at any point.</p>
+
+        <h4>Rule 20: Repeated Moves</h4>
+        <p>Sometimes a situation arises where it is to the benefit of no player to deviate from a repeated set of moves. If the same series of moves is repeated three times, a draw is declared, meaning that the game has no winner or loser. This applies if there three players or two players at the time when the repetitions begin.</p>
+
+        <h4>Rule 21: Drawn Games</h4>
+        <p>In Standard STRIX, there are two types of drawn games.</p>
+        <p>The first is the "THREE-WAY DRAW". This occurs with three rounds of repeated moves by agreement of all three players.</p>
+        <p>The second is the "TWO-WAY DRAW". This can occur when one player has been eliminated and the remaining two players agree that neither is going to win.</p>
+
+        <h4>Rule 22: Winning</h4>
+        <p>The winner is the player whose team's Owl reaches the Nest first, or who has the last Owl standing on the board.</p>
+      </section>
+
+       <section id="additional-considerations">
+        <h3>Additional Considerations</h3>
+
+        <h4>Tourneys</h4>
+        <p>For players intending to play more than a single game of STRIX, it is recommended that they play a 'TOURNEY' of three games. In a Tourney, each player takes his or her turn at each of the team colours. If the physical game is being played, Initial selection for the first game can be made be one player (or a referee) holding three Owls in a bunch so that the coloured tops cannot be seen and then asking the players to pick one each. The team colours taken in the subsequent two games follow the standard order: brown, yellow, green.</p>
+        <p>For three players of markedly unequal experience, it may be preferred to play a "DOUBLE TOURNEY". In a Double Tourney, the players play one Tourney as above, and then a second with two players' positions reversed (for example, Brown may swap seats with Yellow). This ensures that no player always follows the weakest player.</p>
+
+        <h4>Collaboration</h4>
+        <p>There is nothing in the rules of STRIX to forbid collaboration between players. However, all offers of collaboration should be made exclusively through moves in the game and not verbally or by prior arrangement.</p>
+      </section>
+      
+       <section id="final-word">
+        <h3>A Final Word</h3>
+
+        <p>STRIX is a new game, born from a passion for strategic thinking. While every effort has been made to foresee unusual situations and draft comprehensive rules, the true nature of STRIX will only unfold as it is played and explored.</p>
+
+        <p>As with any complex game, STRIX may reveal unforeseen scenarios or strategic nuances that require further clarification or additional rules. We believe this is not a flaw, but a testament to the game's depth and potential for growth. We anticipate and welcome the need for future addenda, viewing them as a natural part of STRIX's evolution.</p>
+
+        <p>We invite you, the players, to be part of this journey. Your experiences, questions, and insights will be invaluable in shaping the future of STRIX. Feel free to share your thoughts and discoveries with the STRIX community.</p>
+
+        <p>Remember, the primary goal of STRIX is enjoyment. The thrill of outmaneuvering two opponents, the satisfaction of a well-executed strategy, and the excitement of a closely contested game are what make STRIX special. We hope you find as much joy in playing STRIX as we have had in designing it.</p>
+
+        <p><strong>Welcome to the world of STRIX. The Nest awaits!</strong></p>
+      </section>
     
           <!-- Add more sections as needed -->
     
