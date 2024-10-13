@@ -15,24 +15,29 @@ import {
   Color3,
   MeshBuilder,
   StandardMaterial,
-  MultiMaterial,
+  //MultiMaterial,
   TransformNode,
-  Mesh,
-  SubMesh,
+  //Mesh,
+  //SubMesh,
   ActionManager,
   ExecuteCodeAction,
-  Matrix,
-  Texture,
+  //Matrix,
+  //Texture,
 } from "@babylonjs/core";
 import { Animation, CubicEase, EasingFunction } from "@babylonjs/core";
 
 //MAIN SCENE CREATION FUNCTION
-
 export default function createScene(engine, canvas) {
   const scene = new Scene(engine);
 
-  //CAMERA SETUP
+  function updateProgress(progress) {
+    if (window.updateLoadingBar) {
+      window.updateLoadingBar(progress);
+    }
+  }
 
+  //CAMERA SETUP
+  updateProgress(10);
   const camera = new ArcRotateCamera(
     "camera1",
     0,
@@ -54,11 +59,9 @@ export default function createScene(engine, canvas) {
     currentTarget.z
   );
   camera.attachControl(canvas, true);
-  
-  
 
   //LIGHTING SETUP
-
+  updateProgress(20);
   const light1 = new HemisphericLight("light1", new Vector3(0, 1, 0), scene);
   const light2 = new DirectionalLight("light2", new Vector3(0, 0, -1), scene);
   const light3 = new DirectionalLight("light3", new Vector3(-1, 0, 0), scene);
@@ -70,13 +73,13 @@ export default function createScene(engine, canvas) {
   light4.intensity = 0.5;
 
   //BACKGROUND CREATION
-
+  updateProgress(30);
   const backgroundPlane = MeshBuilder.CreatePlane(
     "backgroundPlane",
     { size: 1000 },
     scene
   );
-  backgroundPlane.position.y = 0; // Position the plane behind all other objects
+  backgroundPlane.position.y = 0;
   backgroundPlane.rotation.x = Math.PI / 2;
   backgroundPlane.rotation.y = 0;
   backgroundPlane.rotation.z = 0;
@@ -87,35 +90,14 @@ export default function createScene(engine, canvas) {
   const r = 24.3 / 100;
   const g = 43.9 / 100;
   const b = 57.6 / 100;
-  
-  backgroundMaterial.diffuseColor = new Color3(r, g, b); // Set the color of the material
+
+  backgroundMaterial.diffuseColor = new Color3(r, g, b);
   backgroundMaterial.specularColor = new Color3(0, 0, 0);
-  backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
+  backgroundMaterial.backFaceCulling = false;
   backgroundPlane.material = backgroundMaterial;
-
-
-
-
-
-
- /* const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
-  backgroundMaterial.diffuseColor = new Color3(0.7, .9, 0.8); // Set the color of the material
-  backgroundMaterial.specularColor = new Color3(0, 0, 0);
-  backgroundMaterial.backFaceCulling = false; // Enable double-sided rendering
-  backgroundPlane.material = backgroundMaterial;
-  */
-/*
-  const backgroundTexture = new Texture("./images/PaleGreenField.jpg", scene);
-  backgroundTexture.uScale = 3.0;
-  backgroundTexture.vScale = 3.0;
-  const backgroundMaterial = new StandardMaterial("backgroundMaterial", scene);
-  backgroundMaterial.diffuseTexture = backgroundTexture;
-  backgroundMaterial.specularColor = new Color3(0, 0, 0); // Remove shininess
-  backgroundPlane.material = backgroundMaterial;
-  */
-  
 
   //BOARD CONTAINER CREATION
+  updateProgress(40);
   const boardContainer = new TransformNode("boardContainer", scene);
   // Rotate by the sine of the "magic angle" for x and the cosine of it for z, to make the set stand on its point
   boardContainer.rotation = new Vector3(
@@ -126,9 +108,11 @@ export default function createScene(engine, canvas) {
   boardContainer.position.y += 1.45;
 
   //BASE AND FIN CREATION
+  updateProgress(50);
   createBaseAndFins(scene, boardContainer);
 
   //GAME ELEMENTS CREATION
+  updateProgress(60);
   const guiElements = createGUI(scene);
   const gameStateManager = createGameStateManager(guiElements);
   gameStateManager.updateNextPlayerDisplay();
@@ -136,6 +120,8 @@ export default function createScene(engine, canvas) {
     scene,
     boardContainer
   );
+
+  updateProgress(70);
   const {
     brownOwl,
     brownKite,
@@ -147,10 +133,11 @@ export default function createScene(engine, canvas) {
     greenKite,
     greenRaven,
   } = createPlayingPieces(scene, boardContainer);
+  updateProgress(80);
   createOwlSquareToruses(scene, boardContainer, cubesOnTheThreeFaces);
 
   //INITIAL PIECE POSITIONS
-
+  updateProgress(90);
   function setPiecePosition(
     piece,
     cubesOnTheThreeFaces,
@@ -185,10 +172,10 @@ export default function createScene(engine, canvas) {
       const shadowedCubes = gameStateManager.shadowedRows[color];
       // Check if the target cube is in the shadowed rows for the current color
       if (shadowedCubes.includes(targetCube)) {
-        return true; // Collision detected
+        return true;
       }
     }
-    return false; // No collision detected
+    return false;
   }
 
   // PIECE MOVEMENT
@@ -365,7 +352,7 @@ export default function createScene(engine, canvas) {
         mainBoardCubes["b" + (8 - i) + "-1"].clone(cubeNameOHBrown);
       cubeOHBrown.position = new Vector3(i - 0.5, -0.25, 8.5);
       cubeOHBrown.material = new StandardMaterial("brownMaterial", scene);
-      cubeOHBrown.material.diffuseColor = Color3.FromInts(88, 54, 41); // Brown color
+      cubeOHBrown.material.diffuseColor = Color3.FromInts(88, 54, 41);
       cubeOHBrown.visibility = false;
       cubeOHBrown.parent = boardContainer;
       owlHallaCubes.push(cubeOHBrown);
@@ -378,7 +365,7 @@ export default function createScene(engine, canvas) {
         mainBoardCubes["y" + (8 - i) + "-1"].clone(cubeNameOHYellow);
       cubeOHYellow.position = new Vector3(-0.25, 8.5, i - 0.5);
       cubeOHYellow.material = new StandardMaterial("yellowMaterial", scene);
-      cubeOHYellow.material.diffuseColor = Color3.FromInts(255, 204, 0); // Yellow color
+      cubeOHYellow.material.diffuseColor = Color3.FromInts(255, 204, 0);
       cubeOHYellow.visibility = false;
       cubeOHYellow.parent = boardContainer;
       owlHallaCubes.push(cubeOHYellow);
@@ -391,7 +378,7 @@ export default function createScene(engine, canvas) {
         mainBoardCubes["g" + (8 - i) + "-1"].clone(cubeNameOHGreen);
       cubeOHGreen.position = new Vector3(8.5, i - 0.5, -0.25);
       cubeOHGreen.material = new StandardMaterial("greenMaterial", scene);
-      cubeOHGreen.material.diffuseColor = Color3.FromInts(8, 64, 0); // Green color
+      cubeOHGreen.material.diffuseColor = Color3.FromInts(8, 64, 0);
       cubeOHGreen.visibility = false;
       cubeOHGreen.parent = boardContainer;
       owlHallaCubes.push(cubeOHGreen);
@@ -508,19 +495,6 @@ export default function createScene(engine, canvas) {
         30,
         function () {
           gameStateManager.retractMove();
-
-         /* if (lastMove.capturedPiece) {
-            const capturedPiece = scene.getMeshByName(lastMove.capturedPiece);
-            if (capturedPiece) {
-              capturedPiece.position = getPositionFromCubeName(
-                lastMove.destinationSquare
-              );
-              capturedPiece.rotation = getRotationFromCubeName(
-                lastMove.destinationSquare
-              );
-              capturedPiece.setEnabled(true);
-            }
-          }*/
         }
       );
     } else {
@@ -606,11 +580,11 @@ export default function createScene(engine, canvas) {
       const position = cube.position.clone();
       // Add the offset based on which board the cube is on
       if (cubeName.startsWith("b")) {
-        position.y += 3.75; // Adjust for brown board
+        position.y += 3.75;
       } else if (cubeName.startsWith("y")) {
-        position.x += 3.75; // Adjust for yellow board
+        position.x += 3.75;
       } else if (cubeName.startsWith("g")) {
-        position.z += 3.75; // Adjust for green board
+        position.z += 3.75;
       }
       return position;
     }
@@ -620,7 +594,7 @@ export default function createScene(engine, canvas) {
   function getPositionFromOwlHallaCubeName(cubeName) {
     const cube = scene.getMeshByName(cubeName);
     if (cube) {
-      return cube.position.clone(); // No additional offset for owlHalla cubes
+      return cube.position.clone();
     }
     return new Vector3(0, 0, 0);
   }
@@ -660,6 +634,7 @@ export default function createScene(engine, canvas) {
   greenKite.actionManager = createPieceActionManager(greenKite);
   greenRaven.actionManager = createPieceActionManager(greenRaven);
 
+  updateProgress(100);
+
   return scene;
 }
-    

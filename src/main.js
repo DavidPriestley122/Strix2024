@@ -2,9 +2,13 @@ import { Engine } from "@babylonjs/core/Engines/engine.js";
 import { AssetsManager } from "@babylonjs/core/Misc/assetsManager.js";
 import createScene from "./game/strixGame.js";
 import { sidebar } from "./sidebar/sidebar.js";
-import { initLoadingScreen, updateLoadingBar, hideLoadingScreen } from "./loadingScreen.js";
+import {
+  initLoadingScreen,
+  updateLoadingBar,
+  hideLoadingScreen,
+} from "./loadingScreen.js";
 import { initResizeHandler } from "./resizeHandler.js";
-import { initLightbox } from "./utils/lightbox.js";  // New import for lightbox
+import { initLightbox } from "./utils/lightbox.js";
 //import "./css/styles.css";
 import "./css/main.css";
 import "./css/header.css";
@@ -36,8 +40,11 @@ function loadAssets() {
   };
 
   assetsManager.onFinish = (tasks) => {
-    hideLoadingScreen();
-    startRenderLoop();
+    updateLoadingBar(100);
+    setTimeout(() => {
+      hideLoadingScreen();
+      startRenderLoop();
+    }, 500);
   };
 
   assetsManager.load();
@@ -54,7 +61,8 @@ function restartGame() {
 }
 
 // Event Listeners
-window.addEventListener("load", initGame);
+
+window.addEventListener("DOMContentLoaded", initGame);
 
 document.addEventListener("keydown", (event) => {
   if (event.key === "r" || event.key === "R") {

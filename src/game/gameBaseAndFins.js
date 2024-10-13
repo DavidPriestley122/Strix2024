@@ -189,7 +189,6 @@ export function createBaseAndFins(scene) {
 }
   */
 
-
 import {
   Mesh,
   Vector3,
@@ -198,59 +197,68 @@ import {
   ActionManager,
   ExecuteCodeAction,
   MeshBuilder,
-  VertexData
+  VertexData,
 } from "@babylonjs/core";
 
 export function createBaseAndFins(scene) {
   // THE BASE
   function createHexagonalBase(scene, sideLength = 3.91, height = 0.5) {
     const diameter = sideLength * 2;
-    const baseMesh = MeshBuilder.CreateCylinder("hexBase", {
-      diameter: diameter,
-      height: height,
-      tessellation: 6
-    }, scene);
+    const baseMesh = MeshBuilder.CreateCylinder(
+      "hexBase",
+      {
+        diameter: diameter,
+        height: height,
+        tessellation: 6,
+      },
+      scene
+    );
 
     const baseMaterial = new StandardMaterial("baseMaterial", scene);
-    baseMaterial.diffuseColor = Color3.FromHexString("#583623");
-    baseMaterial.specularColor = new Color3(0.1, 0.1, 0.1);
+    baseMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
+    baseMaterial.specularColor = new Color3(0, 0, 0); // Set specular color to black
+    baseMaterial.specularPower = 0; // Reduce specular power to minimum
     baseMesh.material = baseMaterial;
 
     return baseMesh;
   }
 
   const baseMesh = createHexagonalBase(scene);
-  baseMesh.position.y = 0.51; // Raise the base just above the ground plane
+  baseMesh.position.y = 0.51;
 
   // THE FINS FOR THE BASE
   const finHeight = 4.79;
   const finBaseLength = 3.386;
   const finThickness = 0.5;
-
   const finMaterial = new StandardMaterial("finMaterial", scene);
-  finMaterial.diffuseColor = Color3.FromHexString("#583623");
-  finMaterial.specularColor = new Color3(0.1, 0.1, 0.1);
-  finMaterial.specularPower = 64;
+  finMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
+  finMaterial.specularColor = new Color3(0, 0, 0); // Set specular color to black
+  finMaterial.specularPower = 0; // Reduce specular power to minimum
 
   function createFin(name, rotation, translation) {
     const finVertices = [
-      0, 0, 0,
-      finBaseLength, 0, 0,
-      finBaseLength, 0, finHeight,
-      0, -finThickness, 0,
-      finBaseLength, -finThickness, 0,
-      finBaseLength, -finThickness, finHeight,
+      0,
+      0,
+      0,
+      finBaseLength,
+      0,
+      0,
+      finBaseLength,
+      0,
+      finHeight,
+      0,
+      -finThickness,
+      0,
+      finBaseLength,
+      -finThickness,
+      0,
+      finBaseLength,
+      -finThickness,
+      finHeight,
     ];
 
     const finIndices = [
-      0, 1, 2,
-      3, 4, 0,
-      4, 1, 0,
-      4, 5, 2,
-      4, 2, 1,
-      5, 3, 2,
-      2, 3, 0,
-      3, 5, 4,
+      0, 1, 2, 3, 4, 0, 4, 1, 0, 4, 5, 2, 4, 2, 1, 5, 3, 2, 2, 3, 0, 3, 5, 4,
     ];
 
     const normals = [];
