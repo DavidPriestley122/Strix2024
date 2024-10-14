@@ -188,24 +188,24 @@
 }
 
 /* You might also want to add some styles for the expanded state */
-.quill-entry .quill-header {
+.your-turn-entry .your-turn-header {
   cursor: pointer;
 }
 
-.quill-entry .chevron {
+.your-turn-entry .chevron {
   transition: transform 0.3s ease;
 }
 
-.quill-entry .quill-header:not(.hidden) .chevron {
+.your-turn-entry .your-turn-header:not(.hidden) .chevron {
   transform: rotate(180deg);
 }
 
 /* Add any other styles you need for the Quill entries */
-.quill-entry {
+.your-turn-entry {
   margin-bottom: 1rem;
 }
 
-.quill-content {
+.your-turn-content {
   padding: 1rem;
   background-color: rgba(255, 255, 255, 0.05);
   border-radius: 0 0 4px 4px;

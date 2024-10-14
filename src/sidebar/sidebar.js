@@ -345,7 +345,7 @@ export const sidebar = {
       case "gallery":
         return [{ id: "strix-sightings", title: "Sightings of Strix" }];
 
-      case "quill":
+      case "your-turn":
         return [
           { id: "strix-lore", title: "Strix Lore" },
           { id: "parliament", title: "Parliament" },

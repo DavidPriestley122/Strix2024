@@ -1,4 +1,4 @@
-export function createFromYourQuillSection() {
+export function createYourTurnSection() {
   const strixLoreEntries = [
     {
       title: "A Dream of the Wood",

@@ -1,6 +1,6 @@
-import { createFromYourQuillSection } from "./fromYourQuill.js";
+import { createYourTurnSection } from "./yourTurn.js";
 
-const quillSection = createFromYourQuillSection();
+const yourTurnSection = createYourTurnSection();
 
 export const content = {
   "about-strix": {
@@ -686,18 +686,18 @@ export const content = {
     },
   },
 
-  quill: {
+  "your-turn": {
     "strix-lore": {
       title: "Strix Lore",
-      body: quillSection.renderStrixLore(),
+      body: yourTurnSection.renderStrixLore(),
       onRender: () =>
-        quillSection.initializeCollapsibles(".strix-lore-section"),
+        yourTurnSection.initializeCollapsibles(".strix-lore-section"),
     },
     parliament: {
       title: "Parliament",
-      body: quillSection.renderParliament(),
+      body: yourTurnSection.renderParliament(),
       onRender: () =>
-        quillSection.initializeCollapsibles(".parliament-section"),
+        yourTurnSection.initializeCollapsibles(".parliament-section"),
     },
   },
   gallery: {
