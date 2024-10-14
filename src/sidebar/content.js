@@ -25,14 +25,14 @@ export const content = {
       body: `
        <h1>The Fledging of Strix</h1>
 
-        <p>Strix traces its origins to a serendipitous moment in late 1984. As David Priestley walked with friends from the Green Man pub in Muswell Hill towards Alexandra Palace, the incline of their route sparked an idea. The angle of the path, first descending then ascending, inspired the concept of game boards facing each other at angles. The friends, as they traversed this terrain, seemed to David like tall game pieces moving across these imagined planes.</p>
+        <p>Strix traces its origins to a serendipitous moment in late 1984. As David Priestley walked with friends from the Green Man pub in Muswell Hill, London, towards Alexandra Palace, the incline of their route sparked an idea. The angle of the path, first descending then ascending, inspired the concept of game boards facing each other at angles. The friends, as they traversed this terrain, seemed to David like tall game pieces moving across these imagined planes.</p>
 
         <h2>From Concept to Prototype</h2>
-        <p>Living in Blackheath, David experimented with various prototypes using folded cardboard and knitting needles. The first Strix set emerged from a sawn-up plank and a garden tile, embodying the game's unique 3D nature.</p>
+        <p>Living in Blackheath, London, David experimented with various prototypes using folded cardboard and knitting needles. The first Strix set emerged from a sawn-up plank and a garden tile, embodying the game's unique 3D nature.</p>
         <p>The theme of birds in a forest naturally evolved from the board's three-dimensional structure and the branch-like crisscrossed appearance of pieces during play. As the concept took shape, David enlisted his old school friend, Jonathan Moody, to help formalize the rules. Jonathan's incisive intellect transformed David's initial concepts into a robust and coherent ruleset, much of which still forms the backbone of the current official rulebook.</p>
 
         <h2>Early Development and Production</h2>
-        <p>In 1986, on the advice of the proprietor of Just Games in London, David and Jonathan collaborated with Jeff Tye, a wooden games maker based in Kempston. Jeff undertook the production of 100 Strix sets, screen-printed on MDF with stained beech-rod pieces. The rules were hand-coloured, featuring cover art by Kate Giles, and the fully demountable sets were packaged in cardboard boxes.</p>
+        <p>In 1986, on the advice of the proprietor of Just Games in London, David and Jonathan collaborated with Jeff Tye, a wooden games maker based in Kempston, near Bedford, north of London. Jeff undertook the production of 100 Strix sets, screen-printed on MDF with stained beech-rod pieces. The rules were hand-coloured, featuring cover art by Kate Giles, and the fully demountable sets were packaged in cardboard boxes.</p>
 
         <h2>Public Debut and Recognition</h2>
         <p>1987 marked Strix's public debut. Jeff Tye showcased a set at the British Craft Show, resulting in the game's first published image. Around the same time, David and Jonathan exhibited at the London Toy Fair in Olympia, garnering significant interest. The game caught the attention of David Pritchard, the renowned expert on chess variants, who included Strix in his "Classified Encyclopedia of Chess Variants."</p>
