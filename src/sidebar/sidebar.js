@@ -347,6 +347,7 @@ export const sidebar = {
 
       case "your-turn":
         return [
+          { id: "introduction", title: "Welcome" },
           { id: "strix-lore", title: "Strix Lore" },
           { id: "parliament", title: "Parliament" },
         ];

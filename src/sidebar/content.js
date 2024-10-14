@@ -687,6 +687,31 @@ export const content = {
   },
 
   "your-turn": {
+    "introduction": {
+      title: "Welcome to Your Turn",
+      body: `
+        <p>Welcome to the "Your Turn" section! This is where you, the STRIX community, can actively participate in shaping the future of the game.</p>
+        
+        <p>Here's how you can contribute:</p>
+        <ul>
+          <li><strong>Strix Lore:</strong> Share your STRIX-inspired creations - compositions, poems, stories, and more.</li>
+          <li><strong>Parliament:</strong> Provide feedback, share experiences, ask questions, and participate in the ongoing development of STRIX.</li>
+        </ul>
+        
+        <p>As mentioned in the Online Rules Guide:</p>
+        
+        <blockquote>
+          STRIX is a new game, born from a passion for strategic thinking. While every effort has been made to foresee unusual situations and draft comprehensive rules, the true nature of STRIX will only unfold as it is played and explored.
+        </blockquote>
+        
+        <p>We believe that any unforeseen scenarios or strategic nuances are not flaws, but testaments to the game's depth and potential for growth. We welcome your insights as part of STRIX's natural evolution.</p>
+        
+        <p>Remember, the primary goal of STRIX is enjoyment. We hope you find as much joy in playing and contributing to STRIX as we have had in designing it.</p>
+        
+        <p><strong>Welcome to the world of STRIX. The Nest awaits your contributions!</strong></p>
+      `
+    },
+
     "strix-lore": {
       title: "Strix Lore",
       body: yourTurnSection.renderStrixLore(),
