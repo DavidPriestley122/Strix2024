@@ -15,6 +15,7 @@ import "./css/header.css";
 import "./css/sidebar.css";
 import "./css/game.css";
 import "./css/footer.css";
+import "./css/ai-sidebar.css";
 
 let engine, scene;
 

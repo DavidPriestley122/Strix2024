@@ -186,6 +186,11 @@ export function createGameStateManager(guiElements) {
     retractionHistory: [],
     lastMove: null,
     gameOver: false,
+    playerTypes: {
+      brown: "human",
+      yellow: "human",
+      green: "human",
+    },
 
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
       const pieceNotation = this.abbreviatePiece(piece);
@@ -208,51 +213,21 @@ export function createGameStateManager(guiElements) {
       this.updateNextPlayer();
       this.updateMoveHistoryDisplay();
       this.updateNextPlayerDisplay();
+
+      this.updatePlayerTypes(); // Read the radio buttons first
+      // Check if the new current player is AI
+      if (this.isAIPlayer(this.currentPlayerTurn)) {
+        console.log(
+          this.currentPlayerTurn + " is AI - will make move in 2 seconds"
+        );
+        // Call the AI module
+        if (this.aiModule) {
+          this.aiModule.makeMove(this.currentPlayerTurn);
+        }
+      } else {
+        console.log(this.currentPlayerTurn + " is human");
+      }
     },
-
-    /*
-
-    recordCapture: function (capturedPiece) {
-      const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
-      const captureText = `(${abbreviatedCaptured} captured)`;
-
-      // Add to captureHistory
-      this.captureHistory.push({
-        moveIndex: this.moveHistory.length - 1, // Associate with the last move
-        text: captureText,
-      });
-
-      // Update the piece positions
-      this.piecePositions[capturedPiece] = "captured";
-
-      // Check if the captured piece is an Owl
-      if (capturedPiece.includes("Owl")) {
-        // Set the knocked out team
-        this.knockedOutTeam = this.getColorFromPieceName(capturedPiece);
-
-        // Update the next player, skipping the knocked-out team
-        this.updateNextPlayer();
-      }
-
-      // Check for winning condition after capture
-      const winningMessage = this.checkWinningConditions(
-        capturedPiece,
-        "captured"
-      );
-      if (winningMessage) {
-        this.moveHistory.push(winningMessage);
-        this.gameOver = true;
-      }
-
-      // Update the last move to include the capture information
-      if (this.lastMove) {
-        this.lastMove.capturedPiece = capturedPiece;
-      }
-
-      this.updateMoveHistoryDisplay();
-      this.updateNextPlayerDisplay();
-    },
-*/
 
     recordCapture: function (capturedPiece) {
       console.log("Capturing piece:", capturedPiece);
@@ -353,23 +328,6 @@ export function createGameStateManager(guiElements) {
     knockedOutTeam: null,
     currentPlayerTurn: "brown",
 
-    /*
-
-    updateNextPlayer: function () {
-      const teams = ["brown", "yellow", "green"];
-      let currentTeamIndex = teams.indexOf(this.currentPlayerTurn);
-      let nextTeamIndex;
-
-      do {
-        nextTeamIndex = (currentTeamIndex + 1) % teams.length;
-        currentTeamIndex = nextTeamIndex;
-      } while (teams[nextTeamIndex] === this.knockedOutTeam);
-
-      this.currentPlayerTurn = teams[nextTeamIndex];
-
-      this.updateNextPlayerDisplay();
-    },
-*/
     updateNextPlayer: function () {
       const teams = ["brown", "yellow", "green"];
       let currentIndex = teams.indexOf(this.currentPlayerTurn);
@@ -391,6 +349,30 @@ export function createGameStateManager(guiElements) {
       ) {
         this.knockedOutTeam = null;
       }
+    },
+
+    // Function to check if a player is AI
+    isAIPlayer: function (playerColor) {
+      return this.playerTypes[playerColor] === "computer";
+    },
+
+    // Function to read radio button values and update player types
+    updatePlayerTypes: function () {
+      this.playerTypes.brown = document.querySelector(
+        'input[name="brown-player"]:checked'
+      ).value;
+      this.playerTypes.yellow = document.querySelector(
+        'input[name="yellow-player"]:checked'
+      ).value;
+      this.playerTypes.green = document.querySelector(
+        'input[name="green-player"]:checked'
+      ).value;
+
+      console.log("Player types updated:", this.playerTypes);
+    },
+
+    setAI: function (aiModule) {
+      this.aiModule = aiModule;
     },
 
     checkWinningConditions: function (piece, destinationSquare) {

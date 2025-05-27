@@ -24,3 +24,25 @@
   padding-bottom: 10px;
   border-bottom: 1px solid var(--owl-light);
 }
+
+/* Brown team radio buttons */
+input[name="brown-player"] {
+  accent-color: #583629; /* Brown color */
+}
+
+/* Yellow team radio buttons */
+input[name="yellow-player"] {
+  accent-color: #ffcc00; /* Yellow color */
+}
+
+/* Green team radio buttons */
+input[name="green-player"] {
+  accent-color: #084000; /* Green color */
+}
+
+/* Make radio buttons larger and more visible */
+input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}

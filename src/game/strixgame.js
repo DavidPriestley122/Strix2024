@@ -5,6 +5,7 @@ import { createGameStateManager } from "./gameStateManager.js";
 import { createCheckerBoards } from "./gameCheckerBoards.js";
 import { createOwlSquareToruses } from "./gameCheckerBoards.js";
 import { createPlayingPieces } from "./gamePieces.js";
+import { createAI } from "./gameAI.js";
 
 import {
   Scene,
@@ -115,7 +116,16 @@ export default function createScene(engine, canvas) {
   updateProgress(60);
   const guiElements = createGUI(scene);
   const gameStateManager = createGameStateManager(guiElements);
+
+  // Create AI and pass it to gameStateManager
+  const aiModule = createAI(scene, gameStateManager, {
+    animatePieceMovement: animatePieceMovement,
+    isMoveCollidingWithShadowedRows: isMoveCollidingWithShadowedRows,
+  });
+  gameStateManager.setAI(aiModule);
+
   gameStateManager.updateNextPlayerDisplay();
+
   const { cubesOnTheThreeFaces, mainBoardCubes } = createCheckerBoards(
     scene,
     boardContainer

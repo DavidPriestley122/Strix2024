@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="src/css/sidebar.css" />
     <link rel="stylesheet" href="src/css/game.css" />
     <link rel="stylesheet" href="src/css/footer.css" />
+    <link rel="stylesheet" href="src/css/ai-sidebar.css" />
+
     <style>
       body {
         margin: 0;
@@ -69,28 +71,28 @@
   <body>
     <header>
       <div class="logo-container">
-      <div class="owl-logo">
-        <div class="owl-diamond dark top-left"></div>
-        <div class="owl-diamond dark top-center-left"></div>
-        <div class="owl-diamond dark top-center-right"></div>
-        <div class="owl-diamond light middle-left"></div>
-        <div class="owl-diamond light middle-center-left">
-          <div class="owl-eye"><div class="owl-pupil"></div></div>
+        <div class="owl-logo">
+          <div class="owl-diamond dark top-left"></div>
+          <div class="owl-diamond dark top-center-left"></div>
+          <div class="owl-diamond dark top-center-right"></div>
+          <div class="owl-diamond light middle-left"></div>
+          <div class="owl-diamond light middle-center-left">
+            <div class="owl-eye"><div class="owl-pupil"></div></div>
+          </div>
+          <div class="owl-diamond light middle-center-right">
+            <div class="owl-eye"><div class="owl-pupil"></div></div>
+          </div>
+          <div class="owl-diamond light middle-right"></div>
+          <div class="owl-diamond dark bottom">
+            <div class="owl-beak"></div>
+          </div>
+          <div class="owl-half-diamond left-wing"></div>
+          <div class="owl-half-diamond right-wing"></div>
         </div>
-        <div class="owl-diamond light middle-center-right">
-          <div class="owl-eye"><div class="owl-pupil"></div></div>
-        </div>
-        <div class="owl-diamond light middle-right"></div>
-        <div class="owl-diamond dark bottom">
-          <div class="owl-beak"></div>
-        </div>
-        <div class="owl-half-diamond left-wing"></div>
-        <div class="owl-half-diamond right-wing"></div>
-      </div>
       </div>
       <div class="title-container">
         <div class="title-background">
-          <h1 class="game-title">STRIX<br>The Owls' Game</h1>
+          <h1 class="game-title">STRIX<br />The Owls' Game</h1>
         </div>
       </div>
     </header>
@@ -129,10 +131,50 @@
           </div>
         </div>
       </div>
-      <div id="main-content-area" class="main-content">
-        <!-- This is where the expanded content will appear -->
-      </div>
+      <div id="main-content-area" class="main-content"></div>
     </main>
+
+    <aside id="ai-sidebar">
+      <h2>AI Players</h2>
+      <div class="ai-controls">
+        <div class="player-config">
+          <h3>Brown Team</h3>
+          <label>
+            <input type="radio" name="brown-player" value="human" checked />
+            Human
+          </label>
+          <label>
+            <input type="radio" name="brown-player" value="computer" />
+            Computer
+          </label>
+        </div>
+
+        <div class="player-config">
+          <h3>Yellow Team</h3>
+          <label>
+            <input type="radio" name="yellow-player" value="human" checked />
+            Human
+          </label>
+          <label>
+            <input type="radio" name="yellow-player" value="computer" />
+            Computer
+          </label>
+        </div>
+
+        <div class="player-config">
+          <h3>Green Team</h3>
+          <label>
+            <input type="radio" name="green-player" value="human" checked />
+            Human
+          </label>
+          <label>
+            <input type="radio" name="green-player" value="computer" />
+            Computer
+          </label>
+          <button id="test-player-types">Test Player Types</button>
+        </div>
+      </div>
+    </aside>
 
     <footer>
       <p>&copy; 2024 David Priestley. All rights reserved.</p>
