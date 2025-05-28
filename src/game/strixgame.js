@@ -121,6 +121,8 @@ export default function createScene(engine, canvas) {
   const aiModule = createAI(scene, gameStateManager, {
     animatePieceMovement: animatePieceMovement,
     isMoveCollidingWithShadowedRows: isMoveCollidingWithShadowedRows,
+    updateShadowedRows:
+      gameStateManager.updateShadowedRows.bind(gameStateManager),
   });
   gameStateManager.setAI(aiModule);
 

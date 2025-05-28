@@ -103,6 +103,9 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         targetPosition.z += 3.75; // Green board offset
       }
 
+      // Get current position before the move
+      const currentPosition = gameStateManager.piecePositions[pieceToMove.name];
+
       // Execute the move
       gameFunctions.animatePieceMovement(
         pieceToMove,
@@ -111,6 +114,17 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         30,
         function () {
           console.log("AI move completed");
+
+          // Update the game state properly (like human moves do)
+          gameStateManager.piecePositions[pieceToMove.name] = targetSquare.name;
+          gameStateManager.addMoveToHistory(
+            pieceToMove.name,
+            currentPosition,
+            targetSquare.name
+          );
+
+          // Update shadowed rows after the move
+          gameFunctions.updateShadowedRows(pieceToMove.name);
         }
       );
     },
