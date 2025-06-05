@@ -90,9 +90,12 @@ export function createGUI() {
 }
 
 //GAME STATE MANAGER CREATION
-export function createGameStateManager(guiElements) {
+export function createGameStateManager(guiElements, gameResetFunctions) {
   const { moveHistoryViewer, messageText, messageRect, advancedTexture } =
     guiElements;
+
+  // Store the reset functions for later use
+  const resetFunctions = gameResetFunctions;
 
   let nextPlayerText = null; // Variable to store the reference to nextPlayerText control
 
@@ -193,6 +196,10 @@ export function createGameStateManager(guiElements) {
     },
 
     addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
+      console.log(
+        `=== addMoveToHistory called: ${piece} from ${sourceSquare} to ${destinationSquare} ===`
+      );
+
       const pieceNotation = this.abbreviatePiece(piece);
       const moveText = `${pieceNotation}-${destinationSquare.replace("-", "")}`;
       this.moveHistory.push(moveText);
@@ -202,6 +209,7 @@ export function createGameStateManager(guiElements) {
         piece,
         destinationSquare
       );
+
       if (winningMessage) {
         this.moveHistory.push(winningMessage);
         this.gameOver = true;
@@ -215,17 +223,16 @@ export function createGameStateManager(guiElements) {
       this.updateNextPlayerDisplay();
 
       this.updatePlayerTypes(); // Read the radio buttons first
+
       // Check if the new current player is AI
       if (this.isAIPlayer(this.currentPlayerTurn)) {
-        console.log(
-          this.currentPlayerTurn + " is AI - will make move in 2 seconds"
-        );
+        console.log(this.currentPlayerTurn + " is AI - will make move");
         // Call the AI module
         if (this.aiModule) {
           this.aiModule.makeMove(this.currentPlayerTurn);
         }
       } else {
-        console.log(this.currentPlayerTurn + " is human");
+        console.log(this.currentPlayerTurn + " is human or game is paused");
       }
     },
 
@@ -327,6 +334,8 @@ export function createGameStateManager(guiElements) {
 
     knockedOutTeam: null,
     currentPlayerTurn: "brown",
+    aiGameRunning: false,
+    aiGamePaused: false,
 
     updateNextPlayer: function () {
       const teams = ["brown", "yellow", "green"];
@@ -339,7 +348,6 @@ export function createGameStateManager(guiElements) {
       }
 
       this.currentPlayerTurn = teams[nextIndex];
-      this.updateNextPlayerDisplay();
     },
 
     reinstateTeam: function (piece) {
@@ -354,6 +362,152 @@ export function createGameStateManager(guiElements) {
     // Function to check if a player is AI
     isAIPlayer: function (playerColor) {
       return this.playerTypes[playerColor] === "computer";
+    },
+
+    // Functions to control AI game
+    /*startAIGame: function () {
+      this.aiGameRunning = true;
+      this.aiGamePaused = false;
+      console.log("AI game started");
+
+      // Update button states
+      document.getElementById("start-ai-game").disabled = true;
+      document.getElementById("pause-game").disabled = false;
+      document.getElementById("resume-game").disabled = true;
+
+      // Trigger first AI move if it's an AI player's turn
+      if (this.isAIPlayer(this.currentPlayerTurn)) {
+        this.aiModule.makeMove(this.currentPlayerTurn);
+      }
+    },
+*/
+    startAIGame: function () {
+      this.aiGameRunning = true;
+      this.aiGamePaused = false;
+      console.log("AI game started");
+
+      // Debug: Check what player types are read
+      this.updatePlayerTypes();
+      console.log("Current player types:", JSON.stringify(this.playerTypes));
+      console.log("Current player turn:", this.currentPlayerTurn);
+      console.log(
+        "Is current player AI?",
+        this.isAIPlayer(this.currentPlayerTurn)
+      );
+
+      // Update button states
+      document.getElementById("start-ai-game").disabled = true;
+      document.getElementById("pause-game").disabled = false;
+      document.getElementById("resume-game").disabled = true;
+
+      // Start with first move if current player is AI
+      if (this.isAIPlayer(this.currentPlayerTurn)) {
+        console.log("Triggering AI move for", this.currentPlayerTurn);
+        if (this.aiModule) {
+          this.aiModule.makeMove(this.currentPlayerTurn); // Remove setTimeout from here too
+        }
+      } else {
+        console.log("Current player is not AI, waiting for manual move");
+      }
+    },
+
+    pauseAIGame: function () {
+      this.aiGamePaused = true;
+      console.log("AI game paused");
+
+      // Update button states
+      document.getElementById("pause-game").disabled = true;
+      document.getElementById("resume-game").disabled = false;
+    },
+
+    resumeAIGame: function () {
+      this.aiGamePaused = false;
+      console.log("AI game resumed");
+
+      // Update button states
+      document.getElementById("pause-game").disabled = false;
+      document.getElementById("resume-game").disabled = true;
+
+      // Continue with current player if AI
+      if (this.isAIPlayer(this.currentPlayerTurn)) {
+        this.aiModule.makeMove(this.currentPlayerTurn);
+      }
+    },
+
+    resetGame: function () {
+      this.aiGameRunning = false;
+      this.aiGamePaused = false;
+      console.log("Game reset");
+
+      // Update button states
+      document.getElementById("start-ai-game").disabled = false;
+      document.getElementById("pause-game").disabled = true;
+      document.getElementById("resume-game").disabled = true;
+
+      //Reset pieces to starting positions
+
+      this.currentPlayerTurn = "brown";
+      this.moveHistory = [];
+      this.captureHistory = [];
+      this.knockedOutTeam = null;
+      this.gameOver = false;
+
+      // Reset piece positions to starting positions
+      this.piecePositions = {
+        brownOwl: "b7-1",
+        brownKite: "b6-2",
+        brownRaven: "b5-3",
+        yellowOwl: "y7-1",
+        yellowKite: "y6-2",
+        yellowRaven: "y5-3",
+        greenOwl: "g7-1",
+        greenKite: "g6-2",
+        greenRaven: "g5-3",
+      };
+
+      // Move all pieces back to their starting positions visually
+      this.resetPiecesVisually();
+
+      // Update displays
+      this.updateNextPlayerDisplay();
+      this.updateMoveHistoryDisplay();
+    },
+
+    // Add this new function to handle visual piece reset
+    resetPiecesVisually: function () {
+      console.log("Resetting pieces to starting positions");
+
+      if (!resetFunctions) {
+        console.log("Game reset functions not available");
+        return;
+      }
+
+      const { scene, setPiecePosition, cubesOnTheThreeFaces } =
+        resetFunctions;
+
+      // Find and reset each piece
+      const startingPositions = {
+        brownOwl: { cube: "b7-1", offset: { x: 0, y: 3.75, z: 0 } },
+        brownKite: { cube: "b6-2", offset: { x: 0, y: 3.75, z: 0 } },
+        brownRaven: { cube: "b5-3", offset: { x: 0, y: 3.75, z: 0 } },
+        yellowOwl: { cube: "y7-1", offset: { x: 3.75, y: 0, z: 0 } },
+        yellowKite: { cube: "y6-2", offset: { x: 3.75, y: 0, z: 0 } },
+        yellowRaven: { cube: "y5-3", offset: { x: 3.75, y: 0, z: 0 } },
+        greenOwl: { cube: "g7-1", offset: { x: 0, y: 0, z: 3.75 } },
+        greenKite: { cube: "g6-2", offset: { x: 0, y: 0, z: 3.75 } },
+        greenRaven: { cube: "g5-3", offset: { x: 0, y: 0, z: 3.75 } },
+      };
+
+      for (let [pieceName, position] of Object.entries(startingPositions)) {
+        setPiecePosition(
+          scene.getMeshByName(pieceName),
+          cubesOnTheThreeFaces,
+          position.cube,
+          position.offset.x,
+          position.offset.y,
+          position.offset.z
+        );
+      }
     },
 
     // Function to read radio button values and update player types

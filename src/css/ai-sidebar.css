@@ -46,3 +46,42 @@ input[type="radio"] {
   height: 18px;
   margin-right: 8px;
 }
+.game-controls {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  border-top: 2px solid var(--owl-beak);
+}
+
+.game-controls h3 {
+  color: var(--owl-beak);
+  margin-bottom: 15px;
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.control-button {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  background-color: var(--dark-chocolate);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-family: "IM Fell English", serif;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.control-button:hover:not(:disabled) {
+  background-color: var(--owl-eye);
+  color: var(--dark-chocolate);
+}
+
+.control-button:disabled {
+  background-color: #555;
+  color: #999;
+  cursor: not-allowed;
+}

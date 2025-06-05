@@ -115,18 +115,50 @@ export default function createScene(engine, canvas) {
   //GAME ELEMENTS CREATION
   updateProgress(60);
   const guiElements = createGUI(scene);
-  const gameStateManager = createGameStateManager(guiElements);
+  //const gameStateManager = createGameStateManager(guiElements);
 
-  // Create AI and pass it to gameStateManager
-  const aiModule = createAI(scene, gameStateManager, {
-    animatePieceMovement: animatePieceMovement,
-    isMoveCollidingWithShadowedRows: isMoveCollidingWithShadowedRows,
-    updateShadowedRows:
-      gameStateManager.updateShadowedRows.bind(gameStateManager),
-  });
-  gameStateManager.setAI(aiModule);
+  // Wait for DOM to be ready, then add button listeners
+  setTimeout(() => {
+    console.log("Adding button listeners after delay...");
 
-  gameStateManager.updateNextPlayerDisplay();
+    const startBtn = document.getElementById("start-ai-game");
+    const pauseBtn = document.getElementById("pause-game");
+    const resumeBtn = document.getElementById("resume-game");
+    const resetBtn = document.getElementById("reset-game");
+
+    console.log("Start button found:", startBtn !== null);
+    console.log("Pause button found:", pauseBtn !== null);
+
+    if (startBtn) {
+      startBtn.addEventListener("click", function () {
+        console.log("Start button clicked!");
+        gameStateManager.startAIGame();
+      });
+      console.log("Start button listener added");
+    }
+
+    if (pauseBtn) {
+      pauseBtn.addEventListener("click", function () {
+        console.log("Pause button clicked!");
+        gameStateManager.pauseAIGame();
+      });
+      console.log("Pause button listener added");
+    }
+
+    if (resumeBtn) {
+      resumeBtn.addEventListener("click", function () {
+        console.log("Resume button clicked!");
+        gameStateManager.resumeAIGame();
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function () {
+        console.log("Reset button clicked!");
+        gameStateManager.resetGame();
+      });
+    }
+  }, 2000); // Wait 2 seconds for everything to load
 
   const { cubesOnTheThreeFaces, mainBoardCubes } = createCheckerBoards(
     scene,
@@ -150,6 +182,7 @@ export default function createScene(engine, canvas) {
 
   //INITIAL PIECE POSITIONS
   updateProgress(90);
+
   function setPiecePosition(
     piece,
     cubesOnTheThreeFaces,
@@ -189,6 +222,24 @@ export default function createScene(engine, canvas) {
     }
     return false;
   }
+
+  // Create gameStateManager and pass it the functions it needs
+  const gameStateManager = createGameStateManager(guiElements, {
+    scene: scene,
+    setPiecePosition: setPiecePosition,
+    cubesOnTheThreeFaces: cubesOnTheThreeFaces,
+  });
+
+  // Create AI and pass it to gameStateManager
+  const aiModule = createAI(scene, gameStateManager, {
+    animatePieceMovement: animatePieceMovement,
+    isMoveCollidingWithShadowedRows: isMoveCollidingWithShadowedRows,
+    updateShadowedRows:
+      gameStateManager.updateShadowedRows.bind(gameStateManager),
+  });
+  gameStateManager.setAI(aiModule);
+
+  gameStateManager.updateNextPlayerDisplay();
 
   // PIECE MOVEMENT
 
