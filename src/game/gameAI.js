@@ -1,3 +1,7 @@
+import { validateOwlMove } from './rules/pieces/owlRules.js';
+import { validateKiteMove } from './rules/pieces/kiteRules.js';
+import { validateRavenMove } from './rules/pieces/ravenRules.js';
+
 export function createAI(scene, gameStateManager, gameFunctions) {
   return {
     // Store reference to gameStateManager
@@ -37,10 +41,6 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         return;
       }
 
-      // Pick the first piece
-      const pieceToMove = playerPieces[0];
-      console.log(`AI selected piece: ${pieceToMove.name}`);
-
       // Find all board squares
       const boardSquares = scene.meshes.filter(
         (mesh) =>
@@ -51,53 +51,98 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           !mesh.name.includes("--")
       );
 
-      // Find a valid destination square
+      // Try each piece until we find one that can make a valid move
+      // Randomize the order to get more variety in piece selection
+      const shuffledPieces = [...playerPieces].sort(() => Math.random() - 0.5);
+      let pieceToMove = null;
       let targetSquare = null;
-      for (let square of boardSquares) {
-        // Check if square is occupied by looking at gameStateManager.piecePositions
-        const isOccupied = Object.values(
-          this.gameState.piecePositions || {}
-        ).includes(square.name);
-
-        if (!isOccupied) {
-          // Also check if the square is shadowed
-          const isShadowed = gameFunctions.isMoveCollidingWithShadowedRows(
-            square.name,
-            pieceToMove.name
-          );
-
-          if (!isShadowed) {
-            // NEW: Check if path is clear
-            if (this.isPathClear(pieceToMove, square.name)) {
-              targetSquare = square;
-              console.log(`AI found valid square: ${square.name}`);
-              break;
-            } else {
-              console.log(`Path to ${square.name} is blocked`);
-            }
+      
+      for (let piece of shuffledPieces) {
+        console.log(`AI trying piece: ${piece.name}`);
+        
+        // Find a valid destination square for this piece
+        // Prefer cross-face moves when piece is in good position
+        const currentPos = this.gameState.piecePositions[piece.name];
+        const { squares: shuffledSquares, targetCrossFace } = this.prioritizeCrossFaceMoves(boardSquares, currentPos);
+        const targetCrossFaceSquare = targetCrossFace;
+        
+        for (let square of shuffledSquares) {
+          // Debug logging for cross-face target
+          if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+            console.log(`CROSS-FACE: Checking target ${square.name} for ${piece.name} from ${currentPos}`);
           }
-        }
-      }
-
-      // Fallback: find any empty square if no non-shadowed squares available
-      if (!targetSquare) {
-        console.log(
-          "AI could not find non-shadowed move - trying any empty square"
-        );
-        for (let square of boardSquares) {
+          
+          // Check if square is occupied
           const isOccupied = Object.values(
             this.gameState.piecePositions || {}
           ).includes(square.name);
+
           if (!isOccupied) {
-            targetSquare = square;
-            console.log(`AI found fallback square: ${square.name}`);
-            break;
+            if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+              console.log(`CROSS-FACE: ${square.name} is not occupied`);
+            }
+            // Check if the square is shadowed (excluding the moving piece like human version)
+            this.gameState.updateShadowedRows(piece.name);
+            let isShadowed = false;
+            // Directly check shadowed rows like human version
+            for (const color in this.gameState.shadowedRows) {
+              const shadowedCubes = this.gameState.shadowedRows[color];
+              if (shadowedCubes.includes(square.name)) {
+                isShadowed = true;
+                break;
+              }
+            }
+
+            if (!isShadowed) {
+              if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+                console.log(`CROSS-FACE: ${square.name} is not shadowed`);
+              }
+              // Check if path is clear
+              if (this.isPathClear(piece, square.name)) {
+                if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+                  console.log(`CROSS-FACE: Path to ${square.name} is clear`);
+                }
+                // Validate piece-specific rules
+                if (this.isValidPieceMove(piece, square.name)) {
+                  if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+                    console.log(`CROSS-FACE: SUCCESS! ${piece.name} can move to ${square.name}`);
+                  }
+                  pieceToMove = piece;
+                  targetSquare = square;
+                  console.log(`AI found valid move: ${piece.name} to ${square.name}`);
+                  break;
+                } else {
+                  if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+                    console.log(`CROSS-FACE: FAILED - ${square.name} violates piece rules`);
+                  }
+                  console.log(`Move ${piece.name} to ${square.name} violates piece rules`);
+                }
+              } else {
+                if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+                  console.log(`CROSS-FACE: FAILED - Path to ${square.name} is blocked`);
+                }
+                console.log(`Path from ${piece.name} to ${square.name} is blocked`);
+              }
+            } else {
+              if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+                console.log(`CROSS-FACE: FAILED - ${square.name} is shadowed`);
+              }
+            }
+          } else {
+            if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
+              console.log(`CROSS-FACE: FAILED - ${square.name} is occupied`);
+            }
           }
+        }
+        
+        // If we found a valid move, stop trying other pieces
+        if (pieceToMove && targetSquare) {
+          break;
         }
       }
 
-      if (!targetSquare) {
-        console.log("AI could not find any valid move");
+      if (!pieceToMove || !targetSquare) {
+        console.log("AI could not find any valid move with any piece");
         return;
       }
 
@@ -200,6 +245,83 @@ export function createAI(scene, gameStateManager, gameFunctions) {
       }
 
       return true;
+    },
+
+    // Validate piece-specific movement rules
+    isValidPieceMove: function(pieceToMove, targetSquareName) {
+      const currentPos = this.gameState.piecePositions[pieceToMove.name];
+      
+      // Validate based on piece type
+      if (pieceToMove.name.includes('Owl')) {
+        return validateOwlMove(currentPos, targetSquareName);
+      } else if (pieceToMove.name.includes('Kite')) {
+        return validateKiteMove(currentPos, targetSquareName);
+      } else if (pieceToMove.name.includes('Raven')) {
+        return validateRavenMove(currentPos, targetSquareName);
+      }
+      
+      return false; // Unknown piece type
+    },
+
+    // Prioritize cross-face moves when piece is on edge
+    prioritizeCrossFaceMoves: function(boardSquares, currentPos) {
+      if (!currentPos) return [...boardSquares].sort(() => Math.random() - 0.5);
+      
+      const face = currentPos[0];
+      const coords = currentPos.substring(1).split('-');
+      const row = parseInt(coords[0]);
+      const col = parseInt(coords[1]);
+      
+      // Only attempt cross-face moves from edges that connect through the center convergence
+      // The nest (b7-7, y7-7, g7-7) is where all three faces meet at 90° angles
+      // Cross-face moves are only possible along edges radiating from this convergence point
+      let targetCrossFaceSquare = null;
+      
+      // Correct cross-face mappings based on actual geometry:
+      // g5-7 → y7-5, y3-7 → b7-3, b7-4 → y4-7, b3-7 → g7-3
+      
+      if (face === 'g' && col === 7) {
+        // Green col=7 → Yellow row=7: g5-7 → y7-5 (coordinates flip)
+        targetCrossFaceSquare = `y7-${row}`;
+      } else if (face === 'y' && col === 7) {
+        // Yellow col=7 → Brown row=7: y3-7 → b7-3 (coordinates flip)  
+        targetCrossFaceSquare = `b7-${row}`;
+      } else if (face === 'b' && row === 7) {
+        // Brown row=7 → Yellow col=7: b7-4 → y4-7 (coordinates flip)
+        targetCrossFaceSquare = `y${col}-7`;
+      } else if (face === 'b' && col === 7) {
+        // Brown col=7 → Green row=7: b3-7 → g7-3 (coordinates flip)
+        targetCrossFaceSquare = `g7-${row}`;
+      }
+      
+      if (targetCrossFaceSquare) {
+        console.log(`${currentPos} can cross to ${targetCrossFaceSquare} - prioritizing this move`);
+        
+        // Find the specific target square and put it first
+        const targetSquare = boardSquares.find(square => square.name === targetCrossFaceSquare);
+        const otherSquares = boardSquares.filter(square => square.name !== targetCrossFaceSquare);
+        
+        if (targetSquare) {
+          // Put the specific cross-face target first, then shuffle the rest
+          console.log(`Found target square ${targetCrossFaceSquare} - putting it first`);
+          return {
+            squares: [targetSquare, ...otherSquares.sort(() => Math.random() - 0.5)],
+            targetCrossFace: targetCrossFaceSquare
+          };
+        } else {
+          console.log(`Target square ${targetCrossFaceSquare} NOT FOUND in boardSquares`);
+          return {
+            squares: [...boardSquares].sort(() => Math.random() - 0.5),
+            targetCrossFace: targetCrossFaceSquare
+          };
+        }
+      }
+      
+      // If no cross-face target, just shuffle normally
+      return {
+        squares: [...boardSquares].sort(() => Math.random() - 0.5),
+        targetCrossFace: null
+      };
     },
   };
 }
