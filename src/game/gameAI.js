@@ -61,12 +61,69 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         console.log(`AI trying piece: ${piece.name}`);
         
         // Find a valid destination square for this piece
-        // Prefer cross-face moves when piece is in good position
         const currentPos = this.gameState.piecePositions[piece.name];
-        const { squares: shuffledSquares, targetCrossFace } = this.prioritizeCrossFaceMoves(boardSquares, currentPos);
-        const targetCrossFaceSquare = targetCrossFace;
         
-        for (let square of shuffledSquares) {
+        // For Kites and Ravens, explore orthogonal paths like a human would
+        if (piece.name.includes('Kite') || piece.name.includes('Raven')) {
+          console.log(`DEBUG: Exploring orthogonal paths for ${piece.name} from ${currentPos}`);
+          const validDestinations = this.exploreOrthogonalPaths(currentPos, piece.name);
+          console.log(`DEBUG: Found ${validDestinations.length} orthogonal destinations for ${piece.name}`);
+          
+          if (validDestinations.length > 0) {
+            // Pick a random valid destination
+            const randomDestination = validDestinations[Math.floor(Math.random() * validDestinations.length)];
+            targetSquare = scene.meshes.find(mesh => mesh.name === randomDestination);
+            if (targetSquare) {
+              pieceToMove = piece;
+              console.log(`AI found orthogonal path move: ${piece.name} to ${randomDestination}`);
+              break;
+            }
+          } else {
+            console.log(`DEBUG: No orthogonal destinations found for ${piece.name} - will use fallback method`);
+          }
+        }
+        
+        // For Owls, only try adjacent orthogonal squares (one square moves only)
+        if (piece.name.includes('Owl')) {
+          const adjacentSquares = this.getAdjacentSquares(currentPos);
+          for (const adjacentSquare of adjacentSquares) {
+            // Check if square exists and is not occupied
+            const square = scene.meshes.find(mesh => mesh.name === adjacentSquare);
+            if (!square) continue;
+            
+            const isOccupied = Object.values(this.gameState.piecePositions || {}).includes(adjacentSquare);
+            if (isOccupied) continue;
+            
+            // Check shadowing (excluding moving piece)
+            this.gameState.updateShadowedRows(piece.name);
+            let isShadowed = false;
+            for (const color in this.gameState.shadowedRows) {
+              const shadowedCubes = this.gameState.shadowedRows[color];
+              if (shadowedCubes.includes(adjacentSquare)) {
+                isShadowed = true;
+                break;
+              }
+            }
+            if (isShadowed) continue;
+            
+            // Validate with piece rules
+            if (this.isValidPieceMove(piece, adjacentSquare)) {
+              pieceToMove = piece;
+              targetSquare = square;
+              console.log(`AI found valid Owl move: ${piece.name} to ${adjacentSquare}`);
+              break;
+            }
+          }
+          if (pieceToMove && targetSquare) break;
+        }
+        
+        // Fallback: use old method if path exploration failed
+        if (!pieceToMove) {
+          console.log(`DEBUG: Using fallback method for ${piece.name}`);
+          const { squares: shuffledSquares, targetCrossFace } = this.prioritizeCrossFaceMoves(boardSquares, currentPos);
+          const targetCrossFaceSquare = targetCrossFace;
+        
+          for (let square of shuffledSquares) {
           // Debug logging for cross-face target
           if (targetCrossFaceSquare && square.name === targetCrossFaceSquare) {
             console.log(`CROSS-FACE: Checking target ${square.name} for ${piece.name} from ${currentPos}`);
@@ -138,6 +195,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         // If we found a valid move, stop trying other pieces
         if (pieceToMove && targetSquare) {
           break;
+        }
         }
       }
 
@@ -322,6 +380,217 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         squares: [...boardSquares].sort(() => Math.random() - 0.5),
         targetCrossFace: null
       };
+    },
+
+    // Explore orthogonal paths from current position like a human player would
+    exploreOrthogonalPaths: function(currentPos, pieceName) {
+      if (!currentPos) return [];
+      
+      const face = currentPos[0];
+      const coords = currentPos.substring(1).split('-');
+      const row = parseInt(coords[0]);
+      const col = parseInt(coords[1]);
+      
+      console.log(`Exploring orthogonal paths from ${currentPos} for ${pieceName}`);
+      
+      const validDestinations = [];
+      
+      // Explore in 4 orthogonal directions
+      const directions = [
+        { name: 'north', deltaRow: -1, deltaCol: 0 },
+        { name: 'south', deltaRow: 1, deltaCol: 0 },
+        { name: 'east', deltaRow: 0, deltaCol: 1 },
+        { name: 'west', deltaRow: 0, deltaCol: -1 }
+      ];
+      
+      for (const direction of directions) {
+        console.log(`Exploring ${direction.name} from ${currentPos} for ${pieceName}`);
+        
+        let currentRow = row;
+        let currentCol = col;
+        let currentFace = face;
+        const pathDestinations = []; // Store all valid destinations in this direction
+        
+        // Step along this direction until blocked or max distance reached
+        for (let step = 1; step <= 13; step++) { // Max 13 steps (across faces)
+          currentRow += direction.deltaRow;
+          currentCol += direction.deltaCol;
+          
+          // Check if we've gone off the current face
+          if (currentRow < 1 || currentRow > 7 || currentCol < 1 || currentCol > 7) {
+            // Get the last valid position on this face before crossing
+            const lastValidRow = currentRow - direction.deltaRow;
+            const lastValidCol = currentCol - direction.deltaCol;
+            console.log(`Hit edge at ${currentFace}${lastValidRow}-${lastValidCol}, attempting cross-face`);
+            
+            // Try to cross to adjacent face if we're on a connecting edge
+            const crossFaceResult = this.attemptFaceCrossing(currentFace, lastValidRow, lastValidCol, direction);
+            if (crossFaceResult) {
+              currentFace = crossFaceResult.face;
+              currentRow = crossFaceResult.row;
+              currentCol = crossFaceResult.col;
+              console.log(`SUCCESS: Crossed to ${currentFace}${currentRow}-${currentCol}`);
+            } else {
+              console.log(`FAILED: No cross-face path from ${currentFace}${lastValidRow}-${lastValidCol} in ${direction.name}`);
+              break; // Can't continue in this direction
+            }
+          }
+          
+          const targetSquare = `${currentFace}${currentRow}-${currentCol}`;
+          
+          // Check if this square is occupied
+          const isOccupied = Object.values(this.gameState.piecePositions || {}).includes(targetSquare);
+          if (isOccupied) {
+            console.log(`Path blocked at ${targetSquare}`);
+            break; // Path blocked
+          }
+          
+          // Check if this is a nest square (only Owls can land there, and only to win)
+          const isNestSquare = targetSquare.endsWith('7-7');
+          if (isNestSquare) {
+            console.log(`${targetSquare} is nest - stopping exploration in this direction`);
+            // Stop exploring in this direction when we hit the nest
+            break;
+          }
+          
+          // Check if this square is shadowed (excluding the moving piece)
+          this.gameState.updateShadowedRows(pieceName);
+          let isShadowed = false;
+          for (const color in this.gameState.shadowedRows) {
+            const shadowedCubes = this.gameState.shadowedRows[color];
+            if (shadowedCubes.includes(targetSquare)) {
+              isShadowed = true;
+              break;
+            }
+          }
+          
+          if (!isShadowed) {
+            // Also validate against piece-specific rules
+            const pieceValidation = this.isValidPieceMove({ name: pieceName }, targetSquare);
+            if (pieceValidation) {
+              // TEMPORARILY ALLOW ALL MOVES FOR DEBUGGING
+              pathDestinations.push({ square: targetSquare, distance: step });
+              console.log(`Valid destination: ${targetSquare} (distance: ${step}) - Face: ${currentFace} vs Start: ${currentPos[0]}`);
+              if (currentFace !== currentPos[0]) {
+                console.log(`*** CROSS-FACE MOVE FOUND: ${currentPos} → ${targetSquare} ***`);
+              }
+            } else {
+              console.log(`${targetSquare} violates piece rules for ${pieceName} (${currentPos} → ${targetSquare})`);
+            }
+          } else {
+            console.log(`${targetSquare} is shadowed`);
+          }
+          // Continue path exploration even if shadowed (for passing through)
+        }
+        
+        // Prefer longer moves - add destinations with EXTREME distance weighting
+        for (const dest of pathDestinations) {
+          // Much more extreme bias toward longer moves
+          let weight;
+          if (dest.distance === 1) {
+            weight = 1; // Short moves get minimal weight
+          } else if (dest.distance >= 4) {
+            weight = 50; // Long moves get massive weight
+          } else {
+            weight = dest.distance * dest.distance * 3; // Medium moves get squared weight
+          }
+          
+          // Extra bonus for cross-face moves
+          const startFace = currentPos[0];
+          const destFace = dest.square[0];
+          if (startFace !== destFace) {
+            weight *= 10; // 10x bonus for cross-face moves!
+            console.log(`CROSS-FACE BONUS: ${dest.square} gets ${weight} weight`);
+          }
+          
+          for (let i = 0; i < weight; i++) {
+            validDestinations.push(dest.square);
+          }
+        }
+      }
+      
+      console.log(`Found ${validDestinations.length} valid destinations:`, validDestinations);
+      return validDestinations;
+    },
+
+    // Attempt to cross from one face to another when hitting an edge
+    attemptFaceCrossing: function(fromFace, edgeRow, edgeCol, direction) {
+      console.log(`DEBUG: attemptFaceCrossing(${fromFace}, ${edgeRow}, ${edgeCol}, ${direction.name})`);
+      
+      // Only allow crossing from connecting edges (row=7 or col=7)
+      if (fromFace === 'b' && edgeRow === 7) {
+        // Brown row=7 can cross to Yellow col=7
+        console.log(`DEBUG: Brown row=7 crossing to Yellow col=7`);
+        return { face: 'y', row: edgeCol, col: 7 };
+      }
+      if (fromFace === 'b' && edgeCol === 7) {
+        // Brown col=7 can cross to Green row=7  
+        console.log(`DEBUG: Brown col=7 crossing to Green row=7`);
+        return { face: 'g', row: 7, col: edgeRow };
+      }
+      if (fromFace === 'y' && edgeRow === 7) {
+        // Yellow row=7 can cross to Green col=7
+        console.log(`DEBUG: Yellow row=7 crossing to Green col=7`);
+        return { face: 'g', row: edgeCol, col: 7 };
+      }
+      if (fromFace === 'y' && edgeCol === 7) {
+        // Yellow col=7 can cross to Brown row=7
+        console.log(`DEBUG: Yellow col=7 crossing to Brown row=7`);
+        return { face: 'b', row: 7, col: edgeRow };
+      }
+      if (fromFace === 'g' && edgeRow === 7) {
+        // Green row=7 can cross to Brown col=7 or Yellow row=7
+        // For simplicity, prefer Brown
+        console.log(`DEBUG: Green row=7 crossing to Brown col=7`);
+        return { face: 'b', row: edgeCol, col: 7 };
+      }
+      if (fromFace === 'g' && edgeCol === 7) {
+        // Green col=7 can cross to Yellow row=7
+        console.log(`DEBUG: Green col=7 crossing to Yellow row=7`);
+        return { face: 'y', row: 7, col: edgeRow };
+      }
+      
+      console.log(`DEBUG: No crossing possible from ${fromFace}${edgeRow}-${edgeCol}`);
+      return null; // No crossing possible
+    },
+
+    // Get adjacent orthogonal squares for Owl movement (one square only)
+    getAdjacentSquares: function(currentPos) {
+      if (!currentPos) return [];
+      
+      const face = currentPos[0];
+      const coords = currentPos.substring(1).split('-');
+      const row = parseInt(coords[0]);
+      const col = parseInt(coords[1]);
+      
+      const adjacent = [];
+      
+      // Same face adjacent squares
+      const directions = [
+        { deltaRow: -1, deltaCol: 0 }, // north
+        { deltaRow: 1, deltaCol: 0 },  // south
+        { deltaRow: 0, deltaCol: 1 },  // east
+        { deltaRow: 0, deltaCol: -1 }  // west
+      ];
+      
+      for (const direction of directions) {
+        const newRow = row + direction.deltaRow;
+        const newCol = col + direction.deltaCol;
+        
+        // Same face move
+        if (newRow >= 1 && newRow <= 7 && newCol >= 1 && newCol <= 7) {
+          adjacent.push(`${face}${newRow}-${newCol}`);
+        }
+        // Cross-face move (only from connecting edges)
+        else {
+          const crossFaceResult = this.attemptFaceCrossing(face, row, col, direction);
+          if (crossFaceResult) {
+            adjacent.push(`${crossFaceResult.face}${crossFaceResult.row}-${crossFaceResult.col}`);
+          }
+        }
+      }
+      
+      return adjacent;
     },
   };
 }
