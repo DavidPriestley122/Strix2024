@@ -149,10 +149,10 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           route.push(`${startFace}${lineNumber}-${col}`);
         }
         
-        // Cross to next face (clockwise: b→y, y→g, g→b)
-        const nextFace = this.getClockwiseFace(startFace);
+        // Cross to next face: Brown row→Green, Yellow row→Brown, Green row→Yellow
+        const nextFace = this.getRowCrossFace(startFace);
         for (let col = 7; col >= 1; col--) {
-          route.push(`${nextFace}${col}-7`);
+          route.push(`${nextFace}${col}-${lineNumber}`);
         }
       } else {
         // Fixed column route: crosses via col=7 edges  
@@ -161,24 +161,26 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           route.push(`${startFace}${row}-${lineNumber}`);
         }
         
-        // Cross to next face (anticlockwise: b→g, g→y, y→b)
-        const nextFace = this.getAnticlockwiseFace(startFace);
-        for (let row = 7; row >= 1; row--) {
-          route.push(`${nextFace}7-${row}`);
+        // Cross to next face: Brown col→Yellow, Yellow col→Green, Green col→Brown
+        const nextFace = this.getColCrossFace(startFace);
+        for (let col = 7; col >= 1; col--) {
+          route.push(`${nextFace}${lineNumber}-${col}`);
         }
       }
       
       return route;
     },
 
-    getClockwiseFace: function(face) {
-      const clockwise = { 'b': 'y', 'y': 'g', 'g': 'b' };
-      return clockwise[face];
+    getRowCrossFace: function(face) {
+      // Row flightways: Brown→Green, Yellow→Brown, Green→Yellow
+      const rowCrossing = { 'b': 'g', 'y': 'b', 'g': 'y' };
+      return rowCrossing[face];
     },
 
-    getAnticlockwiseFace: function(face) {
-      const anticlockwise = { 'b': 'g', 'g': 'y', 'y': 'b' };
-      return anticlockwise[face];
+    getColCrossFace: function(face) {
+      // Column flightways: Brown→Yellow, Yellow→Green, Green→Brown
+      const colCrossing = { 'b': 'y', 'y': 'g', 'g': 'b' };
+      return colCrossing[face];
     },
 
     // Find a same-face move
