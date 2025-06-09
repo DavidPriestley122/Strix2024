@@ -1,4 +1,4 @@
-export function validateKiteMove(fromSquare, toSquare) {
+export function validateKiteMove(fromSquare, toSquare, piecePositions = {}) {
   if (!fromSquare || !toSquare) return false;
   
   // Parse square coordinates

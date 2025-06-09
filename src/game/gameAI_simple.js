@@ -29,15 +29,12 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         return;
       }
 
-      // Prioritize Kites and Ravens for more dynamic gameplay
-      const kites = playerPieces.filter(p => p.name.includes('Kite'));
-      const ravens = playerPieces.filter(p => p.name.includes('Raven'));
-      const owls = playerPieces.filter(p => p.name.includes('Owl'));
-      const prioritizedPieces = [...kites, ...ravens, ...owls];
+      // Round-robin: give all pieces equal chance to move
+      const shuffledPieces = [...playerPieces].sort(() => Math.random() - 0.5);
       let pieceToMove = null;
       let targetSquare = null;
       
-      for (let piece of prioritizedPieces) {
+      for (let piece of shuffledPieces) {
         const currentPos = this.gameState.piecePositions[piece.name];
         
         // For Kites and Ravens, find all orthogonal moves
@@ -54,11 +51,34 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           }
         }
         
-        // For Owls, try simple adjacent moves
+        // For Owls, prioritize ghosting moves if available
         if (piece.name.includes('Owl')) {
-          const sameFaceMove = this.findSameFaceMove(currentPos, piece.name);
-          if (sameFaceMove) {
-            targetSquare = scene.meshes.find(mesh => mesh.name === sameFaceMove);
+          const orthogonalMoves = this.findOrthogonalMoves(currentPos, piece.name);
+          
+          if (orthogonalMoves.length > 0) {
+            // Separate ghosting moves from regular moves
+            const ghostingMoves = [];
+            const regularMoves = [];
+            
+            for (const move of orthogonalMoves) {
+              // Ghosting move = different face than current position
+              if (move[0] !== currentPos[0]) {
+                ghostingMoves.push(move);
+              } else {
+                regularMoves.push(move);
+              }
+            }
+            
+            // Prioritize ghosting moves if available
+            let chosenMove;
+            if (ghostingMoves.length > 0) {
+              console.log(`GHOSTING AVAILABLE: ${piece.name} at ${currentPos} can ghost to:`, ghostingMoves);
+              chosenMove = ghostingMoves[Math.floor(Math.random() * ghostingMoves.length)];
+            } else {
+              chosenMove = regularMoves[Math.floor(Math.random() * regularMoves.length)];
+            }
+            
+            targetSquare = scene.meshes.find(mesh => mesh.name === chosenMove);
             if (targetSquare) {
               pieceToMove = piece;
               break;
@@ -248,11 +268,11 @@ export function createAI(scene, gameStateManager, gameFunctions) {
       
       // Validate piece-specific rules
       if (pieceName.includes('Owl')) {
-        return validateOwlMove(currentPos, targetSquare);
+        return validateOwlMove(currentPos, targetSquare, this.gameState.piecePositions);
       } else if (pieceName.includes('Kite')) {
-        return validateKiteMove(currentPos, targetSquare);
+        return validateKiteMove(currentPos, targetSquare, this.gameState.piecePositions);
       } else if (pieceName.includes('Raven')) {
-        return validateRavenMove(currentPos, targetSquare);
+        return validateRavenMove(currentPos, targetSquare, this.gameState.piecePositions);
       }
       
       return false;

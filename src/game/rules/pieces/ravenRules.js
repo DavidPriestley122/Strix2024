@@ -1,4 +1,4 @@
-export function validateRavenMove(fromSquare, toSquare) {
+export function validateRavenMove(fromSquare, toSquare, piecePositions = {}) {
   if (!fromSquare || !toSquare) return false;
   
   // Parse square coordinates
