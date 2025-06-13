@@ -5,7 +5,7 @@ import { createGameStateManager } from "./gameStateManager.js";
 import { createCheckerBoards } from "./gameCheckerBoards.js";
 import { createOwlSquareToruses } from "./gameCheckerBoards.js";
 import { createPlayingPieces } from "./gamePieces.js";
-import { createAI } from "./gameAI_simple.js";
+import { createAI } from "./gameAI.js";
 
 import {
   Scene,
