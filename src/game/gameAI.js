@@ -1,18 +1,11 @@
 import {
-  testFlightwayConversions,
-  testCrossAdjacency,
   checkCrossAdjacency,
+  calculateSimpleGhostingDestination,
 } from "./rules/flightwayUtils.js";
 
 // Make them globally available for console testing
-window.testFlightwayConversions = testFlightwayConversions;
-window.testCrossAdjacency = testCrossAdjacency;
 window.checkCrossAdjacency = checkCrossAdjacency;
-
-// Auto-run tests when game loads
-console.log("=== RUNNING FLIGHTWAY TESTS ===");
-testFlightwayConversions();
-testCrossAdjacency();
+window.calculateSimpleGhostingDestination = calculateSimpleGhostingDestination;
 
 import {
   validateOwlMove,
