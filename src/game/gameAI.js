@@ -43,7 +43,8 @@ export function createAI(scene, gameStateManager, gameFunctions) {
       }
 
       // PRIORITY: Try Owls first (they can ghost!)
-      const owls = playerPieces.filter((piece) => piece.name.includes("Owl"));
+      //const owls = playerPieces.filter((piece) => piece.name.includes("Owl"));
+      const owls = []; // Force empty so fallback logic runs
       let pieceToMove = null;
       let targetSquare = null;
 
@@ -127,9 +128,13 @@ export function createAI(scene, gameStateManager, gameFunctions) {
 
       // FALLBACK: If no owl moves available, try other pieces
       if (!pieceToMove) {
-        const nonOwlPieces = playerPieces.filter(
+        /*const nonOwlPieces = playerPieces.filter(
           (piece) => !piece.name.includes("Owl")
         );
+        */
+
+        const nonOwlPieces = playerPieces; // Include all pieces for random selection
+
         const shuffledPieces = [...nonOwlPieces].sort(
           () => Math.random() - 0.5
         );

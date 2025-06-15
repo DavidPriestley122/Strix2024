@@ -1,4 +1,4 @@
-// COMPLETE OWL MOVEMENT VALIDATION (Regular + Ghosting)
+/*// COMPLETE OWL MOVEMENT VALIDATION (Regular + Ghosting)
 
 import {
   checkCrossAdjacency,
@@ -110,58 +110,158 @@ function findGhostingMoves(owlPosition, piecePositions) {
 
   return ghostMoves;
 }
+*/
+import {
+  convertToFlightway,
+  generateFlightwayRoute,
+  isSquareOccupied,
+  checkCrossAdjacency,
+  calculateSimpleGhostingDestination,
+} from "./flightwayUtils.js";
 
-// Check if two squares are orthogonally adjacent (for regular moves)
-function isOrthogonallyAdjacent(square1, square2) {
-  if (!square1 || !square2 || square1 === square2) return false;
+export function validateOwlMove(fromSquare, toSquare, piecePositions = {}) {
+  if (!fromSquare || !toSquare) return false;
 
-  const parse = (sq) => {
-    const face = sq[0];
-    const coords = sq.substring(1).split("-");
-    return { face, row: parseInt(coords[0]), col: parseInt(coords[1]) };
-  };
+  // Get all valid moves for this Owl
+  const validMoves = getAllOwlMoves(fromSquare, piecePositions);
 
-  const sq1 = parse(square1);
-  const sq2 = parse(square2);
-
-  // Must be on same face
-  if (sq1.face !== sq2.face) return false;
-
-  // Must be exactly one square apart orthogonally
-  const rowDiff = Math.abs(sq1.row - sq2.row);
-  const colDiff = Math.abs(sq1.col - sq2.col);
-
-  return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+  return validMoves.includes(toSquare);
 }
 
-// TEST FUNCTIONS
-export function testOwlMovement() {
-  console.log("=== TESTING OWL MOVEMENT SYSTEM ===");
+export function getAllOwlMoves(fromSquare, piecePositions = {}) {
+  const validMoves = [];
 
-  // Test coordinate conversion
-  const testSquare = "b5-3";
-  const flightway = convertToFlightway(testSquare);
-  console.log(`${testSquare} → ${flightway} (expected: b3g5)`);
+  // Get the flightway coordinates for the Owl's current position
+  const flightwayCoord = convertToFlightway(fromSquare);
+  if (!flightwayCoord) return validMoves;
 
-  const backConverted = convertFromFlightway(flightway);
-  console.log(`${flightway} → ${backConverted} (should be: ${testSquare})`);
+  // Parse the flightway coordinates to get the two flightways this square is on
+  const match = flightwayCoord.match(/([byg])(\d)([byg])(\d)/);
+  if (!match) return validMoves;
+
+  const [, face1, num1, face2, num2] = match;
+  const flightway1 = `${face1}${num1}`;
+  const flightway2 = `${face2}${num2}`;
+
+  // 1. Regular moves along flightways (limited to adjacent squares only)
+  const regularMoves1 = getAdjacentMovesAlongFlightway(
+    fromSquare,
+    flightway1,
+    piecePositions
+  );
+  validMoves.push(...regularMoves1);
+
+  const regularMoves2 = getAdjacentMovesAlongFlightway(
+    fromSquare,
+    flightway2,
+    piecePositions
+  );
+  validMoves.push(...regularMoves2);
+
+  // 2. Ghosting moves (special Owl ability)
+  const ghostMoves = getGhostingMoves(fromSquare, piecePositions);
+  validMoves.push(...ghostMoves);
+
+  return validMoves;
 }
 
-export function testGhosting() {
-  console.log("=== TESTING GHOSTING LOGIC ===");
+// Owl-specific: only adjacent squares (unlike Kites/Ravens who can move any distance)
+function getAdjacentMovesAlongFlightway(
+  currentSquare,
+  flightwayName,
+  piecePositions
+) {
+  const validMoves = [];
 
-  // Test example: Owl at y2-5, Kite at b5-3
-  const owlPos = "y2-5";
-  const kitePos = "b5-3";
+  // Generate the complete 14-square flightway sequence
+  const face = flightwayName[0];
+  const num = parseInt(flightwayName[1]);
+  const flightwayRoute = generateFlightwayRoute(face, num);
 
-  const piecePositions = {
-    brownKite: kitePos,
-  };
+  // Find current position in the route
+  const currentIndex = flightwayRoute.indexOf(currentSquare);
+  if (currentIndex === -1) return validMoves;
 
-  console.log(`Owl at ${owlPos} = ${convertToFlightway(owlPos)}`);
-  console.log(`Kite at ${kitePos} = ${convertToFlightway(kitePos)}`);
+  // Check adjacent squares only (one step forward, one step backward)
+  const adjacentIndices = [currentIndex - 1, currentIndex + 1];
 
-  const ghostMoves = findGhostingMoves(owlPos, piecePositions);
-  console.log(`Expected ghost destination: g5-6`);
-  console.log(`Actual ghost moves found:`, ghostMoves);
+  for (const index of adjacentIndices) {
+    if (index < 0 || index >= flightwayRoute.length) continue;
+
+    const targetSquare = flightwayRoute[index];
+
+    // Check if destination is occupied
+    if (isSquareOccupied(targetSquare, piecePositions)) continue;
+
+    // For adjacent moves, path is always clear (only one step)
+    validMoves.push(targetSquare);
+  }
+
+  return validMoves;
+}
+
+// Owl-specific: ghosting functionality
+function getGhostingMoves(owlPosition, piecePositions) {
+  const ghostMoves = [];
+
+  // Check each piece to see if it can serve as a ghosting pivot
+  for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
+    if (piecePos === owlPosition || piecePos === "captured") continue;
+
+    // Check if this piece is cross-adjacent to the Owl
+    const crossAdjacency = checkCrossAdjacency(owlPosition, piecePos);
+    if (crossAdjacency.isAdjacent) {
+      // Calculate the ghosting destination
+      const ghostDestination = calculateSimpleGhostingDestination(
+        owlPosition,
+        piecePos,
+        crossAdjacency
+      );
+
+      if (ghostDestination) {
+        // Verify the destination is not occupied
+        if (!isSquareOccupied(ghostDestination, piecePositions)) {
+          console.log(
+            `👻 GHOSTING: ${pieceName} enables ${owlPosition} → ${ghostDestination} (${crossAdjacency.ghostDirection})`
+          );
+          ghostMoves.push(ghostDestination);
+        }
+      }
+    }
+  }
+
+  return ghostMoves;
+}
+
+// Helper function for backward compatibility
+export function getAdjacentSquares(square) {
+  // This function is used by the existing AI, so keep it for now
+  const adjacent = [];
+
+  const flightwayCoord = convertToFlightway(square);
+  if (!flightwayCoord) return adjacent;
+
+  const match = flightwayCoord.match(/([byg])(\d)([byg])(\d)/);
+  if (!match) return adjacent;
+
+  const [, face1, num1, face2, num2] = match;
+  const flightway1 = `${face1}${num1}`;
+  const flightway2 = `${face2}${num2}`;
+
+  // Get adjacent squares along each flightway
+  const adjacentOnFlightway1 = getAdjacentMovesAlongFlightway(
+    square,
+    flightway1,
+    {}
+  );
+  const adjacentOnFlightway2 = getAdjacentMovesAlongFlightway(
+    square,
+    flightway2,
+    {}
+  );
+
+  adjacent.push(...adjacentOnFlightway1);
+  adjacent.push(...adjacentOnFlightway2);
+
+  return adjacent;
 }

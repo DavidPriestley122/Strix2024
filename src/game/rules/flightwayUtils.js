@@ -327,7 +327,7 @@ export function calculateSimpleGhostingDestination(
   let intersectionSquare;
 
   if (targetFace === "brown") {
-    intersectionSquare = `b${crossShadowNum}-${owlFlightwayNum}`;
+    intersectionSquare = `b${owlFlightwayNum}-${crossShadowNum}`;
   } else if (targetFace === "yellow") {
     intersectionSquare = `y${owlFlightwayNum}-${crossShadowNum}`;
   } else if (targetFace === "green") {
@@ -376,6 +376,50 @@ export function calculateSimpleGhostingDestination(
 
   return destinationSquare;
 }
+
+export function isSquareOccupied(square, piecePositions) {
+  return Object.values(piecePositions || {}).includes(square);
+}
+
+export function isPathClear(fromSquare, toSquare, piecePositions) {
+  // For now, let's implement basic same-face path checking
+  // This can be enhanced later for cross-face moves
+
+  const parseSquare = (squareName) => {
+    const face = squareName[0];
+    const coords = squareName.substring(1).split("-");
+    return { face, row: parseInt(coords[0]), col: parseInt(coords[1]) };
+  };
+
+  const from = parseSquare(fromSquare);
+  const to = parseSquare(toSquare);
+
+  // If different faces, assume path is clear (complex cross-face logic)
+  if (from.face !== to.face) return true;
+
+  // Same face - check orthogonal path
+  const path = [];
+
+  if (from.row === to.row) {
+    // Moving along columns
+    const minCol = Math.min(from.col, to.col);
+    const maxCol = Math.max(from.col, to.col);
+    for (let col = minCol + 1; col < maxCol; col++) {
+      path.push(`${from.face}${from.row}-${col}`);
+    }
+  } else if (from.col === to.col) {
+    // Moving along rows
+    const minRow = Math.min(from.row, to.row);
+    const maxRow = Math.max(from.row, to.row);
+    for (let row = minRow + 1; row < maxRow; row++) {
+      path.push(`${from.face}${row}-${from.col}`);
+    }
+  }
+
+  // Check if any piece blocks the path
+  return !path.some((square) => isSquareOccupied(square, piecePositions));
+}
+
 /**
  * Test function to verify flightway coordinate conversions
  */

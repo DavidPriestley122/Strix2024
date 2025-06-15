@@ -1,65 +1,89 @@
+import {
+  convertToFlightway,
+  generateFlightwayRoute,
+  isSquareOccupied,
+  isPathClear,
+} from "./flightwayUtils.js";
+
 export function validateKiteMove(fromSquare, toSquare, piecePositions = {}) {
   if (!fromSquare || !toSquare) return false;
-  
-  // Parse square coordinates
-  const parseSquare = (squareName) => {
-    const face = squareName[0];
-    const coords = squareName.substring(1).split("-");
-    return { face, row: parseInt(coords[0]), col: parseInt(coords[1]) };
-  };
 
-  const from = parseSquare(fromSquare);
-  const to = parseSquare(toSquare);
-  
-  // Generate the two orthogonal routes from current position
-  const route1 = generateRoute(from.face, from.row, 'row');
-  const route2 = generateRoute(from.face, from.col, 'column');
-  
-  // Kites can move to any square on either route (except current position)
-  const allRouteSquares = [...route1, ...route2].filter(square => square !== fromSquare);
-  
-  return allRouteSquares.includes(toSquare);
+  // Get all valid moves for this Kite
+  const validMoves = getAllKiteMoves(fromSquare, piecePositions);
+
+  return validMoves.includes(toSquare);
 }
 
-// Helper function to generate routes (copied from gameAI_simple.js)
-function generateRoute(startFace, lineNumber, lineType) {
-  const route = [];
-  
-  if (lineType === 'row') {
-    // Fixed row route
-    for (let col = 1; col <= 7; col++) {
-      route.push(`${startFace}${lineNumber}-${col}`);
+export function getAllKiteMoves(fromSquare, piecePositions = {}) {
+  const validMoves = [];
+
+  // Get the flightway coordinates for the Kite's current position
+  const flightwayCoord = convertToFlightway(fromSquare);
+  if (!flightwayCoord) return validMoves;
+
+  // Parse the flightway coordinates to get the two flightways this square is on
+  const match = flightwayCoord.match(/([byg])(\d)([byg])(\d)/);
+  if (!match) return validMoves;
+
+  const [, face1, num1, face2, num2] = match;
+  const flightway1 = `${face1}${num1}`;
+  const flightway2 = `${face2}${num2}`;
+
+  // Get moves along first flightway
+  const moves1 = getMovesAlongFlightway(fromSquare, flightway1, piecePositions);
+  validMoves.push(...moves1);
+
+  // Get moves along second flightway
+  const moves2 = getMovesAlongFlightway(fromSquare, flightway2, piecePositions);
+  validMoves.push(...moves2);
+
+  return validMoves;
+}
+
+function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
+  const validMoves = [];
+
+  // Generate the complete 14-square flightway sequence
+  const face = flightwayName[0];
+  const num = parseInt(flightwayName[1]);
+  const flightwayRoute = generateFlightwayRoute(face, num);
+
+  // Find current position in the route
+  const currentIndex = flightwayRoute.indexOf(currentSquare);
+  if (currentIndex === -1) return validMoves;
+
+  // Kites can move to any square along the flightway (like Rooks)
+  for (let i = 0; i < flightwayRoute.length; i++) {
+    if (i === currentIndex) continue; // Skip current position
+
+    const targetSquare = flightwayRoute[i];
+
+    // Check if destination is occupied
+    if (isSquareOccupied(targetSquare, piecePositions)) {
+      // Can't move to occupied square, but also can't jump over it
+      // So if we're going in this direction, stop here
+      if (i > currentIndex) {
+        // Moving forward in route - stop here
+        break;
+      } else {
+        // Moving backward in route - continue checking but don't add this square
+        continue;
+      }
     }
-    
-    // Cross to next face: Brown row→Green, Yellow row→Brown, Green row→Yellow
-    const nextFace = getRowCrossFace(startFace);
-    for (let col = 7; col >= 1; col--) {
-      route.push(`${nextFace}${col}-${lineNumber}`);
+
+    // Check if path is clear (no pieces between current and target)
+    if (!isPathClear(currentSquare, targetSquare, piecePositions)) {
+      // Path blocked - if going in this direction, stop
+      if (i > currentIndex) {
+        break;
+      } else {
+        continue;
+      }
     }
-  } else {
-    // Fixed column route
-    for (let row = 1; row <= 7; row++) {
-      route.push(`${startFace}${row}-${lineNumber}`);
-    }
-    
-    // Cross to next face: Brown col→Yellow, Yellow col→Green, Green col→Brown
-    const nextFace = getColCrossFace(startFace);
-    for (let col = 7; col >= 1; col--) {
-      route.push(`${nextFace}${lineNumber}-${col}`);
-    }
+
+    // Valid move
+    validMoves.push(targetSquare);
   }
-  
-  return route;
-}
 
-function getRowCrossFace(face) {
-  // Row flightways: Brown→Green, Yellow→Brown, Green→Yellow
-  const rowCrossing = { 'b': 'g', 'y': 'b', 'g': 'y' };
-  return rowCrossing[face];
-}
-
-function getColCrossFace(face) {
-  // Column flightways: Brown→Yellow, Yellow→Green, Green→Brown
-  const colCrossing = { 'b': 'y', 'y': 'g', 'g': 'b' };
-  return colCrossing[face];
+  return validMoves;
 }
