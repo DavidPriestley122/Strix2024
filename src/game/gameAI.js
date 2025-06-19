@@ -3,6 +3,8 @@ import {
   calculateSimpleGhostingDestination,
 } from "./rules/flightwayUtils.js";
 
+import { Vector3 } from "@babylonjs/core";
+
 // Make them globally available for console testing
 window.checkCrossAdjacency = checkCrossAdjacency;
 window.calculateSimpleGhostingDestination = calculateSimpleGhostingDestination;
@@ -16,6 +18,30 @@ import { validateKiteMove } from "./rules/kiteRules.js";
 import { validateRavenMove } from "./rules/ravenRules.js";
 
 export function createAI(scene, gameStateManager, gameFunctions) {
+  // Helper functions for owlHalla management
+  function getOwlHallaCubeName(pieceName) {
+    const owlHallaCubeNames = {
+      brownOwl: "b7--1",
+      brownKite: "b6--1",
+      brownRaven: "b5--1",
+      yellowOwl: "y7--1",
+      yellowKite: "y6--1",
+      yellowRaven: "y5--1",
+      greenOwl: "g7--1",
+      greenKite: "g6--1",
+      greenRaven: "g5--1",
+    };
+    return owlHallaCubeNames[pieceName];
+  }
+
+  function getPositionFromOwlHallaCubeName(cubeName) {
+    const cube = scene.getMeshByName(cubeName);
+    if (cube) {
+      return cube.position.clone();
+    }
+    return new Vector3(0, 0, 0);
+  }
+
   return {
     gameState: gameStateManager,
 
@@ -42,9 +68,8 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         return;
       }
 
-      // PRIORITY: Try Owls first (they can ghost!)
-      //const owls = playerPieces.filter((piece) => piece.name.includes("Owl"));
-      const owls = []; // Force empty so fallback logic runs
+      // PRIORITY: Try Owls first (they can ghost and capture!)
+      const owls = playerPieces.filter((piece) => piece.name.includes("Owl"));
       let pieceToMove = null;
       let targetSquare = null;
 
@@ -64,15 +89,17 @@ export function createAI(scene, gameStateManager, gameFunctions) {
 */
         const allPossibleMoves = getAllOwlMoves(
           currentPos,
-          this.gameState.piecePositions
+          this.gameState.piecePositions,
+          owl.name
         );
-        console.log(`📋 getAllOwlMoves returned:`, allPossibleMoves);
+        console.log(`📋 ${owl.name} at ${currentPos} - getAllOwlMoves returned:`, allPossibleMoves);
         const allValidMoves = allPossibleMoves.filter((move) =>
           this.isValidMove(move, owl.name)
         );
         console.log(`✅ After validation:`, allValidMoves);
 
-        if (allValidMoves.length > 0) {
+        // Give other pieces a chance - only use Owl 50% of the time even when it has moves
+        if (allValidMoves.length > 0 && Math.random() < 0.5) {
           /* console.log(`${owl.name} at ${currentPos} has ${allValidMoves.length} valid moves:`, allValidMoves);
           
           // Separate ghosting from regular moves
@@ -99,7 +126,30 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           console.log(`  Regular moves:`, [...regularMoves]);
           console.log(`  Ghosting moves:`, ghostingMoves);
 
-          if (ghostingMoves.length > 0) {
+          // NEW: Identify capture moves from the moves that passed validation
+          const captureMoves = allValidMoves.filter(move => {
+            // Check if this move has an opponent piece (same logic as validation)
+            const occupyingPiece = Object.entries(this.gameState.piecePositions).find(
+              ([pieceName, piecePos]) => piecePos === move && pieceName !== owl.name
+            );
+            if (occupyingPiece) {
+              const [pieceName] = occupyingPiece;
+              const owlColor = owl.name.split(/(?=[A-Z])/)[0];
+              const pieceColor = pieceName.split(/(?=[A-Z])/)[0];
+              console.log(`🔍 Checking if ${move} is capture: ${pieceName}(${pieceColor}) vs ${owl.name}(${owlColor})`);
+              return owlColor !== pieceColor; // Different colors = opponent piece
+            }
+            return false;
+          });
+
+          console.log(`  Capture moves:`, captureMoves);
+
+          if (captureMoves.length > 0) {
+            console.log(`🎯 CAPTURE AVAILABLE: ${owl.name} can capture at:`, captureMoves);
+            // PRIORITIZE CAPTURES for testing
+            const chosenMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
+            targetSquare = scene.meshes.find((mesh) => mesh.name === chosenMove);
+          } else if (ghostingMoves.length > 0) {
             console.log(`🦉 GHOSTING FOUND: ${owl.name} can ghost to:`, [
               ...ghostingMoves,
             ]);
@@ -111,7 +161,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
               (mesh) => mesh.name === chosenMove
             );
           } else {
-            // Use regular moves if no ghosting available
+            // Use regular moves if no captures or ghosting available
             const chosenMove =
               allValidMoves[Math.floor(Math.random() * allValidMoves.length)];
             targetSquare = scene.meshes.find(
@@ -197,10 +247,52 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         targetRotation,
         30,
         function () {
+          // Check if this move captures a piece (for Owls only - they move into victim's square)
+          let capturedPiece = null;
+          if (piece.name.includes('Owl')) {
+            // Find if there was a piece at the destination before this move
+            for (const [pieceName, piecePos] of Object.entries(gameStateManager.piecePositions)) {
+              if (piecePos === targetSquare.name && pieceName !== piece.name) {
+                capturedPiece = pieceName;
+                break;
+              }
+            }
+            
+            // If we found a captured piece, move it to owlHalla atomically
+            if (capturedPiece) {
+              console.log(`🦉 CAPTURE: ${piece.name} captures ${capturedPiece} at ${targetSquare.name}`);
+              gameStateManager.piecePositions[capturedPiece] = "captured";
+              
+              // Move the captured piece to owlHalla visually
+              const capturedMesh = scene.getMeshByName(capturedPiece);
+              if (capturedMesh) {
+                // Get the owlHalla position for this piece
+                const owlHallaCubeName = getOwlHallaCubeName(capturedPiece);
+                const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
+                
+                // Apply offset based on piece color
+                if (capturedPiece.startsWith("brown")) {
+                  owlHallaPosition.y += 3.5;
+                } else if (capturedPiece.startsWith("yellow")) {
+                  owlHallaPosition.x += 3.5;
+                } else if (capturedPiece.startsWith("green")) {
+                  owlHallaPosition.z += 3.5;
+                }
+                
+                capturedMesh.position = owlHallaPosition;
+                capturedMesh.visibility = false; // owlHalla pieces are initially invisible
+                
+                // Record the capture
+                gameStateManager.recordCapture(capturedPiece, targetSquare.name);
+              }
+            }
+          }
+          
           gameStateManager.addMoveToHistory(
             piece.name,
             oldPosition,
-            targetSquare.name
+            targetSquare.name,
+            capturedPiece
           );
         }
       );
@@ -297,14 +389,38 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         return false;
       }
 
-      // Check not occupied
+      // Check not occupied (unless it's an Owl capturing an opponent piece)
       const isOccupied = Object.values(
         this.gameState.piecePositions || {}
       ).includes(targetSquare);
       console.log(`🔍 Checking ${targetSquare} - occupied: ${isOccupied}`);
+      
       if (isOccupied) {
-        console.log(`❌ Move blocked - ${targetSquare} is occupied`);
-        return false;
+        // For Owls, allow moves to occupied squares if they contain opponent pieces
+        if (pieceName.includes('Owl')) {
+          const occupyingPiece = Object.entries(this.gameState.piecePositions).find(
+            ([pieceNameEntry, piecePos]) => piecePos === targetSquare && pieceNameEntry !== pieceName
+          );
+          if (occupyingPiece) {
+            const [occupyingPieceName] = occupyingPiece;
+            const movingPieceColor = pieceName.split(/(?=[A-Z])/)[0];
+            const occupyingPieceColor = occupyingPieceName.split(/(?=[A-Z])/)[0];
+            
+            if (movingPieceColor !== occupyingPieceColor) {
+              console.log(`✅ Owl capture allowed - ${pieceName} can capture ${occupyingPieceName} at ${targetSquare}`);
+              // This is a valid capture - skip the normal occupation check
+            } else {
+              console.log(`❌ Move blocked - ${targetSquare} occupied by own piece ${occupyingPieceName}`);
+              return false;
+            }
+          } else {
+            console.log(`❌ Move blocked - ${targetSquare} is occupied`);
+            return false;
+          }
+        } else {
+          console.log(`❌ Move blocked - ${targetSquare} is occupied`);
+          return false;
+        }
       }
 
       // Check not nest (except for owls)
@@ -317,17 +433,22 @@ export function createAI(scene, gameStateManager, gameFunctions) {
       for (const color in this.gameState.shadowedRows) {
         const shadowedCubes = this.gameState.shadowedRows[color];
         if (shadowedCubes.includes(targetSquare)) {
+          console.log(`❌ Move blocked - ${targetSquare} is shadowed by ${color}`);
           return false;
         }
       }
+      console.log(`✅ Shadow check passed for ${targetSquare}`);
 
       // Validate piece-specific rules
       if (pieceName.includes("Owl")) {
-        return validateOwlMove(
+        const owlResult = validateOwlMove(
           currentPos,
           targetSquare,
-          this.gameState.piecePositions
+          this.gameState.piecePositions,
+          pieceName
         );
+        console.log(`✅ Owl rule validation for ${targetSquare}: ${owlResult}`);
+        return owlResult;
       } else if (pieceName.includes("Kite")) {
         return validateKiteMove(
           currentPos,

@@ -119,16 +119,31 @@ import {
   calculateSimpleGhostingDestination,
 } from "./flightwayUtils.js";
 
-export function validateOwlMove(fromSquare, toSquare, piecePositions = {}) {
+export function validateOwlMove(fromSquare, toSquare, piecePositions = {}, movingPieceName = null) {
   if (!fromSquare || !toSquare) return false;
 
-  // Get all valid moves for this Owl
-  const validMoves = getAllOwlMoves(fromSquare, piecePositions);
+  // Check if this is a capture move first (to avoid circular dependency)
+  const targetPiece = findPieceAtSquare(toSquare, piecePositions);
+  if (targetPiece && movingPieceName) {
+    const movingPieceColor = movingPieceName.split(/(?=[A-Z])/)[0];
+    const targetPieceColor = targetPiece.split(/(?=[A-Z])/)[0];
+    
+    if (movingPieceColor !== targetPieceColor) {
+      // This is a capture - check if it's adjacent
+      const adjacentSquares = getAdjacentSquares(fromSquare);
+      if (adjacentSquares.includes(toSquare)) {
+        return true; // Valid capture move
+      }
+    }
+  }
+
+  // For non-capture moves, use the standard logic (but without capture moves to avoid recursion)
+  const validMoves = getAllOwlMoves(fromSquare, piecePositions, null); // Don't include captures to avoid recursion
 
   return validMoves.includes(toSquare);
 }
 
-export function getAllOwlMoves(fromSquare, piecePositions = {}) {
+export function getAllOwlMoves(fromSquare, piecePositions = {}, movingPieceName = null) {
   const validMoves = [];
 
   // Get the flightway coordinates for the Owl's current position
@@ -161,6 +176,12 @@ export function getAllOwlMoves(fromSquare, piecePositions = {}) {
   // 2. Ghosting moves (special Owl ability)
   const ghostMoves = getGhostingMoves(fromSquare, piecePositions);
   validMoves.push(...ghostMoves);
+
+  // 3. NEW: Capture moves (adjacent squares with opponent pieces)
+  if (movingPieceName) {
+    const captureMoves = getOwlCaptureMoves(fromSquare, piecePositions, movingPieceName);
+    validMoves.push(...captureMoves);
+  }
 
   return validMoves;
 }
@@ -231,6 +252,83 @@ function getGhostingMoves(owlPosition, piecePositions) {
   }
 
   return ghostMoves;
+}
+
+// Owl capture moves: adjacent squares with opponent pieces
+function getOwlCaptureMoves(fromSquare, piecePositions, movingPieceName) {
+  console.log(`🔍 getOwlCaptureMoves called for ${movingPieceName} at ${fromSquare}`);
+  const captureMoves = [];
+  
+  // Get all adjacent squares (same logic as regular moves but ignore occupation)
+  const flightwayCoord = convertToFlightway(fromSquare);
+  if (!flightwayCoord) return captureMoves;
+
+  const match = flightwayCoord.match(/([byg])(\d)([byg])(\d)/);
+  if (!match) return captureMoves;
+
+  const [, face1, num1, face2, num2] = match;
+  const flightway1 = `${face1}${num1}`;
+  const flightway2 = `${face2}${num2}`;
+
+  // Get adjacent squares along each flightway (ignoring occupation for now)
+  const adjacentSquares1 = getAdjacentSquaresIgnoringOccupation(fromSquare, flightway1);
+  const adjacentSquares2 = getAdjacentSquaresIgnoringOccupation(fromSquare, flightway2);
+  
+  const allAdjacentSquares = [...adjacentSquares1, ...adjacentSquares2];
+
+  // Filter for squares that contain opponent pieces
+  console.log(`🔍 Adjacent squares to check:`, allAdjacentSquares);
+  for (const square of allAdjacentSquares) {
+    const occupyingPiece = findPieceAtSquare(square, piecePositions);
+    console.log(`🔍 Square ${square} occupied by:`, occupyingPiece);
+    if (occupyingPiece && movingPieceName) {
+      // Check if it's an opponent piece
+      const movingPieceColor = movingPieceName.split(/(?=[A-Z])/)[0];
+      const occupyingPieceColor = occupyingPiece.split(/(?=[A-Z])/)[0];
+      
+      console.log(`🔍 Colors: ${movingPieceName}(${movingPieceColor}) vs ${occupyingPiece}(${occupyingPieceColor})`);
+      
+      if (movingPieceColor !== occupyingPieceColor) {
+        console.log(`🎯 CAPTURE MOVE FOUND: ${movingPieceName} can capture ${occupyingPiece} at ${square}`);
+        captureMoves.push(square);
+      }
+    }
+  }
+
+  console.log(`🔍 getOwlCaptureMoves returning:`, captureMoves);
+  return captureMoves;
+}
+
+// Helper to get adjacent squares without checking occupation
+function getAdjacentSquaresIgnoringOccupation(currentSquare, flightwayName) {
+  const adjacent = [];
+  
+  const face = flightwayName[0];
+  const num = parseInt(flightwayName[1]);
+  const flightwayRoute = generateFlightwayRoute(face, num);
+  
+  const currentIndex = flightwayRoute.indexOf(currentSquare);
+  if (currentIndex === -1) return adjacent;
+  
+  // Check adjacent squares only (one step forward, one step backward)
+  const adjacentIndices = [currentIndex - 1, currentIndex + 1];
+  
+  for (const index of adjacentIndices) {
+    if (index < 0 || index >= flightwayRoute.length) continue;
+    adjacent.push(flightwayRoute[index]);
+  }
+  
+  return adjacent;
+}
+
+// Helper function to find which piece is at a given square
+function findPieceAtSquare(square, piecePositions) {
+  for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
+    if (piecePos === square && piecePos !== "captured") {
+      return pieceName;
+    }
+  }
+  return null;
 }
 
 // Helper function for backward compatibility
