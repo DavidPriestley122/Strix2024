@@ -223,8 +223,50 @@ export function createAI(scene, gameStateManager, gameFunctions) {
     },
 
     executeMoveDirectly: function (piece, targetSquare) {
-      // Execute the move
       const oldPosition = this.gameState.piecePositions[piece.name];
+      
+      // Check for capture BEFORE moving the piece (for Owls only)
+      let capturedPiece = null;
+      if (piece.name.includes('Owl')) {
+        // Find if there's a piece at the destination square
+        for (const [pieceName, piecePos] of Object.entries(this.gameState.piecePositions)) {
+          if (piecePos === targetSquare.name && pieceName !== piece.name) {
+            capturedPiece = pieceName;
+            break;
+          }
+        }
+        
+        // If we found a captured piece, remove it from the board immediately
+        if (capturedPiece) {
+          console.log(`🦉 CAPTURE: ${piece.name} captures ${capturedPiece} at ${targetSquare.name}`);
+          this.gameState.piecePositions[capturedPiece] = "captured";
+          
+          // Move the captured piece to owlHalla visually (immediately)
+          const capturedMesh = scene.getMeshByName(capturedPiece);
+          if (capturedMesh) {
+            // Get the owlHalla position for this piece
+            const owlHallaCubeName = getOwlHallaCubeName(capturedPiece);
+            const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
+            
+            // Apply offset based on piece color
+            if (capturedPiece.startsWith("brown")) {
+              owlHallaPosition.y += 3.5;
+            } else if (capturedPiece.startsWith("yellow")) {
+              owlHallaPosition.x += 3.5;
+            } else if (capturedPiece.startsWith("green")) {
+              owlHallaPosition.z += 3.5;
+            }
+            
+            capturedMesh.position = owlHallaPosition;
+            capturedMesh.visibility = false; // owlHalla pieces are initially invisible
+            
+            // Record the capture
+            this.gameState.recordCapture(capturedPiece, targetSquare.name);
+          }
+        }
+      }
+
+      // Now move the piece to the target square
       this.gameState.piecePositions[piece.name] = targetSquare.name;
 
       // Calculate position and rotation from the target square
@@ -240,54 +282,14 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         targetPosition.z += 3.75;
       }
 
-      // Execute the move
+      // Execute the move animation
       gameFunctions.animatePieceMovement(
         piece,
         targetPosition,
         targetRotation,
         30,
         function () {
-          // Check if this move captures a piece (for Owls only - they move into victim's square)
-          let capturedPiece = null;
-          if (piece.name.includes('Owl')) {
-            // Find if there was a piece at the destination before this move
-            for (const [pieceName, piecePos] of Object.entries(gameStateManager.piecePositions)) {
-              if (piecePos === targetSquare.name && pieceName !== piece.name) {
-                capturedPiece = pieceName;
-                break;
-              }
-            }
-            
-            // If we found a captured piece, move it to owlHalla atomically
-            if (capturedPiece) {
-              console.log(`🦉 CAPTURE: ${piece.name} captures ${capturedPiece} at ${targetSquare.name}`);
-              gameStateManager.piecePositions[capturedPiece] = "captured";
-              
-              // Move the captured piece to owlHalla visually
-              const capturedMesh = scene.getMeshByName(capturedPiece);
-              if (capturedMesh) {
-                // Get the owlHalla position for this piece
-                const owlHallaCubeName = getOwlHallaCubeName(capturedPiece);
-                const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
-                
-                // Apply offset based on piece color
-                if (capturedPiece.startsWith("brown")) {
-                  owlHallaPosition.y += 3.5;
-                } else if (capturedPiece.startsWith("yellow")) {
-                  owlHallaPosition.x += 3.5;
-                } else if (capturedPiece.startsWith("green")) {
-                  owlHallaPosition.z += 3.5;
-                }
-                
-                capturedMesh.position = owlHallaPosition;
-                capturedMesh.visibility = false; // owlHalla pieces are initially invisible
-                
-                // Record the capture
-                gameStateManager.recordCapture(capturedPiece, targetSquare.name);
-              }
-            }
-          }
-          
+          // Add move to history after animation completes
           gameStateManager.addMoveToHistory(
             piece.name,
             oldPosition,
