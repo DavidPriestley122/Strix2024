@@ -236,6 +236,7 @@ export default function createScene(engine, canvas) {
     isMoveCollidingWithShadowedRows: isMoveCollidingWithShadowedRows,
     updateShadowedRows:
       gameStateManager.updateShadowedRows.bind(gameStateManager),
+    updatePiecesArrivingOnOwlHalla: updatePiecesArrivingOnOwlHalla,
   });
   gameStateManager.setAI(aiModule);
 

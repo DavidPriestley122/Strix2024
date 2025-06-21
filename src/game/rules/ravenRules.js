@@ -14,7 +14,7 @@ export function validateRavenMove(fromSquare, toSquare, piecePositions = {}) {
   return validMoves.includes(toSquare);
 }
 
-export function getAllRavenMoves(fromSquare, piecePositions = {}) {
+export function getAllRavenMoves(fromSquare, piecePositions = {}, movingPieceName = null) {
   const validMoves = [];
 
   // Get the flightway coordinates for the Raven's current position

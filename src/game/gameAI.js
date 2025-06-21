@@ -14,8 +14,8 @@ import {
   getAllOwlMoves,
   getAdjacentSquares,
 } from "./rules/owlRules.js";
-import { validateKiteMove } from "./rules/kiteRules.js";
-import { validateRavenMove } from "./rules/ravenRules.js";
+import { validateKiteMove, getAllKiteMoves } from "./rules/kiteRules.js";
+import { validateRavenMove, getAllRavenMoves } from "./rules/ravenRules.js";
 
 export function createAI(scene, gameStateManager, gameFunctions) {
   // Helper functions for owlHalla management
@@ -42,6 +42,39 @@ export function createAI(scene, gameStateManager, gameFunctions) {
     return new Vector3(0, 0, 0);
   }
 
+  // Helper functions for Kite captures
+  function getAdjacentSquaresForCapture(square) {
+    const face = square[0];
+    const coords = square.substring(1).split("-");
+    const row = parseInt(coords[0]);
+    const col = parseInt(coords[1]);
+    
+    const adjacent = [];
+    const directions = [
+      [0, 1], [0, -1], [1, 0], [-1, 0]  // right, left, down, up
+    ];
+    
+    for (const [dr, dc] of directions) {
+      const newRow = row + dr;
+      const newCol = col + dc;
+      
+      if (newRow >= 1 && newRow <= 7 && newCol >= 1 && newCol <= 7) {
+        adjacent.push(`${face}${newRow}-${newCol}`);
+      }
+    }
+    
+    return adjacent;
+  }
+
+  function findPieceAtSquareForCapture(square, piecePositions) {
+    for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
+      if (piecePos === square && piecePos !== "captured") {
+        return pieceName;
+      }
+    }
+    return null;
+  }
+
   return {
     gameState: gameStateManager,
 
@@ -50,6 +83,13 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         if (!this.gameState.aiGameRunning || this.gameState.aiGamePaused) {
           return;
         }
+        
+        // Check if game is over before making a move
+        if (this.gameState.gameOver) {
+          console.log(`🏁 Game is over - AI stopping`);
+          return;
+        }
+        
         this.executeSimpleMove(playerColor);
       }, 2000);
     },
@@ -68,149 +108,61 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         return;
       }
 
-      // PRIORITY: Try Owls first (they can ghost and capture!)
-      const owls = playerPieces.filter((piece) => piece.name.includes("Owl"));
+      // Collect all pieces with valid moves, then pick randomly
+      const piecesWithMoves = [];
       let pieceToMove = null;
       let targetSquare = null;
 
-      for (let owl of owls) {
-        const currentPos = this.gameState.piecePositions[owl.name];
-
-        // Use the new function that includes both regular and ghosting moves
-
-        /*// Get all possible moves, then filter through isValidMove
-        const allPossibleMoves = getAllOwlMoves(
-          currentPos,
-          this.gameState.piecePositions
-        );
+      // Check all pieces for valid moves
+      const shuffledPieces = [...playerPieces].sort(() => Math.random() - 0.5);
+      
+      for (let piece of shuffledPieces) {
+        const currentPos = this.gameState.piecePositions[piece.name];
+        let allPossibleMoves = [];
+        
+        // Get moves based on piece type
+        if (piece.name.includes('Owl')) {
+          allPossibleMoves = getAllOwlMoves(currentPos, this.gameState.piecePositions, piece.name);
+          console.log(`📋 ${piece.name} at ${currentPos} - getAllOwlMoves returned:`, allPossibleMoves);
+        } else if (piece.name.includes('Kite')) {
+          allPossibleMoves = getAllKiteMoves(currentPos, this.gameState.piecePositions, piece.name);
+        } else if (piece.name.includes('Raven')) {
+          allPossibleMoves = getAllRavenMoves(currentPos, this.gameState.piecePositions, piece.name);
+        }
+        
+        // Filter through validation
         const allValidMoves = allPossibleMoves.filter((move) =>
-          this.isValidMove(move, owl.name)
+          this.isValidMove(move, piece.name)
         );
-*/
-        const allPossibleMoves = getAllOwlMoves(
-          currentPos,
-          this.gameState.piecePositions,
-          owl.name
-        );
-        console.log(`📋 ${owl.name} at ${currentPos} - getAllOwlMoves returned:`, allPossibleMoves);
-        const allValidMoves = allPossibleMoves.filter((move) =>
-          this.isValidMove(move, owl.name)
-        );
-        console.log(`✅ After validation:`, allValidMoves);
-
-        // Give other pieces a chance - only use Owl 50% of the time even when it has moves
-        if (allValidMoves.length > 0 && Math.random() < 0.5) {
-          /* console.log(`${owl.name} at ${currentPos} has ${allValidMoves.length} valid moves:`, allValidMoves);
-          
-          // Separate ghosting from regular moves
-          const regularMoves = getAdjacentSquares(currentPos);
-          const ghostingMoves = allValidMoves.filter(move => !regularMoves.includes(move));
-          
-          if (ghostingMoves.length > 0) {
-            console.log(`🦉 GHOSTING FOUND: ${owl.name} can ghost to:`, ghostingMoves);
-            */
-          console.log(
-            `${owl.name} at ${currentPos} has ${allValidMoves.length} valid moves:`,
-            allValidMoves
-          );
-
-          // Separate ghosting from regular moves
-          const regularMoves = getAdjacentSquares(currentPos);
-
-          console.log(`🔧 Regular moves for ${currentPos}:`, [...regularMoves]); // ADD THIS LINE
-
-          const ghostingMoves = allValidMoves.filter(
-            (move) => !regularMoves.includes(move)
-          );
-
-          console.log(`  Regular moves:`, [...regularMoves]);
-          console.log(`  Ghosting moves:`, ghostingMoves);
-
-          // NEW: Identify capture moves from the moves that passed validation
-          const captureMoves = allValidMoves.filter(move => {
-            // Check if this move has an opponent piece (same logic as validation)
-            const occupyingPiece = Object.entries(this.gameState.piecePositions).find(
-              ([pieceName, piecePos]) => piecePos === move && pieceName !== owl.name
-            );
-            if (occupyingPiece) {
-              const [pieceName] = occupyingPiece;
-              const owlColor = owl.name.split(/(?=[A-Z])/)[0];
-              const pieceColor = pieceName.split(/(?=[A-Z])/)[0];
-              console.log(`🔍 Checking if ${move} is capture: ${pieceName}(${pieceColor}) vs ${owl.name}(${owlColor})`);
-              return owlColor !== pieceColor; // Different colors = opponent piece
-            }
-            return false;
+        
+        console.log(`✅ ${piece.name} valid moves:`, allValidMoves);
+        
+        // Check if any valid moves include nest squares (debugging)
+        const nestMoves = allValidMoves.filter(move => move.endsWith('7-7'));
+        if (nestMoves.length > 0 && !piece.name.includes('Owl')) {
+          console.log(`🚨 BUG: Non-Owl ${piece.name} has nest moves that passed validation:`, nestMoves);
+        }
+        
+        if (allValidMoves.length > 0) {
+          // Add this piece and its moves to the collection
+          piecesWithMoves.push({
+            piece: piece,
+            moves: allValidMoves
           });
-
-          console.log(`  Capture moves:`, captureMoves);
-
-          if (captureMoves.length > 0) {
-            console.log(`🎯 CAPTURE AVAILABLE: ${owl.name} can capture at:`, captureMoves);
-            // PRIORITIZE CAPTURES for testing
-            const chosenMove = captureMoves[Math.floor(Math.random() * captureMoves.length)];
-            targetSquare = scene.meshes.find((mesh) => mesh.name === chosenMove);
-          } else if (ghostingMoves.length > 0) {
-            console.log(`🦉 GHOSTING FOUND: ${owl.name} can ghost to:`, [
-              ...ghostingMoves,
-            ]);
-
-            // Prefer ghosting moves
-            const chosenMove =
-              ghostingMoves[Math.floor(Math.random() * ghostingMoves.length)];
-            targetSquare = scene.meshes.find(
-              (mesh) => mesh.name === chosenMove
-            );
-          } else {
-            // Use regular moves if no captures or ghosting available
-            const chosenMove =
-              allValidMoves[Math.floor(Math.random() * allValidMoves.length)];
-            targetSquare = scene.meshes.find(
-              (mesh) => mesh.name === chosenMove
-            );
-          }
-
-          if (targetSquare) {
-            pieceToMove = owl;
-            break; // Found a move for this owl
-          }
         }
       }
 
-      // FALLBACK: If no owl moves available, try other pieces
-      if (!pieceToMove) {
-        /*const nonOwlPieces = playerPieces.filter(
-          (piece) => !piece.name.includes("Owl")
-        );
-        */
-
-        const nonOwlPieces = playerPieces; // Include all pieces for random selection
-
-        const shuffledPieces = [...nonOwlPieces].sort(
-          () => Math.random() - 0.5
-        );
-
-        for (let piece of shuffledPieces) {
-          const currentPos = this.gameState.piecePositions[piece.name];
-
-          // For Kites and Ravens, find all orthogonal moves
-          const orthogonalMoves = this.findOrthogonalMoves(
-            currentPos,
-            piece.name
-          );
-          if (orthogonalMoves.length > 0) {
-            const chosenMove =
-              orthogonalMoves[
-                Math.floor(Math.random() * orthogonalMoves.length)
-              ];
-            targetSquare = scene.meshes.find(
-              (mesh) => mesh.name === chosenMove
-            );
-            if (targetSquare) {
-              pieceToMove = piece;
-              break;
-            }
-          }
-        }
+      // Pick a random piece from those that have moves
+      if (piecesWithMoves.length > 0) {
+        const randomChoice = piecesWithMoves[Math.floor(Math.random() * piecesWithMoves.length)];
+        pieceToMove = randomChoice.piece;
+        const validMoves = randomChoice.moves;
+        
+        // Pick a random move for the chosen piece
+        const chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+        targetSquare = scene.meshes.find((mesh) => mesh.name === chosenMove);
+        
+        console.log(`🎲 Randomly selected ${pieceToMove.name} with move to ${chosenMove}`);
       }
 
       if (!pieceToMove || !targetSquare) {
@@ -258,7 +210,17 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             }
             
             capturedMesh.position = owlHallaPosition;
+            
+            // Set proper rotation to match owlHalla cube
+            const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
+            if (owlHallaCube) {
+              capturedMesh.rotation = owlHallaCube.rotation.clone();
+            }
+            
             capturedMesh.visibility = false; // owlHalla pieces are initially invisible
+            
+            // Register piece in owlHalla tracking system
+            gameFunctions.updatePiecesArrivingOnOwlHalla(capturedPiece);
             
             // Record the capture
             this.gameState.recordCapture(capturedPiece, targetSquare.name);
@@ -289,13 +251,83 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         targetRotation,
         30,
         function () {
-          // Add move to history after animation completes
+          // Handle Kite captures AFTER the move (different from Owl captures)
+          let capturedByKite = null;
+          if (piece.name.includes('Kite')) {
+            // First verify this was a cross-face move (required for Kite captures)
+            const startFace = oldPosition[0];
+            const endFace = targetSquare.name[0];
+            
+            if (startFace !== endFace) {
+              console.log(`🦅 Cross-face Kite move confirmed: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace})`);
+              // Check if this Kite move can capture adjacent pieces
+              const adjacentSquares = getAdjacentSquaresForCapture(targetSquare.name);
+              
+              for (const adjSquare of adjacentSquares) {
+                const occupyingPiece = findPieceAtSquareForCapture(adjSquare, gameStateManager.piecePositions);
+                
+                if (occupyingPiece) {
+                  // Check if it's an opponent piece
+                  const kitePieceColor = piece.name.split(/(?=[A-Z])/)[0];
+                  const occupyingPieceColor = occupyingPiece.split(/(?=[A-Z])/)[0];
+                  
+                  if (kitePieceColor !== occupyingPieceColor) {
+                    console.log(`🦅 KITE CAPTURE AFTER LANDING: ${piece.name} at ${targetSquare.name} captures ${occupyingPiece} at ${adjSquare}`);
+                    capturedByKite = occupyingPiece;
+                    
+                    // Move captured piece to OwlHalla
+                    gameStateManager.piecePositions[capturedByKite] = "captured";
+                    
+                    const capturedMesh = scene.getMeshByName(capturedByKite);
+                    if (capturedMesh) {
+                      const owlHallaCubeName = getOwlHallaCubeName(capturedByKite);
+                      const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
+                      
+                      if (capturedByKite.startsWith("brown")) {
+                        owlHallaPosition.y += 3.5;
+                      } else if (capturedByKite.startsWith("yellow")) {
+                        owlHallaPosition.x += 3.5;
+                      } else if (capturedByKite.startsWith("green")) {
+                        owlHallaPosition.z += 3.5;
+                      }
+                      
+                      capturedMesh.position = owlHallaPosition;
+                      
+                      // Set proper rotation to match owlHalla cube
+                      const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
+                      if (owlHallaCube) {
+                        capturedMesh.rotation = owlHallaCube.rotation.clone();
+                      }
+                      
+                      capturedMesh.visibility = false;
+                      
+                      // Register piece in owlHalla tracking system
+                      gameFunctions.updatePiecesArrivingOnOwlHalla(capturedByKite);
+                      
+                      gameStateManager.recordCapture(capturedByKite, adjSquare);
+                    }
+                    break; // Only capture one piece per move
+                  }
+                }
+              }
+            } else {
+              console.log(`🦅 Same-face Kite move: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace}) - no capture allowed`);
+            }
+          }
+          
+          // Add move to history after animation completes (this will check winning conditions)
           gameStateManager.addMoveToHistory(
             piece.name,
             oldPosition,
             targetSquare.name,
-            capturedPiece
+            capturedPiece || capturedByKite
           );
+          
+          // Debug: Log remaining Owls after move
+          const remainingOwls = Object.keys(gameStateManager.piecePositions).filter(
+            (p) => p.endsWith("Owl") && gameStateManager.piecePositions[p] !== "captured"
+          );
+          console.log(`🦉 After move: ${remainingOwls.length} Owls remaining:`, remainingOwls);
         }
       );
     },
@@ -427,6 +459,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
 
       // Check not nest (except for owls)
       if (targetSquare.endsWith("7-7") && !pieceName.includes("Owl")) {
+        console.log(`❌ NEST BLOCK: ${pieceName} attempted to enter nest square ${targetSquare}`);
         return false;
       }
 
