@@ -15,7 +15,7 @@ import {
   getAdjacentSquares,
 } from "./rules/owlRules.js";
 import { validateKiteMove, getAllKiteMoves } from "./rules/kiteRules.js";
-import { validateRavenMove, getAllRavenMoves } from "./rules/ravenRules.js";
+import { validateRavenMove, getAllRavenMoves, isValidMobbingConfiguration } from "./rules/ravenRules.js";
 
 export function createAI(scene, gameStateManager, gameFunctions) {
   // Helper functions for owlHalla management
@@ -72,6 +72,83 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         return pieceName;
       }
     }
+    return null;
+  }
+
+  // Helper function for Raven mobbing opportunities
+  function findRavenMobbingOpportunities(ravenPosition, piecePositions, movingRavenName) {
+    const opportunities = [];
+    
+    // Find all Ravens that could serve as passive partners
+    const allRavens = Object.entries(piecePositions).filter(([name, pos]) => 
+      name.endsWith('Raven') && 
+      pos !== "captured" && 
+      name !== movingRavenName
+    );
+    
+    // For each potential passive Raven, find what can be mobbed
+    for (const [passiveRavenName, passiveRavenPos] of allRavens) {
+      // Find all pieces that could be mobbed by this Raven pair
+      const mobbableVictims = findMobbableVictims(ravenPosition, passiveRavenPos, piecePositions, movingRavenName);
+      
+      if (mobbableVictims.length > 0) {
+        // Group all victims for this passive Raven
+        opportunities.push({
+          passiveRaven: passiveRavenName,
+          victims: mobbableVictims
+        });
+      }
+    }
+    
+    return opportunities;
+  }
+
+  function findMobbableVictims(attackingRavenPos, passiveRavenPos, piecePositions, movingRavenName) {
+    const victims = [];
+    
+    // Check each piece to see if it can be mobbed by this Raven pair
+    for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
+      if (piecePos === "captured" || pieceName === movingRavenName) continue;
+      
+      // Don't mob teammates (same color)
+      const attackingColor = movingRavenName.split(/(?=[A-Z])/)[0];
+      const victimColor = pieceName.split(/(?=[A-Z])/)[0];
+      
+      if (attackingColor === victimColor) continue;
+      
+      // Check if this piece can be mobbed by the Raven pair
+      if (isValidMobbingConfiguration(attackingRavenPos, passiveRavenPos, piecePos)) {
+        victims.push({
+          name: pieceName,
+          position: piecePos
+        });
+      }
+    }
+    
+    return victims;
+  }
+
+  function findPassiveRavenForMobbing(attackingRavenPos, victimPos, piecePositions, movingRavenName) {
+    // Find all Ravens that could serve as passive partners
+    const allRavens = Object.entries(piecePositions).filter(([name, pos]) => 
+      name.endsWith('Raven') && 
+      pos !== "captured" && 
+      name !== movingRavenName
+    );
+    
+    for (const [ravenName, ravenPos] of allRavens) {
+      // Check if this Raven is in the correct position to mob the victim
+      // For now, simplified check - all Ravens on different faces can potentially mob
+      const attackingFace = attackingRavenPos[0];
+      const passiveFace = ravenPos[0];
+      const victimFace = victimPos[0];
+      
+      // All three must be on different faces
+      if (attackingFace !== passiveFace && attackingFace !== victimFace && passiveFace !== victimFace) {
+        return ravenName;
+      }
+    }
+    
     return null;
   }
 
@@ -315,12 +392,72 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             }
           }
           
+          // Handle Raven mobbing AFTER the move (different from Owl captures)
+          let capturedByRaven = [];
+          if (piece.name.includes('Raven')) {
+            // First verify this was a cross-face move (required for Raven mobbing)
+            const startFace = oldPosition[0];
+            const endFace = targetSquare.name[0];
+            
+            if (startFace !== endFace) {
+              console.log(`🐦 Cross-face Raven move confirmed: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace})`);
+              
+              // Check if this Raven can now mob any pieces
+              const mobbingOpportunities = findRavenMobbingOpportunities(targetSquare.name, gameStateManager.piecePositions, piece.name);
+              
+              for (const opportunity of mobbingOpportunities) {
+                // Handle multiple victims per opportunity
+                for (const victim of opportunity.victims) {
+                  console.log(`🐦 RAVEN MOBBING: ${piece.name} at ${targetSquare.name} mobs ${victim.name} with help from ${opportunity.passiveRaven}`);
+                  capturedByRaven.push(victim.name);
+                  
+                  // Move captured piece to OwlHalla
+                  gameStateManager.piecePositions[victim.name] = "captured";
+                
+                  const capturedMesh = scene.getMeshByName(victim.name);
+                  if (capturedMesh) {
+                    const owlHallaCubeName = getOwlHallaCubeName(victim.name);
+                    const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
+                    
+                    if (victim.name.startsWith("brown")) {
+                      owlHallaPosition.y += 3.5;
+                    } else if (victim.name.startsWith("yellow")) {
+                      owlHallaPosition.x += 3.5;
+                    } else if (victim.name.startsWith("green")) {
+                      owlHallaPosition.z += 3.5;
+                    }
+                    
+                    capturedMesh.position = owlHallaPosition;
+                    
+                    // Set proper rotation to match owlHalla cube
+                    const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
+                    if (owlHallaCube) {
+                      capturedMesh.rotation = owlHallaCube.rotation.clone();
+                    }
+                    
+                    capturedMesh.visibility = false;
+                    
+                    // Register piece in owlHalla tracking system
+                    gameFunctions.updatePiecesArrivingOnOwlHalla(victim.name);
+                    
+                    gameStateManager.recordCapture(victim.name, victim.position);
+                  }
+                }
+              }
+            } else {
+              console.log(`🐦 Same-face Raven move: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace}) - no mobbing allowed`);
+            }
+          }
+          
           // Add move to history after animation completes (this will check winning conditions)
+          const allCapturedPieces = [capturedPiece, capturedByKite, ...capturedByRaven].filter(Boolean);
+          const capturedPieceForHistory = allCapturedPieces.length > 0 ? allCapturedPieces[0] : null;
+          
           gameStateManager.addMoveToHistory(
             piece.name,
             oldPosition,
             targetSquare.name,
-            capturedPiece || capturedByKite
+            capturedPieceForHistory
           );
           
           // Debug: Log remaining Owls after move
