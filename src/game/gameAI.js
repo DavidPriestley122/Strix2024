@@ -1,21 +1,16 @@
+import { Vector3 } from "@babylonjs/core";
+import { AIPlayer } from "../ai/aiPlayer.js";
+import { validateOwlMove } from "./rules/owlRules.js";
+import { validateKiteMove } from "./rules/kiteRules.js";
+import { validateRavenMove, isValidMobbingConfiguration } from "./rules/ravenRules.js";
+
+// Make them globally available for console testing
 import {
   checkCrossAdjacency,
   calculateSimpleGhostingDestination,
 } from "./rules/flightwayUtils.js";
-
-import { Vector3 } from "@babylonjs/core";
-
-// Make them globally available for console testing
 window.checkCrossAdjacency = checkCrossAdjacency;
 window.calculateSimpleGhostingDestination = calculateSimpleGhostingDestination;
-
-import {
-  validateOwlMove,
-  getAllOwlMoves,
-  getAdjacentSquares,
-} from "./rules/owlRules.js";
-import { validateKiteMove, getAllKiteMoves } from "./rules/kiteRules.js";
-import { validateRavenMove, getAllRavenMoves, isValidMobbingConfiguration } from "./rules/ravenRules.js";
 
 export function createAI(scene, gameStateManager, gameFunctions) {
   // Helper functions for owlHalla management
@@ -128,32 +123,17 @@ export function createAI(scene, gameStateManager, gameFunctions) {
     return victims;
   }
 
-  function findPassiveRavenForMobbing(attackingRavenPos, victimPos, piecePositions, movingRavenName) {
-    // Find all Ravens that could serve as passive partners
-    const allRavens = Object.entries(piecePositions).filter(([name, pos]) => 
-      name.endsWith('Raven') && 
-      pos !== "captured" && 
-      name !== movingRavenName
-    );
-    
-    for (const [ravenName, ravenPos] of allRavens) {
-      // Check if this Raven is in the correct position to mob the victim
-      // For now, simplified check - all Ravens on different faces can potentially mob
-      const attackingFace = attackingRavenPos[0];
-      const passiveFace = ravenPos[0];
-      const victimFace = victimPos[0];
-      
-      // All three must be on different faces
-      if (attackingFace !== passiveFace && attackingFace !== victimFace && passiveFace !== victimFace) {
-        return ravenName;
-      }
-    }
-    
-    return null;
-  }
 
-  return {
+  // Create AI players for each color
+  const aiPlayers = {
+    brown: new AIPlayer('brown', gameStateManager, null), // Will set moveExecutor after creation
+    yellow: new AIPlayer('yellow', gameStateManager, null),
+    green: new AIPlayer('green', gameStateManager, null)
+  };
+
+  const aiSystem = {
     gameState: gameStateManager,
+    aiPlayers: aiPlayers,
 
     makeMove: function (playerColor) {
       setTimeout(() => {
@@ -167,89 +147,57 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           return;
         }
         
-        this.executeSimpleMove(playerColor);
+        this.executeAIMove(playerColor);
       }, 2000);
     },
 
-    executeSimpleMove: function (playerColor) {
-      // Find all pieces belonging to this player
-      const playerPieces = scene.meshes.filter(
-        (mesh) =>
-          mesh.name.startsWith(playerColor) &&
-          (mesh.name.endsWith("Owl") ||
-            mesh.name.endsWith("Kite") ||
-            mesh.name.endsWith("Raven"))
-      );
-
-      if (playerPieces.length === 0) {
+    executeAIMove: function (playerColor) {
+      const aiPlayer = this.aiPlayers[playerColor];
+      if (!aiPlayer) {
+        console.log(`❌ No AI player found for color: ${playerColor}`);
         return;
       }
 
-      // Collect all pieces with valid moves, then pick randomly
-      const piecesWithMoves = [];
-      let pieceToMove = null;
-      let targetSquare = null;
-
-      // Check all pieces for valid moves
-      const shuffledPieces = [...playerPieces].sort(() => Math.random() - 0.5);
+      // Let the AI player decide on a move
+      const selectedMove = aiPlayer.selectMove();
       
-      for (let piece of shuffledPieces) {
-        const currentPos = this.gameState.piecePositions[piece.name];
-        let allPossibleMoves = [];
-        
-        // Get moves based on piece type
-        if (piece.name.includes('Owl')) {
-          allPossibleMoves = getAllOwlMoves(currentPos, this.gameState.piecePositions, piece.name);
-          console.log(`📋 ${piece.name} at ${currentPos} - getAllOwlMoves returned:`, allPossibleMoves);
-        } else if (piece.name.includes('Kite')) {
-          allPossibleMoves = getAllKiteMoves(currentPos, this.gameState.piecePositions, piece.name);
-        } else if (piece.name.includes('Raven')) {
-          allPossibleMoves = getAllRavenMoves(currentPos, this.gameState.piecePositions, piece.name);
-        }
-        
-        // Filter through validation
-        const allValidMoves = allPossibleMoves.filter((move) =>
-          this.isValidMove(move, piece.name)
-        );
-        
-        console.log(`✅ ${piece.name} valid moves:`, allValidMoves);
-        
-        // Check if any valid moves include nest squares (debugging)
-        const nestMoves = allValidMoves.filter(move => move.endsWith('7-7'));
-        if (nestMoves.length > 0 && !piece.name.includes('Owl')) {
-          console.log(`🚨 BUG: Non-Owl ${piece.name} has nest moves that passed validation:`, nestMoves);
-        }
-        
-        if (allValidMoves.length > 0) {
-          // Add this piece and its moves to the collection
-          piecesWithMoves.push({
-            piece: piece,
-            moves: allValidMoves
-          });
-        }
-      }
-
-      // Pick a random piece from those that have moves
-      if (piecesWithMoves.length > 0) {
-        const randomChoice = piecesWithMoves[Math.floor(Math.random() * piecesWithMoves.length)];
-        pieceToMove = randomChoice.piece;
-        const validMoves = randomChoice.moves;
-        
-        // Pick a random move for the chosen piece
-        const chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-        targetSquare = scene.meshes.find((mesh) => mesh.name === chosenMove);
-        
-        console.log(`🎲 Randomly selected ${pieceToMove.name} with move to ${chosenMove}`);
-      }
-
-      if (!pieceToMove || !targetSquare) {
-        console.log(`No valid moves found for ${playerColor}`);
+      if (!selectedMove) {
+        console.log(`❌ AI could not select a move for ${playerColor}`);
         return;
       }
 
-      console.log(`AI moving ${pieceToMove.name} to ${targetSquare.name}`);
-      this.executeMoveDirectly(pieceToMove, targetSquare);
+      // Execute the move using our mechanics
+      const piece = scene.getMeshByName(selectedMove.piece.name);
+      const targetSquare = scene.getMeshByName(selectedMove.targetSquare);
+      
+      if (piece && targetSquare) {
+        console.log(`🤖 AI executing: ${piece.name} to ${targetSquare.name}`);
+        this.executeMoveDirectly(piece, targetSquare);
+      } else {
+        console.log(`❌ Could not find piece or target square for AI move`);
+      }
     },
+
+    // Set strategy for a specific AI player
+    setAIStrategy: function (playerColor, strategy) {
+      const aiPlayer = this.aiPlayers[playerColor];
+      if (aiPlayer) {
+        aiPlayer.setStrategy(strategy);
+      }
+    },
+
+    // Set strategy for all AI players
+    setAllAIStrategies: function (strategy) {
+      for (const playerColor in this.aiPlayers) {
+        this.aiPlayers[playerColor].setStrategy(strategy);
+      }
+    },
+
+    // Get AI player for external access
+    getAIPlayer: function (playerColor) {
+      return this.aiPlayers[playerColor];
+    },
+
 
     executeMoveDirectly: function (piece, targetSquare) {
       const oldPosition = this.gameState.piecePositions[piece.name];
@@ -638,4 +586,11 @@ export function createAI(scene, gameStateManager, gameFunctions) {
       return false;
     },
   };
+
+  // Set the moveExecutor reference for all AI players
+  for (const playerColor in aiPlayers) {
+    aiPlayers[playerColor].moveExecutor = aiSystem;
+  }
+
+  return aiSystem;
 }
