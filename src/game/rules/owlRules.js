@@ -100,7 +100,7 @@ function findGhostingMoves(owlPosition, piecePositions) {
       );
 
       if (ghostDestination) {
-        console.log(
+        if (ENABLE_MECHANISTIC_LOGGING) console.log(
           `👻 GHOSTING: ${pieceName} enables ${owlPosition} → ${ghostDestination} (${crossAdjacency.ghostDirection})`
         );
         ghostMoves.push(ghostDestination);
@@ -118,6 +118,9 @@ import {
   checkCrossAdjacency,
   calculateSimpleGhostingDestination,
 } from "./flightwayUtils.js";
+
+// Logging control - set to false to hide mechanistic logging
+const ENABLE_MECHANISTIC_LOGGING = false; // Disabled to reduce noise
 
 export function validateOwlMove(fromSquare, toSquare, piecePositions = {}, movingPieceName = null) {
   if (!fromSquare || !toSquare) return false;
@@ -224,6 +227,12 @@ function getAdjacentMovesAlongFlightway(
 // Owl-specific: ghosting functionality
 function getGhostingMoves(owlPosition, piecePositions) {
   const ghostMoves = [];
+  const isBrownOwl = owlPosition === "b7-6";
+
+  // Debug output for Brown Owl
+  if (isBrownOwl) {
+    console.log("🔍 Brown Owl ghosting check started");
+  }
 
   // Check each piece to see if it can serve as a ghosting pivot
   for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
@@ -231,6 +240,7 @@ function getGhostingMoves(owlPosition, piecePositions) {
 
     // Check if this piece is cross-adjacent to the Owl
     const crossAdjacency = checkCrossAdjacency(owlPosition, piecePos);
+    
     if (crossAdjacency.isAdjacent) {
       // Calculate the ghosting destination
       const ghostDestination = calculateSimpleGhostingDestination(
@@ -239,24 +249,28 @@ function getGhostingMoves(owlPosition, piecePositions) {
         crossAdjacency
       );
 
+      if (isBrownOwl) console.log(`👻 ${pieceName}@${piecePos} → ${ghostDestination || 'NONE'}`);
+
       if (ghostDestination) {
         // Verify the destination is not occupied
-        if (!isSquareOccupied(ghostDestination, piecePositions)) {
-          console.log(
-            `👻 GHOSTING: ${pieceName} enables ${owlPosition} → ${ghostDestination} (${crossAdjacency.ghostDirection})`
-          );
+        const isOccupied = isSquareOccupied(ghostDestination, piecePositions);
+        
+        if (!isOccupied) {
           ghostMoves.push(ghostDestination);
+        } else if (isBrownOwl) {
+          console.log(`❌ ${ghostDestination} occupied`);
         }
       }
     }
   }
 
+  if (isBrownOwl) console.log(`🔍 Final ghosting moves: ${ghostMoves.join(', ') || 'NONE'}`);
   return ghostMoves;
 }
 
 // Owl capture moves: adjacent squares with opponent pieces
 function getOwlCaptureMoves(fromSquare, piecePositions, movingPieceName) {
-  console.log(`🔍 getOwlCaptureMoves called for ${movingPieceName} at ${fromSquare}`);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🔍 getOwlCaptureMoves called for ${movingPieceName} at ${fromSquare}`);
   const captureMoves = [];
   
   // Get all adjacent squares (same logic as regular moves but ignore occupation)
@@ -277,25 +291,25 @@ function getOwlCaptureMoves(fromSquare, piecePositions, movingPieceName) {
   const allAdjacentSquares = [...adjacentSquares1, ...adjacentSquares2];
 
   // Filter for squares that contain opponent pieces
-  console.log(`🔍 Adjacent squares to check:`, allAdjacentSquares);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🔍 Adjacent squares to check:`, allAdjacentSquares);
   for (const square of allAdjacentSquares) {
     const occupyingPiece = findPieceAtSquare(square, piecePositions);
-    console.log(`🔍 Square ${square} occupied by:`, occupyingPiece);
+    if (ENABLE_MECHANISTIC_LOGGING) console.log(`🔍 Square ${square} occupied by:`, occupyingPiece);
     if (occupyingPiece && movingPieceName) {
       // Check if it's an opponent piece
       const movingPieceColor = movingPieceName.split(/(?=[A-Z])/)[0];
       const occupyingPieceColor = occupyingPiece.split(/(?=[A-Z])/)[0];
       
-      console.log(`🔍 Colors: ${movingPieceName}(${movingPieceColor}) vs ${occupyingPiece}(${occupyingPieceColor})`);
+      if (ENABLE_MECHANISTIC_LOGGING) console.log(`🔍 Colors: ${movingPieceName}(${movingPieceColor}) vs ${occupyingPiece}(${occupyingPieceColor})`);
       
       if (movingPieceColor !== occupyingPieceColor) {
-        console.log(`🎯 CAPTURE MOVE FOUND: ${movingPieceName} can capture ${occupyingPiece} at ${square}`);
+        if (ENABLE_MECHANISTIC_LOGGING) console.log(`🎯 CAPTURE MOVE FOUND: ${movingPieceName} can capture ${occupyingPiece} at ${square}`);
         captureMoves.push(square);
       }
     }
   }
 
-  console.log(`🔍 getOwlCaptureMoves returning:`, captureMoves);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🔍 getOwlCaptureMoves returning:`, captureMoves);
   return captureMoves;
 }
 

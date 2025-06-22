@@ -5,6 +5,9 @@ import {
   isPathClear,
 } from "./flightwayUtils.js";
 
+// Logging control - set to false to hide mechanistic logging
+const ENABLE_MECHANISTIC_LOGGING = false;
+
 export function validateKiteMove(fromSquare, toSquare, piecePositions = {}) {
   if (!fromSquare || !toSquare) return false;
 
@@ -96,7 +99,7 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
 
 // Kite capture moves: cross-face swooping captures  
 function getKiteCaptureMoves(fromSquare, piecePositions, movingPieceName, flightway1, flightway2) {
-  console.log(`🦅 getKiteCaptureMoves called for ${movingPieceName} at ${fromSquare}`);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🦅 getKiteCaptureMoves called for ${movingPieceName} at ${fromSquare}`);
   const captureMoves = [];
   
   // Get all possible landing squares along both flightways
@@ -112,7 +115,7 @@ function getKiteCaptureMoves(fromSquare, piecePositions, movingPieceName, flight
     
     // Check if this move crosses faces (required for capture)
     if (landingFace !== currentFace) {
-      console.log(`🦅 Cross-face move detected: ${fromSquare}(${currentFace}) → ${landingSquare}(${landingFace})`);
+      if (ENABLE_MECHANISTIC_LOGGING) console.log(`🦅 Cross-face move detected: ${fromSquare}(${currentFace}) → ${landingSquare}(${landingFace})`);
       
       // Check if landing square is adjacent to any opponent pieces
       const adjacentSquares = getAdjacentSquares(landingSquare);
@@ -126,7 +129,7 @@ function getKiteCaptureMoves(fromSquare, piecePositions, movingPieceName, flight
           const occupyingPieceColor = occupyingPiece.split(/(?=[A-Z])/)[0];
           
           if (movingPieceColor !== occupyingPieceColor) {
-            console.log(`🎯 KITE CAPTURE: ${movingPieceName} can swoop to ${landingSquare} and capture ${occupyingPiece} at ${adjSquare}`);
+            if (ENABLE_MECHANISTIC_LOGGING) console.log(`🎯 KITE CAPTURE: ${movingPieceName} can swoop to ${landingSquare} and capture ${occupyingPiece} at ${adjSquare}`);
             // Add the landing square as a capture move (not the victim's square)
             if (!captureMoves.includes(landingSquare)) {
               captureMoves.push(landingSquare);
@@ -137,7 +140,7 @@ function getKiteCaptureMoves(fromSquare, piecePositions, movingPieceName, flight
     }
   }
   
-  console.log(`🦅 getKiteCaptureMoves returning:`, captureMoves);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🦅 getKiteCaptureMoves returning:`, captureMoves);
   return captureMoves;
 }
 

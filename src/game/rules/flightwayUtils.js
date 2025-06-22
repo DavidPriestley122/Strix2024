@@ -246,97 +246,147 @@ export function calculateSimpleGhostingDestination(
   crossPiecePosition,
   crossAdjacency
 ) {
-  if (!crossAdjacency.isAdjacent) return null;
+  const isBrownOwl = owlPosition === "b7-6";
+  
+  if (isBrownOwl) {
+    console.log(`🔧 GHOSTING CALC: ${owlPosition} around ${crossPiecePosition}`);
+    console.log(`🔧 Cross adjacency:`, crossAdjacency);
+  }
+  
+  if (!crossAdjacency.isAdjacent) {
+    if (isBrownOwl) console.log(`🔧 NOT ADJACENT - returning null`);
+    return null;
+  }
 
   // Get flightway coordinates
   const owlFlightway = convertToFlightway(owlPosition);
   const crossFlightway = convertToFlightway(crossPiecePosition);
+  
+  if (isBrownOwl) {
+    console.log(`🔧 Owl flightway: ${owlFlightway}`);
+    console.log(`🔧 Cross flightway: ${crossFlightway}`);
+  }
 
-  if (!owlFlightway || !crossFlightway) return null;
+  if (!owlFlightway || !crossFlightway) {
+    if (isBrownOwl) console.log(`🔧 NULL FLIGHTWAY - returning null`);
+    return null;
+  }
 
   // Get the faces they're on
   const owlFace = getFaceFromFlightway(owlFlightway);
   const crossFace = getFaceFromFlightway(crossFlightway);
+  
+  if (isBrownOwl) {
+    console.log(`🔧 Owl face: ${owlFace}`);
+    console.log(`🔧 Cross face: ${crossFace}`);
+  }
 
   // Target face is the third face (not owl's, not crosspiece's)
   const allFaces = ["brown", "yellow", "green"];
   const targetFace = allFaces.find(
     (face) => face !== owlFace && face !== crossFace
   );
+  
+  if (isBrownOwl) {
+    console.log(`🔧 Target face: ${targetFace}`);
+  }
 
-  // Parse owl's flightway coordinates
+  // Use simplified flightway method to find intersection square
   const owlMatch = owlFlightway.match(/([byg])(\d)([byg])(\d)/);
-  if (!owlMatch) return null;
-
+  const crossMatch = crossFlightway.match(/([byg])(\d)([byg])(\d)/);
+  
+  if (!owlMatch || !crossMatch) {
+    if (isBrownOwl) console.log(`🔧 FLIGHTWAY PARSING FAILED`);
+    return null;
+  }
+  
   const [, owlFace1, owlNum1, owlFace2, owlNum2] = owlMatch;
+  const [, crossFace1, crossNum1, crossFace2, crossNum2] = crossMatch;
+  
+  // Create flightway arrays
+  const owlFlightways = [`${owlFace1}${owlNum1}`, `${owlFace2}${owlNum2}`];
+  const crossFlightways = [`${crossFace1}${crossNum1}`, `${crossFace2}${crossNum2}`];
+  
+  // Find the adjacent pair and remaining pair
+  let remainingPair = [];
+  
+  for (const owlFw of owlFlightways) {
+    for (const crossFw of crossFlightways) {
+      if (owlFw[0] === crossFw[0]) { // Same flightway type
+        const owlNum = parseInt(owlFw[1]);
+        const crossNum = parseInt(crossFw[1]);
+        if (Math.abs(owlNum - crossNum) === 1) {
+          // Found adjacent pair - get remaining flightways
+          const remainingOwl = owlFlightways.find(fw => fw !== owlFw);
+          const remainingCross = crossFlightways.find(fw => fw !== crossFw);
+          remainingPair = [remainingOwl, remainingCross];
+          break;
+        }
+      }
+    }
+    if (remainingPair.length > 0) break;
+  }
+  
+  if (remainingPair.length !== 2) {
+    if (isBrownOwl) console.log(`🔧 REMAINING PAIR NOT FOUND`);
+    return null;
+  }
+  
+  // Create intersection flightway from remaining pair
+  const [fw1, fw2] = remainingPair.sort((a, b) => {
+    const faceOrder = { b: 0, y: 1, g: 2 };
+    return faceOrder[a[0]] - faceOrder[b[0]];
+  });
+  
+  const intersectionFlightway = `${fw1}${fw2}`;
+  const intersectionSquare = convertFromFlightway(intersectionFlightway);
+  
+  if (isBrownOwl) {
+    console.log(`🔧 Remaining pair: ${remainingPair.join(', ')}`);
+    console.log(`🔧 Intersection flightway: ${intersectionFlightway}`);
+    console.log(`🔧 Intersection square: ${intersectionSquare}`);
+  }
+
+  if (!intersectionSquare) {
+    if (isBrownOwl) console.log(`🔧 INTERSECTION SQUARE CONVERSION FAILED`);
+    return null;
+  }
 
   // Find which of owl's flightways goes to the target face
   let owlTargetFlightway;
   if (targetFace === "brown") {
-    owlTargetFlightway =
-      owlFace1 === "b" || owlFace1 === "g"
-        ? `${owlFace1}${owlNum1}`
-        : `${owlFace2}${owlNum2}`;
+    owlTargetFlightway = owlFlightways.find(fw => fw[0] === "b" || fw[0] === "g");
   } else if (targetFace === "yellow") {
-    owlTargetFlightway =
-      owlFace1 === "b" || owlFace1 === "y"
-        ? `${owlFace1}${owlNum1}`
-        : `${owlFace2}${owlNum2}`;
+    owlTargetFlightway = owlFlightways.find(fw => fw[0] === "b" || fw[0] === "y");
   } else if (targetFace === "green") {
-    owlTargetFlightway =
-      owlFace1 === "y" || owlFace1 === "g"
-        ? `${owlFace1}${owlNum1}`
-        : `${owlFace2}${owlNum2}`;
+    owlTargetFlightway = owlFlightways.find(fw => fw[0] === "y" || fw[0] === "g");
   }
 
-  // Parse crosspiece's flightway coordinates
-  const crossMatch = crossFlightway.match(/([byg])(\d)([byg])(\d)/);
-  if (!crossMatch) return null;
-
-  const [, crossFace1, crossNum1, crossFace2, crossNum2] = crossMatch;
-
-  // Find which crosspiece flightway creates shadows on target face
-  let crossShadowFlightway;
-  if (targetFace === "green") {
-    crossShadowFlightway =
-      crossFace1 === "g" || crossFace1 === "y"
-        ? `${crossFace1}${crossNum1}`
-        : `${crossFace2}${crossNum2}`;
-  } else if (targetFace === "yellow") {
-    crossShadowFlightway =
-      crossFace1 === "b" || crossFace1 === "y"
-        ? `${crossFace1}${crossNum1}`
-        : `${crossFace2}${crossNum2}`;
-  } else if (targetFace === "brown") {
-    crossShadowFlightway =
-      crossFace1 === "b" || crossFace1 === "g"
-        ? `${crossFace1}${crossNum1}`
-        : `${crossFace2}${crossNum2}`;
+  if (!owlTargetFlightway) {
+    if (isBrownOwl) console.log(`🔧 OWL TARGET FLIGHTWAY NOT FOUND`);
+    return null;
   }
 
   // Generate the complete route for owl's target flightway
   const owlFlightwayFace = owlTargetFlightway[0];
   const owlFlightwayNum = parseInt(owlTargetFlightway[1]);
-  const flightwayRoute = generateFlightwayRoute(
-    owlFlightwayFace,
-    owlFlightwayNum
-  );
-
-  // Find intersection square (where crosspiece shadows)
-  const crossShadowNum = parseInt(crossShadowFlightway[1]);
-  let intersectionSquare;
-
-  if (targetFace === "brown") {
-    intersectionSquare = `b${owlFlightwayNum}-${crossShadowNum}`;
-  } else if (targetFace === "yellow") {
-    intersectionSquare = `y${owlFlightwayNum}-${crossShadowNum}`;
-  } else if (targetFace === "green") {
-    intersectionSquare = `g${owlFlightwayNum}-${crossShadowNum}`;
+  const flightwayRoute = generateFlightwayRoute(owlFlightwayFace, owlFlightwayNum);
+  
+  if (isBrownOwl) {
+    console.log(`🔧 Owl target flightway: ${owlTargetFlightway}`);
+    console.log(`🔧 Flightway route: [${flightwayRoute.slice(0,3).join(', ')}...${flightwayRoute.slice(-3).join(', ')}] (${flightwayRoute.length} squares)`);
   }
 
   // Find position of intersection in the route
   const intersectionIndex = flightwayRoute.indexOf(intersectionSquare);
-  if (intersectionIndex === -1) return null;
+  if (intersectionIndex === -1) {
+    if (isBrownOwl) console.log(`🔧 INTERSECTION NOT FOUND in route - returning null`);
+    return null;
+  }
+  
+  if (isBrownOwl) {
+    console.log(`🔧 Intersection found at index: ${intersectionIndex}`);
+  }
 
   // KEY FIX: Determine if Owl is currently inside or outside the shadow pair
   const currentOwlIndex = flightwayRoute.indexOf(owlPosition);
@@ -353,26 +403,32 @@ export function calculateSimpleGhostingDestination(
   let destIndex;
 
   if (crossAdjacency.ghostDirection === "in") {
-    // Owl wants to ghost "inward" (toward center)
-    // This should move the Owl from "outside" to "inside" the shadow pair
-    destIndex = intersectionIndex - 1; // One square before the intersection
-  } else {
-    // Owl wants to ghost "outward" (away from center)
-    // This should move the Owl from "inside" to "outside" the shadow pair
+    // Owl flightway number < Cross flightway number - move forward past intersection
     destIndex = intersectionIndex + 1; // One square after the intersection
+  } else {
+    // Owl flightway number > Cross flightway number - move backward before intersection
+    destIndex = intersectionIndex - 1; // One square before the intersection
   }
 
   // Check bounds
   if (destIndex < 0 || destIndex >= flightwayRoute.length) return null;
 
   const destinationSquare = flightwayRoute[destIndex];
+  
+  if (isBrownOwl) {
+    console.log(`🔧 Intersection square: ${intersectionSquare}`);
+    console.log(`🔧 Intersection index: ${intersectionIndex}`);
+    console.log(`🔧 Dest index: ${destIndex}`);
+    console.log(`🔧 Flightway route length: ${flightwayRoute.length}`);
+    console.log(`🔧 Final destination: ${destinationSquare}`);
+  }
 
   // ADDITIONAL VALIDATION: Check if this actually represents a valid inside/outside transition
   // For now, let's allow the move and see if it makes sense geometrically
 
-  console.log(
-    `🔄 Ghosting ${crossAdjacency.ghostDirection}: ${owlPosition} → ${destinationSquare} via ${intersectionSquare}`
-  );
+  // console.log(
+  //   `🔄 Ghosting ${crossAdjacency.ghostDirection}: ${owlPosition} → ${destinationSquare} via ${intersectionSquare}`
+  // ); // Mechanistic logging - disabled
 
   return destinationSquare;
 }
@@ -418,6 +474,26 @@ export function isPathClear(fromSquare, toSquare, piecePositions) {
 
   // Check if any piece blocks the path
   return !path.some((square) => isSquareOccupied(square, piecePositions));
+}
+
+/**
+ * Test ghosting calculation - call from console
+ * Example: testGhosting("b7-6", "y7-6")
+ */
+export function testGhosting(owlPos, crossPos) {
+  console.log(`=== TESTING GHOSTING: ${owlPos} around ${crossPos} ===`);
+  
+  const crossAdjacency = checkCrossAdjacency(owlPos, crossPos);
+  console.log(`Cross adjacency:`, crossAdjacency);
+  
+  if (crossAdjacency.isAdjacent) {
+    const destination = calculateSimpleGhostingDestination(owlPos, crossPos, crossAdjacency);
+    console.log(`Ghosting destination: ${destination || 'NONE'}`);
+  } else {
+    console.log(`Not cross-adjacent - no ghosting possible`);
+  }
+  
+  return crossAdjacency.isAdjacent ? calculateSimpleGhostingDestination(owlPos, crossPos, crossAdjacency) : null;
 }
 
 /**

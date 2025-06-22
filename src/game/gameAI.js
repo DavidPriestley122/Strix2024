@@ -8,9 +8,11 @@ import { validateRavenMove, isValidMobbingConfiguration } from "./rules/ravenRul
 import {
   checkCrossAdjacency,
   calculateSimpleGhostingDestination,
+  testGhosting,
 } from "./rules/flightwayUtils.js";
 window.checkCrossAdjacency = checkCrossAdjacency;
 window.calculateSimpleGhostingDestination = calculateSimpleGhostingDestination;
+window.testGhosting = testGhosting;
 
 export function createAI(scene, gameStateManager, gameFunctions) {
   // Helper functions for owlHalla management
@@ -171,7 +173,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
       const targetSquare = scene.getMeshByName(selectedMove.targetSquare);
       
       if (piece && targetSquare) {
-        console.log(`🤖 AI executing: ${piece.name} to ${targetSquare.name}`);
+        // console.log(`🤖 AI executing: ${piece.name} to ${targetSquare.name}`); // Mechanistic logging - disabled
         this.executeMoveDirectly(piece, targetSquare);
       } else {
         console.log(`❌ Could not find piece or target square for AI move`);
@@ -215,7 +217,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         
         // If we found a captured piece, remove it from the board immediately
         if (capturedPiece) {
-          console.log(`🦉 CAPTURE: ${piece.name} captures ${capturedPiece} at ${targetSquare.name}`);
+          // console.log(`🦉 CAPTURE: ${piece.name} captures ${capturedPiece} at ${targetSquare.name}`); // Mechanistic logging - disabled
           this.gameState.piecePositions[capturedPiece] = "captured";
           
           // Move the captured piece to owlHalla visually (immediately)
@@ -284,7 +286,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             const endFace = targetSquare.name[0];
             
             if (startFace !== endFace) {
-              console.log(`🦅 Cross-face Kite move confirmed: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace})`);
+              // console.log(`🦅 Cross-face Kite move confirmed: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace})`); // Mechanistic logging - disabled
               // Check if this Kite move can capture adjacent pieces
               const adjacentSquares = getAdjacentSquaresForCapture(targetSquare.name);
               
@@ -297,7 +299,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
                   const occupyingPieceColor = occupyingPiece.split(/(?=[A-Z])/)[0];
                   
                   if (kitePieceColor !== occupyingPieceColor) {
-                    console.log(`🦅 KITE CAPTURE AFTER LANDING: ${piece.name} at ${targetSquare.name} captures ${occupyingPiece} at ${adjSquare}`);
+                    // console.log(`🦅 KITE CAPTURE AFTER LANDING: ${piece.name} at ${targetSquare.name} captures ${occupyingPiece} at ${adjSquare}`); // Mechanistic logging - disabled
                     capturedByKite = occupyingPiece;
                     
                     // Move captured piece to OwlHalla
@@ -336,7 +338,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
                 }
               }
             } else {
-              console.log(`🦅 Same-face Kite move: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace}) - no capture allowed`);
+              // console.log(`🦅 Same-face Kite move: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace}) - no capture allowed`); // Mechanistic logging - disabled
             }
           }
           
@@ -348,7 +350,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             const endFace = targetSquare.name[0];
             
             if (startFace !== endFace) {
-              console.log(`🐦 Cross-face Raven move confirmed: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace})`);
+              // console.log(`🐦 Cross-face Raven move confirmed: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace})`); // Mechanistic logging - disabled
               
               // Check if this Raven can now mob any pieces
               const mobbingOpportunities = findRavenMobbingOpportunities(targetSquare.name, gameStateManager.piecePositions, piece.name);
@@ -356,7 +358,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
               for (const opportunity of mobbingOpportunities) {
                 // Handle multiple victims per opportunity
                 for (const victim of opportunity.victims) {
-                  console.log(`🐦 RAVEN MOBBING: ${piece.name} at ${targetSquare.name} mobs ${victim.name} with help from ${opportunity.passiveRaven}`);
+                  // console.log(`🐦 RAVEN MOBBING: ${piece.name} at ${targetSquare.name} mobs ${victim.name} with help from ${opportunity.passiveRaven}`); // Mechanistic logging - disabled
                   capturedByRaven.push(victim.name);
                   
                   // Move captured piece to OwlHalla
@@ -393,7 +395,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
                 }
               }
             } else {
-              console.log(`🐦 Same-face Raven move: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace}) - no mobbing allowed`);
+              // console.log(`🐦 Same-face Raven move: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace}) - no mobbing allowed`); // Mechanistic logging - disabled
             }
           }
           
@@ -412,7 +414,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           const remainingOwls = Object.keys(gameStateManager.piecePositions).filter(
             (p) => p.endsWith("Owl") && gameStateManager.piecePositions[p] !== "captured"
           );
-          console.log(`🦉 After move: ${remainingOwls.length} Owls remaining:`, remainingOwls);
+          // console.log(`🦉 After move: ${remainingOwls.length} Owls remaining:`, remainingOwls); // Mechanistic logging - disabled
         }
       );
     },
@@ -496,7 +498,10 @@ export function createAI(scene, gameStateManager, gameFunctions) {
 
     // Check if a move is valid
     isValidMove: function (targetSquare, pieceName) {
-      console.log(`🎯 Validating move: ${pieceName} to ${targetSquare}`);
+      // Enable logging for critical winning moves
+      const isWinningMove = pieceName.includes('Owl') && ['b7-7', 'y7-7', 'g7-7'].includes(targetSquare);
+      // if (isWinningMove) console.log(`🔍 VALIDATING WINNING MOVE: ${pieceName} to ${targetSquare}`); // Disabled to reduce noise
+      // console.log(`🎯 Validating move: ${pieceName} to ${targetSquare}`); // Mechanistic logging - disabled
       const currentPos = this.gameState.piecePositions[pieceName];
 
       const moveCoords = targetSquare.substring(1).split("-");
@@ -505,6 +510,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
 
       // Check bounds
       if (moveRow < 1 || moveRow > 7 || moveCol < 1 || moveCol > 7) {
+        if (isWinningMove) console.log(`❌ BOUNDS CHECK FAILED: ${targetSquare} out of bounds`);
         return false;
       }
 
@@ -512,9 +518,10 @@ export function createAI(scene, gameStateManager, gameFunctions) {
       const isOccupied = Object.values(
         this.gameState.piecePositions || {}
       ).includes(targetSquare);
-      console.log(`🔍 Checking ${targetSquare} - occupied: ${isOccupied}`);
+      // console.log(`🔍 Checking ${targetSquare} - occupied: ${isOccupied}`); // Mechanistic logging - disabled
       
       if (isOccupied) {
+        if (isWinningMove) console.log(`🔍 OCCUPATION CHECK: ${targetSquare} is occupied`);
         // For Owls, allow moves to occupied squares if they contain opponent pieces
         if (pieceName.includes('Owl')) {
           const occupyingPiece = Object.entries(this.gameState.piecePositions).find(
@@ -526,38 +533,39 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             const occupyingPieceColor = occupyingPieceName.split(/(?=[A-Z])/)[0];
             
             if (movingPieceColor !== occupyingPieceColor) {
-              console.log(`✅ Owl capture allowed - ${pieceName} can capture ${occupyingPieceName} at ${targetSquare}`);
+              if (isWinningMove) console.log(`✅ CAPTURE ALLOWED: ${pieceName} can capture ${occupyingPieceName} at ${targetSquare}`);
               // This is a valid capture - skip the normal occupation check
             } else {
-              console.log(`❌ Move blocked - ${targetSquare} occupied by own piece ${occupyingPieceName}`);
+              if (isWinningMove) console.log(`❌ OCCUPATION BLOCKED: ${targetSquare} occupied by own piece ${occupyingPieceName}`);
               return false;
             }
           } else {
-            console.log(`❌ Move blocked - ${targetSquare} is occupied`);
+            if (isWinningMove) console.log(`❌ OCCUPATION BLOCKED: ${targetSquare} is occupied (unknown piece)`);
             return false;
           }
         } else {
-          console.log(`❌ Move blocked - ${targetSquare} is occupied`);
+          if (isWinningMove) console.log(`❌ OCCUPATION BLOCKED: Non-owl piece can't move to occupied square`);
           return false;
         }
       }
 
       // Check not nest (except for owls)
       if (targetSquare.endsWith("7-7") && !pieceName.includes("Owl")) {
-        console.log(`❌ NEST BLOCK: ${pieceName} attempted to enter nest square ${targetSquare}`);
+        // console.log(`❌ NEST BLOCK: ${pieceName} attempted to enter nest square ${targetSquare}`); // Mechanistic logging - disabled
         return false;
       }
 
       // Check not shadowed
+      if (isWinningMove) console.log(`🔍 SHADOW CHECK: Updating shadows excluding ${pieceName}`);
       this.gameState.updateShadowedRows(pieceName);
       for (const color in this.gameState.shadowedRows) {
         const shadowedCubes = this.gameState.shadowedRows[color];
         if (shadowedCubes.includes(targetSquare)) {
-          console.log(`❌ Move blocked - ${targetSquare} is shadowed by ${color}`);
+          if (isWinningMove) console.log(`❌ SHADOW BLOCKED: ${targetSquare} is shadowed by ${color} - shadows: ${shadowedCubes.slice(0,3).join(', ')}...`);
           return false;
         }
       }
-      console.log(`✅ Shadow check passed for ${targetSquare}`);
+      // console.log(`✅ Shadow check passed for ${targetSquare}`); // Mechanistic logging - disabled
 
       // Validate piece-specific rules
       if (pieceName.includes("Owl")) {
@@ -567,7 +575,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
           this.gameState.piecePositions,
           pieceName
         );
-        console.log(`✅ Owl rule validation for ${targetSquare}: ${owlResult}`);
+        if (isWinningMove) console.log(`🔍 OWL RULE VALIDATION: ${pieceName} → ${targetSquare} result: ${owlResult}`);
         return owlResult;
       } else if (pieceName.includes("Kite")) {
         return validateKiteMove(

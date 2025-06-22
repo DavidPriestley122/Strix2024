@@ -5,6 +5,9 @@ import {
   isPathClear,
 } from "./flightwayUtils.js";
 
+// Logging control - set to false to hide mechanistic logging
+const ENABLE_MECHANISTIC_LOGGING = false;
+
 export function validateRavenMove(fromSquare, toSquare, piecePositions = {}) {
   if (!fromSquare || !toSquare) return false;
 
@@ -96,7 +99,7 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
 
 // Raven mobbing moves: cross-adjacent sandwiching captures
 function getRavenMobbingMoves(fromSquare, piecePositions, movingRavenName, flightway1, flightway2) {
-  console.log(`🐦 getRavenMobbingMoves called for ${movingRavenName} at ${fromSquare}`);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🐦 getRavenMobbingMoves called for ${movingRavenName} at ${fromSquare}`);
   const mobbingMoves = [];
   
   // Get all possible landing squares along both flightways
@@ -112,13 +115,13 @@ function getRavenMobbingMoves(fromSquare, piecePositions, movingRavenName, fligh
     
     // Check if this move crosses faces (required for mobbing)
     if (landingFace !== ravenFace) {
-      console.log(`🐦 Cross-face Raven move: ${fromSquare}(${ravenFace}) → ${landingSquare}(${landingFace})`);
+      if (ENABLE_MECHANISTIC_LOGGING) console.log(`🐦 Cross-face Raven move: ${fromSquare}(${ravenFace}) → ${landingSquare}(${landingFace})`);
       
       // Check if this landing position can complete a mob
       const mobbingOpportunities = findMobbingOpportunities(landingSquare, piecePositions, movingRavenName);
       
       if (mobbingOpportunities.length > 0) {
-        console.log(`🎯 MOBBING OPPORTUNITY: ${movingRavenName} can mob from ${landingSquare}:`, mobbingOpportunities);
+        if (ENABLE_MECHANISTIC_LOGGING) console.log(`🎯 MOBBING OPPORTUNITY: ${movingRavenName} can mob from ${landingSquare}:`, mobbingOpportunities);
         if (!mobbingMoves.includes(landingSquare)) {
           mobbingMoves.push(landingSquare);
         }
@@ -126,7 +129,7 @@ function getRavenMobbingMoves(fromSquare, piecePositions, movingRavenName, fligh
     }
   }
   
-  console.log(`🐦 getRavenMobbingMoves returning:`, mobbingMoves);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🐦 getRavenMobbingMoves returning:`, mobbingMoves);
   return mobbingMoves;
 }
 
@@ -148,7 +151,7 @@ function findMobbingOpportunities(ravenPosition, piecePositions, movingRavenName
     const passiveRaven = findPassiveRavenForMobbing(ravenPosition, piecePos, piecePositions, movingRavenName);
     
     if (passiveRaven) {
-      console.log(`🎯 Found mobbing opportunity: ${movingRavenName} at ${ravenPosition} can mob ${pieceName} at ${piecePos} with help from ${passiveRaven}`);
+      if (ENABLE_MECHANISTIC_LOGGING) console.log(`🎯 Found mobbing opportunity: ${movingRavenName} at ${ravenPosition} can mob ${pieceName} at ${piecePos} with help from ${passiveRaven}`);
       opportunities.push({
         victim: pieceName,
         victimPosition: piecePos,
@@ -182,7 +185,7 @@ function findPassiveRavenForMobbing(attackingRavenPos, victimPos, piecePositions
 
 // Check if attacking Raven, passive Raven, and victim form valid mobbing configuration
 export function isValidMobbingConfiguration(attackingRavenPos, passiveRavenPos, victimPos) {
-  console.log(`🔍 Checking mobbing config: Attacking(${attackingRavenPos}) vs Passive(${passiveRavenPos}) around Victim(${victimPos})`);
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🔍 Checking mobbing config: Attacking(${attackingRavenPos}) vs Passive(${passiveRavenPos}) around Victim(${victimPos})`);
   
   // Get flightway coordinates for all three pieces
   const attackingFlightway = convertToFlightway(attackingRavenPos);
@@ -203,7 +206,7 @@ export function isValidMobbingConfiguration(attackingRavenPos, passiveRavenPos, 
     for (const passiveFW of passiveFWs) {
       for (const victimFW of victimFWs) {
         if (isValidMobbingFlightwayPattern(attackingFW, passiveFW, victimFW, attackingRavenPos, passiveRavenPos, victimPos)) {
-          console.log(`✅ Valid mobbing pattern found: ${attackingFW} + ${passiveFW} → ${victimFW}`);
+          if (ENABLE_MECHANISTIC_LOGGING) console.log(`✅ Valid mobbing pattern found: ${attackingFW} + ${passiveFW} → ${victimFW}`);
           return true;
         }
       }
@@ -253,7 +256,7 @@ function isValidMobbingFlightwayPattern(attackingFW, passiveFW, victimFW, attack
         const passiveIndex = passiveRoute.indexOf(passivePos);
         
         if (attackingIndex !== -1 && passiveIndex !== -1 && attackingIndex === passiveIndex) {
-          console.log(`🎯 Mobbing pattern: Ravens on ${attackingFW}+${passiveFW} (both on face ${attackingRavenFace}, same position ${attackingIndex}) → victim on ${victimFW} (face ${victimFace})`);
+          if (ENABLE_MECHANISTIC_LOGGING) console.log(`🎯 Mobbing pattern: Ravens on ${attackingFW}+${passiveFW} (both on face ${attackingRavenFace}, same position ${attackingIndex}) → victim on ${victimFW} (face ${victimFace})`);
           return true;
         }
       }
