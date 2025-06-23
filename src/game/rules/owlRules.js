@@ -18,24 +18,40 @@ export function validateOwlMove(fromSquare, toSquare, piecePositions = {}) {
 }
 
 export function getAllOwlMoves(fromSquare, piecePositions = {}) {
+  const isYellowOwl = fromSquare === "b4-7";
+  
+  if (isYellowOwl) console.log(`🦉 DETAILED: getAllOwlMoves for ${fromSquare}`);
+  
   const validMoves = [];
 
   // 1. Regular adjacent moves (one square orthogonally)
   const adjacentMoves = getAdjacentSquares(fromSquare);
+  if (isYellowOwl) console.log(`🦉 Adjacent moves: [${adjacentMoves.join(', ')}]`);
   validMoves.push(...adjacentMoves);
 
   // 2. Ghosting moves (using our corrected flightway logic)
   const ghostMoves = findGhostingMoves(fromSquare, piecePositions);
+  if (isYellowOwl) console.log(`🦉 Ghost moves: [${ghostMoves.join(', ')}]`);
   validMoves.push(...ghostMoves);
+
+  if (isYellowOwl) console.log(`🦉 Final valid moves: [${validMoves.join(', ')}]`);
+  if (isYellowOwl && validMoves.includes('b7-7')) {
+    console.log(`🚨 b7-7 FOUND! Source: ${adjacentMoves.includes('b7-7') ? 'ADJACENT' : 'GHOST'}`);
+  }
 
   return validMoves;
 }
 
 export function getAdjacentSquares(square) {
+  const isYellowOwl = square === "b4-7";
+  
+  if (isYellowOwl) console.log(`🦉 getAdjacentSquares for ${square}`);
+  
   const adjacent = [];
 
   // Get the owl's flightway coordinates
   const flightway = convertToFlightway(square);
+  if (isYellowOwl) console.log(`🦉 Flightway: ${flightway}`);
   if (!flightway) return adjacent;
 
   // Parse the flightway coordinates to get the two flightways
@@ -45,26 +61,41 @@ export function getAdjacentSquares(square) {
   const [, face1, num1, face2, num2] = match;
   const flightway1 = `${face1}${num1}`;
   const flightway2 = `${face2}${num2}`;
+  
+  if (isYellowOwl) console.log(`🦉 Flightways: ${flightway1}, ${flightway2}`);
 
   // Get adjacent squares along each flightway
   const adjacentOnFlightway1 = getAdjacentOnFlightway(square, flightway1);
   const adjacentOnFlightway2 = getAdjacentOnFlightway(square, flightway2);
+  
+  if (isYellowOwl) console.log(`🦉 Adjacent on ${flightway1}: [${adjacentOnFlightway1.join(', ')}]`);
+  if (isYellowOwl) console.log(`🦉 Adjacent on ${flightway2}: [${adjacentOnFlightway2.join(', ')}]`);
 
   adjacent.push(...adjacentOnFlightway1);
   adjacent.push(...adjacentOnFlightway2);
+
+  if (isYellowOwl) console.log(`🦉 Total adjacent: [${adjacent.join(', ')}]`);
 
   return adjacent;
 }
 
 function getAdjacentOnFlightway(currentSquare, flightwayName) {
+  const isYellowOwl = currentSquare === "b4-7";
+  
   const face = flightwayName[0];
   const num = parseInt(flightwayName[1]);
 
   // Generate the complete route for this flightway
   const route = generateFlightwayRoute(face, num);
+  
+  if (isYellowOwl) {
+    console.log(`🦉 Route for ${flightwayName}: [${route.slice(0,10).join(', ')}${route.length > 10 ? '...' : ''}] (${route.length} squares)`);
+  }
 
   // Find current position in the route
   const currentIndex = route.indexOf(currentSquare);
+  if (isYellowOwl) console.log(`🦉 ${currentSquare} found at index ${currentIndex} in ${flightwayName} route`);
+  
   if (currentIndex === -1) return [];
 
   const adjacent = [];
@@ -72,12 +103,16 @@ function getAdjacentOnFlightway(currentSquare, flightwayName) {
   // Add previous square in route (if exists)
   if (currentIndex > 0) {
     adjacent.push(route[currentIndex - 1]);
+    if (isYellowOwl) console.log(`🦉 Previous square: ${route[currentIndex - 1]}`);
   }
 
   // Add next square in route (if exists)
   if (currentIndex < route.length - 1) {
     adjacent.push(route[currentIndex + 1]);
+    if (isYellowOwl) console.log(`🦉 Next square: ${route[currentIndex + 1]}`);
   }
+
+  if (isYellowOwl) console.log(`🦉 Adjacent on ${flightwayName}: [${adjacent.join(', ')}]`);
 
   return adjacent;
 }
@@ -147,10 +182,15 @@ export function validateOwlMove(fromSquare, toSquare, piecePositions = {}, movin
 }
 
 export function getAllOwlMoves(fromSquare, piecePositions = {}, movingPieceName = null) {
+  const isYellowOwl = fromSquare === "b4-7";
+  
+  if (isYellowOwl) console.log(`🦉 ACTIVE getAllOwlMoves for ${fromSquare}`);
+  
   const validMoves = [];
 
   // Get the flightway coordinates for the Owl's current position
   const flightwayCoord = convertToFlightway(fromSquare);
+  if (isYellowOwl) console.log(`🦉 ACTIVE Flightway: ${flightwayCoord}`);
   if (!flightwayCoord) return validMoves;
 
   // Parse the flightway coordinates to get the two flightways this square is on
@@ -167,6 +207,7 @@ export function getAllOwlMoves(fromSquare, piecePositions = {}, movingPieceName 
     flightway1,
     piecePositions
   );
+  if (isYellowOwl) console.log(`🦉 ACTIVE Regular moves on ${flightway1}: [${regularMoves1.join(', ')}]`);
   validMoves.push(...regularMoves1);
 
   const regularMoves2 = getAdjacentMovesAlongFlightway(
@@ -174,16 +215,25 @@ export function getAllOwlMoves(fromSquare, piecePositions = {}, movingPieceName 
     flightway2,
     piecePositions
   );
+  if (isYellowOwl) console.log(`🦉 ACTIVE Regular moves on ${flightway2}: [${regularMoves2.join(', ')}]`);
   validMoves.push(...regularMoves2);
 
   // 2. Ghosting moves (special Owl ability)
   const ghostMoves = getGhostingMoves(fromSquare, piecePositions);
+  if (isYellowOwl) console.log(`🦉 ACTIVE Ghost moves: [${ghostMoves.join(', ')}]`);
   validMoves.push(...ghostMoves);
 
   // 3. NEW: Capture moves (adjacent squares with opponent pieces)
   if (movingPieceName) {
     const captureMoves = getOwlCaptureMoves(fromSquare, piecePositions, movingPieceName);
+    if (isYellowOwl) console.log(`🦉 ACTIVE Capture moves: [${captureMoves.join(', ')}]`);
     validMoves.push(...captureMoves);
+  }
+
+  if (isYellowOwl) console.log(`🦉 ACTIVE Final moves: [${validMoves.join(', ')}]`);
+  if (isYellowOwl && validMoves.includes('b7-7')) {
+    console.log(`🚨 ACTIVE b7-7 FOUND! Checking source...`);
+    console.log(`🚨 Regular1: ${regularMoves1.includes('b7-7')}, Regular2: ${regularMoves2.includes('b7-7')}, Ghost: ${ghostMoves.includes('b7-7')}`);
   }
 
   return validMoves;
@@ -228,18 +278,36 @@ function getAdjacentMovesAlongFlightway(
 function getGhostingMoves(owlPosition, piecePositions) {
   const ghostMoves = [];
   const isBrownOwl = owlPosition === "b7-6";
+  const isYellowOwl = owlPosition === "b4-7";
 
   // Debug output for Brown Owl
   if (isBrownOwl) {
     console.log("🔍 Brown Owl ghosting check started");
   }
 
+  // Debug output for Yellow Owl
+  if (isYellowOwl) {
+    console.log("👻 YELLOW OWL ghosting check started");
+    console.log("👻 Available pieces to check:", Object.keys(piecePositions));
+  }
+
   // Check each piece to see if it can serve as a ghosting pivot
   for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
     if (piecePos === owlPosition || piecePos === "captured") continue;
 
+    if (isYellowOwl) {
+      console.log(`👻 Checking ${pieceName} at ${piecePos}`);
+    }
+
     // Check if this piece is cross-adjacent to the Owl
     const crossAdjacency = checkCrossAdjacency(owlPosition, piecePos);
+    
+    if (isYellowOwl) {
+      console.log(`👻 Cross-adjacency with ${pieceName}: ${crossAdjacency.isAdjacent ? 'YES' : 'NO'}`);
+      if (crossAdjacency.isAdjacent) {
+        console.log(`👻 Details:`, crossAdjacency);
+      }
+    }
     
     if (crossAdjacency.isAdjacent) {
       // Calculate the ghosting destination
@@ -250,6 +318,13 @@ function getGhostingMoves(owlPosition, piecePositions) {
       );
 
       if (isBrownOwl) console.log(`👻 ${pieceName}@${piecePos} → ${ghostDestination || 'NONE'}`);
+      
+      if (isYellowOwl) {
+        console.log(`👻 YELLOW OWL ghosting around ${pieceName}@${piecePos} → ${ghostDestination || 'NONE'}`);
+        if (ghostDestination === 'b7-7') {
+          console.log(`🚨 FOUND THE BUG! Yellow Owl ghosting to b7-7 via ${pieceName}@${piecePos}`);
+        }
+      }
 
       if (ghostDestination) {
         // Verify the destination is not occupied
@@ -259,12 +334,16 @@ function getGhostingMoves(owlPosition, piecePositions) {
           ghostMoves.push(ghostDestination);
         } else if (isBrownOwl) {
           console.log(`❌ ${ghostDestination} occupied`);
+        } else if (isYellowOwl) {
+          console.log(`👻 ${ghostDestination} occupied, not adding`);
         }
       }
     }
   }
 
   if (isBrownOwl) console.log(`🔍 Final ghosting moves: ${ghostMoves.join(', ') || 'NONE'}`);
+  if (isYellowOwl) console.log(`👻 YELLOW OWL final ghosting moves: [${ghostMoves.join(', ') || 'NONE'}]`);
+  
   return ghostMoves;
 }
 

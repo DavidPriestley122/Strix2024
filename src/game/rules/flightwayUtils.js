@@ -247,6 +247,7 @@ export function calculateSimpleGhostingDestination(
   crossAdjacency
 ) {
   const isBrownOwl = owlPosition === "b7-6";
+  const isYellowOwl = owlPosition === "b4-7";
   
   if (isBrownOwl) {
     console.log(`🔧 GHOSTING CALC: ${owlPosition} around ${crossPiecePosition}`);
@@ -384,30 +385,36 @@ export function calculateSimpleGhostingDestination(
     return null;
   }
   
-  if (isBrownOwl) {
-    console.log(`🔧 Intersection found at index: ${intersectionIndex}`);
-  }
-
-  // KEY FIX: Determine if Owl is currently inside or outside the shadow pair
+  // Find owl's current position in the route
   const currentOwlIndex = flightwayRoute.indexOf(owlPosition);
   if (currentOwlIndex === -1) return null;
 
-  // The crosspiece creates TWO shadows on this flightway - we need to find both
-  // For now, let's assume the other shadow is at a different crosspiece flightway number
-  // This is a simplification - we may need to get both shadow positions properly
+  if (isBrownOwl) {
+    console.log(`🔧 Owl at index: ${currentOwlIndex}, Intersection at index: ${intersectionIndex}`);
+  }
+  
+  if (isYellowOwl) {
+    console.log(`🟡 Owl at index: ${currentOwlIndex}, Intersection at index: ${intersectionIndex}`);
+    console.log(`🟡 Owl position: ${owlPosition}, Intersection: ${intersectionSquare}`);
+  }
 
-  // Based on the ghostDirection from crossAdjacency:
-  // "in" means Owl number < Cross number (Owl wants to move toward center/lower numbers)
-  // "out" means Owl number > Cross number (Owl wants to move away from center/higher numbers)
-
+  // Implement local coordinate system: Owl → Intersection defines positive direction
   let destIndex;
-
-  if (crossAdjacency.ghostDirection === "in") {
-    // Owl flightway number < Cross flightway number - move forward past intersection
-    destIndex = intersectionIndex + 1; // One square after the intersection
+  
+  if (currentOwlIndex < intersectionIndex) {
+    // Intersection is ahead of owl in route (local positive direction)
+    if (crossAdjacency.ghostDirection === "in") {
+      destIndex = intersectionIndex - 1; // Back toward owl
+    } else {
+      destIndex = intersectionIndex + 1; // Further ahead past intersection
+    }
   } else {
-    // Owl flightway number > Cross flightway number - move backward before intersection
-    destIndex = intersectionIndex - 1; // One square before the intersection
+    // Intersection is behind owl in route (local negative direction) 
+    if (crossAdjacency.ghostDirection === "in") {
+      destIndex = intersectionIndex + 1; // Back toward owl (forward in route)
+    } else {
+      destIndex = intersectionIndex - 1; // Further away from owl (backward in route)
+    }
   }
 
   // Check bounds
@@ -421,6 +428,11 @@ export function calculateSimpleGhostingDestination(
     console.log(`🔧 Dest index: ${destIndex}`);
     console.log(`🔧 Flightway route length: ${flightwayRoute.length}`);
     console.log(`🔧 Final destination: ${destinationSquare}`);
+  }
+  
+  if (isYellowOwl) {
+    console.log(`🟡 Direction: ${crossAdjacency.ghostDirection}, Dest index: ${destIndex}`);
+    console.log(`🟡 Final destination: ${destinationSquare}`);
   }
 
   // ADDITIONAL VALIDATION: Check if this actually represents a valid inside/outside transition
