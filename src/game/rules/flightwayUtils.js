@@ -247,7 +247,7 @@ export function calculateSimpleGhostingDestination(
   crossAdjacency
 ) {
   const isBrownOwl = owlPosition === "b7-6";
-  const isYellowOwl = owlPosition === "b4-7";
+  const isYellowOwl = owlPosition === "b4-7" || owlPosition === "b5-7";
   
   if (isBrownOwl) {
     console.log(`🔧 GHOSTING CALC: ${owlPosition} around ${crossPiecePosition}`);
@@ -351,6 +351,17 @@ export function calculateSimpleGhostingDestination(
   if (!intersectionSquare) {
     if (isBrownOwl) console.log(`🔧 INTERSECTION SQUARE CONVERSION FAILED`);
     return null;
+  }
+
+  // Edge case validation: Check if intersection is at face boundary
+  if (intersectionSquare.includes('7-7')) {
+    // At face boundary - "in" ghosting is geometrically impossible
+    if (crossAdjacency.ghostDirection === "in") {
+      if (isBrownOwl || isYellowOwl) {
+        console.log(`🚫 EDGE CASE: Cannot ghost "in" around piece at face boundary. Intersection: ${intersectionSquare}`);
+      }
+      return null;
+    }
   }
 
   // Find which of owl's flightways goes to the target face

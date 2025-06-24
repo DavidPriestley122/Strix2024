@@ -182,7 +182,7 @@ export function validateOwlMove(fromSquare, toSquare, piecePositions = {}, movin
 }
 
 export function getAllOwlMoves(fromSquare, piecePositions = {}, movingPieceName = null) {
-  const isYellowOwl = fromSquare === "b4-7";
+  const isYellowOwl = fromSquare === "b4-7" || fromSquare === "b5-7";
   
   if (isYellowOwl) console.log(`🦉 ACTIVE getAllOwlMoves for ${fromSquare}`);
   
@@ -278,7 +278,7 @@ function getAdjacentMovesAlongFlightway(
 function getGhostingMoves(owlPosition, piecePositions) {
   const ghostMoves = [];
   const isBrownOwl = owlPosition === "b7-6";
-  const isYellowOwl = owlPosition === "b4-7";
+  const isYellowOwl = owlPosition === "b4-7" || owlPosition === "b5-7";
 
   // Debug output for Brown Owl
   if (isBrownOwl) {

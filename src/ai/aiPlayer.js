@@ -1,6 +1,6 @@
 import { getAllOwlMoves } from "../game/rules/owlRules.js";
 import { getAllKiteMoves } from "../game/rules/kiteRules.js";
-import { getAllRavenMoves } from "../game/rules/ravenRules.js";
+import { getAllRavenMoves, isValidMobbingConfiguration } from "../game/rules/ravenRules.js";
 
 export class AIPlayer {
   constructor(playerColor, gameStateManager, moveExecutor) {
@@ -328,12 +328,12 @@ export class AIPlayer {
           this.logStrategy(`🤔 ${piece.name} → ${targetSquare} is a nest square, but win condition returned: ${winCondition}`);
         }
         
-        // ADVANCEMENT TOWARD WIN - Owls getting closer to center
+        // ADVANCEMENT TOWARD WIN - Owls getting closer to center (reduced since can be blocked)
         const advancement = this.getOwlAdvancement(piece.position, targetSquare);
         if (advancement > 0) {
-          this.logStrategy(`📍 ADVANCEMENT: ${piece.name} → ${targetSquare} moves ${advancement} steps closer to nest (+${advancement * 5})`);
+          this.logStrategy(`📍 ADVANCEMENT: ${piece.name} → ${targetSquare} moves ${advancement} steps closer to nest (+${advancement * 2})`);
         }
-        score += advancement * 5;
+        score += advancement * 2; // Reduced from 5 to 2 since advancement can be blocked
       }
     }
 
@@ -405,9 +405,10 @@ export class AIPlayer {
   }
 
   getPieceCaptureValue(pieceName) {
-    if (pieceName.includes('Owl')) return 10;
-    if (pieceName.includes('Kite')) return 5;
-    if (pieceName.includes('Raven')) return 5;
+    // Increased capture values since they provide guaranteed value
+    if (pieceName.includes('Owl')) return 15;
+    if (pieceName.includes('Kite')) return 8;
+    if (pieceName.includes('Raven')) return 8;
     return 1;
   }
 
@@ -497,8 +498,36 @@ export class AIPlayer {
   // Check if a piece can reach a specific square (for threat analysis)
   canPieceReachSquare(pieceName, fromPosition, targetSquare) {
     const pieceType = this.getPieceType(pieceName);
+    
+    // For Ravens, we need to check if they can actually capture at the target square
+    // (not just move there), since Ravens capture through mobbing, not direct movement
+    if (pieceType === 'Raven') {
+      return this.canRavenCaptureAtSquare(pieceName, fromPosition, targetSquare);
+    }
+    
     const possibleMoves = this.getPossibleMovesForPiece(pieceType, fromPosition, pieceName);
     return possibleMoves.includes(targetSquare);
+  }
+
+  // Check if a Raven can capture a piece at a specific square through mobbing
+  canRavenCaptureAtSquare(ravenName, ravenPosition, targetSquare) {
+    // For Ravens, we need to check if they could potentially mob a piece at the target square
+    // This is much more complex than direct capture, so for now let's return false
+    // to prevent Ravens from being seen as direct threats to each other
+    
+    // Ravens can only capture through mobbing with another Raven, and they need 
+    // cross-face moves to do so. Since threat detection is about immediate danger,
+    // and mobbing requires coordination, Ravens are generally not immediate threats
+    // to pieces of the same type (other Ravens)
+    
+    const targetPieceType = this.getPieceType(ravenName);
+    if (targetPieceType === 'Raven') {
+      return false; // Ravens don't threaten other Ravens directly
+    }
+    
+    // For other piece types, we'd need to check actual mobbing potential
+    // but this is complex, so for now return false to fix the immediate issue
+    return false;
   }
 
   // Get possible moves for any piece (used for threat analysis)
@@ -524,10 +553,63 @@ export class AIPlayer {
   }
 
   // Find raven mobbing capture opportunities
-  findRavenMobbingCaptures() {
-    // Placeholder for now - this requires complex mobbing logic
-    // TODO: Implement raven mobbing detection using piece and targetSquare
-    return [];
+  findRavenMobbingCaptures(piece, targetSquare) {
+    const captures = [];
+    
+    // Use imported mobbing function
+    if (!isValidMobbingConfiguration) {
+      // Fallback: return empty if mobbing functions not available
+      return captures;
+    }
+    
+    // Get current piece positions
+    const piecePositions = this.gameState.piecePositions;
+    if (!piecePositions) return captures;
+    
+    // Check if this is a cross-face move (required for mobbing)
+    const currentFace = piecePositions[piece.name]?.[0];
+    const targetFace = targetSquare[0];
+    
+    if (currentFace === targetFace) {
+      // Same-face move - no mobbing possible
+      return captures;
+    }
+    
+    // Find all pieces that could be mobbed from the target position
+    for (const [victimName, victimPos] of Object.entries(piecePositions)) {
+      if (victimPos === "captured" || victimName === piece.name) continue;
+      
+      // Don't mob teammates (same color)
+      const ravenColor = piece.name.split(/(?=[A-Z])/)[0];
+      const victimColor = victimName.split(/(?=[A-Z])/)[0];
+      
+      if (ravenColor === victimColor) continue;
+      
+      // Find a passive Raven that could help mob this victim
+      for (const [passiveRavenName, passiveRavenPos] of Object.entries(piecePositions)) {
+        if (!passiveRavenName.endsWith('Raven') || 
+            passiveRavenPos === "captured" || 
+            passiveRavenName === piece.name) continue;
+        
+        // Check if this forms a valid mobbing configuration
+        try {
+          if (isValidMobbingConfiguration(targetSquare, passiveRavenPos, victimPos)) {
+            captures.push({
+              targetPiece: victimName,
+              victimPosition: victimPos,
+              captureType: 'mobbing',
+              passiveRaven: passiveRavenName
+            });
+            break; // Found a valid mobbing partner for this victim
+          }
+        } catch (error) {
+          // If mobbing function fails, skip this combination
+          continue;
+        }
+      }
+    }
+    
+    return captures;
   }
 
   // Evaluate protection value of a move

@@ -224,8 +224,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
       this.updatePlayerTypes(); // Read the radio buttons first
 
-      // Check if the new current player is AI
-      if (this.isAIPlayer(this.currentPlayerTurn)) {
+      // Check if the new current player is AI and game is running (not paused)
+      if (this.isAIPlayer(this.currentPlayerTurn) && this.aiGameRunning && !this.aiGamePaused) {
         console.log(this.currentPlayerTurn + " is AI - will make move");
         // Call the AI module
         if (this.aiModule) {
