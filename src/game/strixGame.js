@@ -207,6 +207,40 @@ export default function createScene(engine, canvas) {
   setPiecePosition(greenKite, cubesOnTheThreeFaces, "g6-2", 0, 0, 3.75);
   setPiecePosition(greenRaven, cubesOnTheThreeFaces, "g5-3", 0, 0, 3.75);
 
+  //CAPTURE DETECTION HELPER FUNCTIONS
+
+  function getAdjacentSquaresForCapture(square) {
+    const face = square[0];
+    const coords = square.substring(1).split("-");
+    const row = parseInt(coords[0]);
+    const col = parseInt(coords[1]);
+    
+    const adjacent = [];
+    const directions = [
+      [0, 1], [0, -1], [1, 0], [-1, 0]  // right, left, down, up
+    ];
+    
+    for (const [dr, dc] of directions) {
+      const newRow = row + dr;
+      const newCol = col + dc;
+      
+      if (newRow >= 1 && newRow <= 7 && newCol >= 1 && newCol <= 7) {
+        adjacent.push(`${face}${newRow}-${newCol}`);
+      }
+    }
+    
+    return adjacent;
+  }
+
+  function findPieceAtSquareForCapture(square, piecePositions) {
+    for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
+      if (piecePos === square && piecePos !== "captured") {
+        return pieceName;
+      }
+    }
+    return null;
+  }
+
   //GAME LOGIC FUNCTIONS
 
   function isMoveCollidingWithShadowedRows(targetCube, selectedPiece) {
@@ -370,20 +404,44 @@ export default function createScene(engine, canvas) {
                   );
                 });
               } else if (selectedPiece.name.includes('Kite')) {
-                // Kite captures: check if this is a cross-face move (required for capture)
+                // Kite captures: check if this is a cross-face move AND if there are adjacent victims
                 const startFace = currentPosition[0];
                 const endFace = clickedCube.name[0];
                 if (startFace !== endFace) {
-                  // Cross-face move - potential for Kite capture
-                  capturedPiece = { name: "potential_kite_capture" }; // Placeholder to trigger timer
+                  // Cross-face move - check for actual adjacent victims
+                  const adjacentSquares = getAdjacentSquaresForCapture(clickedCube.name);
+                  const hasVictims = adjacentSquares.some(square => {
+                    const occupyingPiece = findPieceAtSquareForCapture(square, gameStateManager.piecePositions);
+                    if (occupyingPiece) {
+                      const kiteColor = selectedPiece.name.split(/(?=[A-Z])/)[0];
+                      const victimColor = occupyingPiece.split(/(?=[A-Z])/)[0];
+                      return kiteColor !== victimColor; // Different teams
+                    }
+                    return false;
+                  });
+                  
+                  if (hasVictims) {
+                    capturedPiece = { name: "potential_kite_capture" };
+                  }
                 }
               } else if (selectedPiece.name.includes('Raven')) {
-                // Raven captures: check if this is a cross-face move (required for mobbing)
+                // Raven captures: check if this is a cross-face move AND if mobbing is possible
                 const startFace = currentPosition[0];
                 const endFace = clickedCube.name[0];
                 if (startFace !== endFace) {
-                  // Cross-face move - potential for Raven mobbing
-                  capturedPiece = { name: "potential_raven_mobbing" }; // Placeholder to trigger timer
+                  // Cross-face move - check for actual mobbing opportunities
+                  // This is complex, so for now just check if there are any potential victims on different faces
+                  const hasOpponents = Object.entries(gameStateManager.piecePositions).some(([pieceName, piecePos]) => {
+                    if (piecePos === "captured" || pieceName === selectedPiece.name) return false;
+                    const ravenColor = selectedPiece.name.split(/(?=[A-Z])/)[0];
+                    const victimColor = pieceName.split(/(?=[A-Z])/)[0];
+                    const victimFace = piecePos[0];
+                    return ravenColor !== victimColor && victimFace !== endFace; // Different team, different face
+                  });
+                  
+                  if (hasOpponents) {
+                    capturedPiece = { name: "potential_raven_mobbing" };
+                  }
                 }
               }
 

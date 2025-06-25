@@ -51,6 +51,18 @@ export function createGUI() {
   messageText.paddingRight = "5%";
   messageRect.addControl(messageText);
 
+  //CAPTURE TIMER DISPLAY CREATION
+  const captureTimerText = new TextBlock("captureTimerText");
+  captureTimerText.text = "";
+  captureTimerText.color = "orange";
+  captureTimerText.fontSize = 28;
+  captureTimerText.fontWeight = "bold";
+  captureTimerText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
+  captureTimerText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+  captureTimerText.top = "80px";
+  captureTimerText.isVisible = false;
+  advancedTexture.addControl(captureTimerText);
+
   //MOVE HISTORY DISPLAY CREATION
   const moveHistoryContainer = new Rectangle("moveHistoryContainer");
   moveHistoryContainer.width = "120px";
@@ -83,6 +95,7 @@ export function createGUI() {
     infoText,
     messageRect,
     messageText,
+    captureTimerText,
     moveHistoryContainer,
     moveHistoryViewer,
     moveHistoryText,
@@ -91,7 +104,7 @@ export function createGUI() {
 
 //GAME STATE MANAGER CREATION
 export function createGameStateManager(guiElements, gameResetFunctions) {
-  const { moveHistoryViewer, messageText, messageRect, advancedTexture } =
+  const { moveHistoryViewer, messageText, messageRect, advancedTexture, captureTimerText } =
     guiElements;
 
   // Store the reset functions for later use
@@ -125,7 +138,9 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
     // Capture decision timer
     captureDecisionTimer: null,
+    captureCountdownTimer: null,
     isRavenCaptureInProgress: false,
+    captureTimeRemaining: 0,
 
     //GAME STATE UPDATE FUNCTIONS
 
@@ -237,11 +252,15 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         console.log(`🕒 Starting 7-second capture decision timer for ${piece}`);
         this.isRavenCaptureInProgress = isRavenMove;
         
+        // Start visual countdown
+        this.startCaptureTimerDisplay();
+        
         // Start 7-second timer for capture decisions
         this.captureDecisionTimer = setTimeout(() => {
           console.log(`⏰ Capture decision timer expired - proceeding to next turn`);
           this.captureDecisionTimer = null;
           this.isRavenCaptureInProgress = false;
+          this.stopCaptureTimerDisplay();
           this.proceedToNextTurn();
         }, 7000);
       } else {
@@ -268,9 +287,41 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         clearTimeout(this.captureDecisionTimer);
         this.captureDecisionTimer = null;
         this.isRavenCaptureInProgress = false;
+        this.stopCaptureTimerDisplay();
         console.log("🚫 Capture decision timer cancelled - proceeding to next turn");
         this.proceedToNextTurn();
       }
+    },
+
+    startCaptureTimerDisplay: function() {
+      this.captureTimeRemaining = 7;
+      captureTimerText.isVisible = true;
+      this.updateCaptureTimerDisplay();
+      
+      // Update countdown every second
+      this.captureCountdownTimer = setInterval(() => {
+        this.captureTimeRemaining--;
+        this.updateCaptureTimerDisplay();
+        
+        if (this.captureTimeRemaining <= 0) {
+          this.stopCaptureTimerDisplay();
+        }
+      }, 1000);
+    },
+
+    updateCaptureTimerDisplay: function() {
+      if (this.captureTimeRemaining > 0) {
+        captureTimerText.text = `Capture Decision: ${this.captureTimeRemaining}s`;
+      }
+    },
+
+    stopCaptureTimerDisplay: function() {
+      if (this.captureCountdownTimer) {
+        clearInterval(this.captureCountdownTimer);
+        this.captureCountdownTimer = null;
+      }
+      captureTimerText.isVisible = false;
+      captureTimerText.text = "";
     },
 
     recordCapture: function (capturedPiece) {
