@@ -355,16 +355,37 @@ export default function createScene(engine, canvas) {
               const currentPosition =
                 gameStateManager.piecePositions[selectedPiece.name];
 
-              // NEW: Check for a captured piece
-              const capturedPiece = scene.meshes.find((mesh) => {
-                return (
-                  mesh !== selectedPiece &&
-                  (mesh.name.endsWith("Owl") ||
-                    mesh.name.endsWith("Kite") ||
-                    mesh.name.endsWith("Raven")) &&
-                  mesh.position.equals(targetPosition)
-                );
-              });
+              // Check for potential captures based on piece type
+              let capturedPiece = null;
+              
+              if (selectedPiece.name.includes('Owl')) {
+                // Owl captures: direct occupation
+                capturedPiece = scene.meshes.find((mesh) => {
+                  return (
+                    mesh !== selectedPiece &&
+                    (mesh.name.endsWith("Owl") ||
+                      mesh.name.endsWith("Kite") ||
+                      mesh.name.endsWith("Raven")) &&
+                    mesh.position.equals(targetPosition)
+                  );
+                });
+              } else if (selectedPiece.name.includes('Kite')) {
+                // Kite captures: check if this is a cross-face move (required for capture)
+                const startFace = currentPosition[0];
+                const endFace = clickedCube.name[0];
+                if (startFace !== endFace) {
+                  // Cross-face move - potential for Kite capture
+                  capturedPiece = { name: "potential_kite_capture" }; // Placeholder to trigger timer
+                }
+              } else if (selectedPiece.name.includes('Raven')) {
+                // Raven captures: check if this is a cross-face move (required for mobbing)
+                const startFace = currentPosition[0];
+                const endFace = clickedCube.name[0];
+                if (startFace !== endFace) {
+                  // Cross-face move - potential for Raven mobbing
+                  capturedPiece = { name: "potential_raven_mobbing" }; // Placeholder to trigger timer
+                }
+              }
 
               // Animate the selected piece movement
               animatePieceMovement(

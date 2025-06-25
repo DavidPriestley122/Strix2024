@@ -123,6 +123,10 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       greenRaven: "g5-3",
     },
 
+    // Capture decision timer
+    captureDecisionTimer: null,
+    isRavenCaptureInProgress: false,
+
     //GAME STATE UPDATE FUNCTIONS
 
     updateShadowedRows: function (excludedPiece) {
@@ -137,8 +141,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       for (let pieceName in this.piecePositions) {
         let piecePosition = this.piecePositions[pieceName];
 
-        // Skip the excluded piece and pieces on owlHalla squares
-        if (pieceName === excludedPiece || piecePosition.includes("--")) {
+        // Skip the excluded piece, pieces on owlHalla squares, and captured pieces
+        if (pieceName === excludedPiece || piecePosition.includes("--") || piecePosition === "captured") {
           continue;
         }
 
@@ -195,7 +199,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       green: "human",
     },
 
-    addMoveToHistory: function (piece, sourceSquare, destinationSquare) {
+    addMoveToHistory: function (piece, sourceSquare, destinationSquare, capturedPiece) {
       console.log(
         `=== addMoveToHistory called: ${piece} from ${sourceSquare} to ${destinationSquare} ===`
       );
@@ -224,6 +228,29 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
       this.updatePlayerTypes(); // Read the radio buttons first
 
+      // Check if this was a human move with potential captures
+      const isHumanMove = !this.isAIPlayer(piece.split(/(?=[A-Z])/)[0]); // Extract color from piece name
+      const hasPotentialCapture = capturedPiece !== null && capturedPiece !== undefined;
+      const isRavenMove = piece.includes('Raven');
+      
+      if (isHumanMove && hasPotentialCapture) {
+        console.log(`🕒 Starting 7-second capture decision timer for ${piece}`);
+        this.isRavenCaptureInProgress = isRavenMove;
+        
+        // Start 7-second timer for capture decisions
+        this.captureDecisionTimer = setTimeout(() => {
+          console.log(`⏰ Capture decision timer expired - proceeding to next turn`);
+          this.captureDecisionTimer = null;
+          this.isRavenCaptureInProgress = false;
+          this.proceedToNextTurn();
+        }, 7000);
+      } else {
+        // No capture timer needed - proceed immediately
+        this.proceedToNextTurn();
+      }
+    },
+
+    proceedToNextTurn: function() {
       // Check if the new current player is AI and game is running (not paused)
       if (this.isAIPlayer(this.currentPlayerTurn) && this.aiGameRunning && !this.aiGamePaused) {
         console.log(this.currentPlayerTurn + " is AI - will make move");
@@ -236,9 +263,28 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       }
     },
 
+    cancelCaptureDecisionTimer: function() {
+      if (this.captureDecisionTimer) {
+        clearTimeout(this.captureDecisionTimer);
+        this.captureDecisionTimer = null;
+        this.isRavenCaptureInProgress = false;
+        console.log("🚫 Capture decision timer cancelled - proceeding to next turn");
+        this.proceedToNextTurn();
+      }
+    },
+
     recordCapture: function (capturedPiece) {
       console.log("Capturing piece:", capturedPiece);
       console.log("Current player before capture:", this.currentPlayerTurn);
+
+      // For Raven captures, let the timer run to completion (multiple victims possible)
+      // For Owl/Kite captures, cancel timer immediately (single victim only)
+      if (this.captureDecisionTimer && !this.isRavenCaptureInProgress) {
+        console.log("🚫 Single-victim capture complete - cancelling timer");
+        this.cancelCaptureDecisionTimer();
+      } else if (this.captureDecisionTimer) {
+        console.log("🐦 Raven capture - timer continues running for additional victims");
+      }
 
       const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
       const captureText = `(${abbreviatedCaptured} captured)`;
