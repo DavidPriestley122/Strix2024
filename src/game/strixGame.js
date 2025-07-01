@@ -263,7 +263,11 @@ export default function createScene(engine, canvas) {
     scene: scene,
     setPiecePosition: setPiecePosition,
     cubesOnTheThreeFaces: cubesOnTheThreeFaces,
+    animatePieceMovement: animatePieceMovement,
   });
+
+  // Initialize move input functionality
+  gameStateManager.initializeMoveInput();
 
   // Create AI and pass it to gameStateManager
   const aiModule = createAI(scene, gameStateManager, {

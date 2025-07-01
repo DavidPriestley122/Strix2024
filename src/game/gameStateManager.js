@@ -8,7 +8,12 @@ import {
   ScrollViewer,
   TextWrapping,
   Button,
+  InputText,
+  StackPanel,
 } from "@babylonjs/gui";
+
+import { moveNotation } from "./moveNotation.js";
+import { Vector3 } from "@babylonjs/core";
 
 //GUI CREATION FUNCTION
 export function createGUI() {
@@ -63,31 +68,22 @@ export function createGUI() {
   captureTimerText.isVisible = false;
   advancedTexture.addControl(captureTimerText);
 
-  //MOVE HISTORY DISPLAY CREATION
+  //SIMPLE MOVE HISTORY DISPLAY (for compatibility)
   const moveHistoryContainer = new Rectangle("moveHistoryContainer");
-  moveHistoryContainer.width = "120px";
-  moveHistoryContainer.height = "220px";
-  moveHistoryContainer.background = "rgba(0, 0, 0, 0.7)";
-  moveHistoryContainer.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
-  moveHistoryContainer.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
-  moveHistoryContainer.top = "0px";
-  moveHistoryContainer.left = "0px";
-  moveHistoryContainer.paddingRight = "20px";
+  moveHistoryContainer.width = "1px";
+  moveHistoryContainer.height = "1px";
+  moveHistoryContainer.isVisible = false;
   advancedTexture.addControl(moveHistoryContainer);
 
   const moveHistoryViewer = new ScrollViewer("moveHistoryViewer");
-  moveHistoryViewer.width = "100%";
-  moveHistoryViewer.height = "100%";
+  moveHistoryViewer.width = "1px";
+  moveHistoryViewer.height = "1px";
+  moveHistoryViewer.isVisible = false;
   moveHistoryContainer.addControl(moveHistoryViewer);
 
   const moveHistoryText = new TextBlock("moveHistoryText");
   moveHistoryText.text = "";
-  moveHistoryText.color = "white";
-  moveHistoryText.fontSize = 16;
-  moveHistoryText.textHorizontalAlignment = Control.HORIZONTAL_ALIGNMENT_LEFT;
-  moveHistoryText.textVerticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
-  moveHistoryText.resizeToFit = true;
-  moveHistoryText.textWrapping = TextWrapping.WordWrap;
+  moveHistoryText.isVisible = false;
   moveHistoryViewer.addControl(moveHistoryText);
 
   return {
@@ -104,13 +100,49 @@ export function createGUI() {
 
 //GAME STATE MANAGER CREATION
 export function createGameStateManager(guiElements, gameResetFunctions) {
-  const { moveHistoryViewer, messageText, messageRect, advancedTexture, captureTimerText } =
-    guiElements;
+  const { 
+    moveHistoryViewer, 
+    messageText, 
+    messageRect, 
+    advancedTexture, 
+    captureTimerText 
+  } = guiElements;
 
   // Store the reset functions for later use
   const resetFunctions = gameResetFunctions;
+  const { scene, animatePieceMovement } = resetFunctions;
 
   let nextPlayerText = null; // Variable to store the reference to nextPlayerText control
+
+  // Helper functions for 3D animation
+  function findPieceInScene(pieceName) {
+    console.log(`Looking for piece: ${pieceName}`);
+    const piece = scene.meshes.find(mesh => mesh.name === pieceName);
+    console.log(`Found piece:`, piece ? piece.name : 'NOT FOUND');
+    return piece;
+  }
+
+  function findCubeInScene(squareNotation) {
+    // Convert notation from "b72" to "b7-2" format used in scene
+    const cubeName = squareNotation.slice(0, -1) + '-' + squareNotation.slice(-1);
+    console.log(`Looking for cube: ${squareNotation} -> ${cubeName}`);
+    const cube = scene.meshes.find(mesh => mesh.name === cubeName);
+    console.log(`Found cube:`, cube ? cube.name : 'NOT FOUND');
+    return cube;
+  }
+
+  function calculateTargetPosition(cube) {
+    let offsetVector;
+    if (cube.name.startsWith("b")) {
+      offsetVector = new Vector3(0, 3.75, 0);
+    } else if (cube.name.startsWith("y")) {
+      offsetVector = new Vector3(3.75, 0, 0);
+    } else if (cube.name.startsWith("g")) {
+      offsetVector = new Vector3(0, 0, 3.75);
+    }
+    
+    return cube.position.clone().add(offsetVector);
+  }
 
   function displayInfoMessage(message) {
     messageText.text = message;
@@ -120,6 +152,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       messageRect.isVisible = false;
     }, 2000);
   }
+
 
   //GAME STATE OBJECT
 
@@ -220,7 +253,20 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       );
 
       const pieceNotation = this.abbreviatePiece(piece);
-      const moveText = `${pieceNotation}-${destinationSquare.replace("-", "")}`;
+      let moveText = `${pieceNotation}-${destinationSquare.replace("-", "")}`;
+      
+      // Add capture notation if there was a capture
+      if (capturedPiece && capturedPiece.name !== "text_input_capture") {
+        // Try to find what was captured by looking at recent captures
+        const recentCaptures = this.getRecentCaptures();
+        if (recentCaptures.length > 0) {
+          const captureNotation = recentCaptures.map(cap => moveNotation.getNotationFromPieceName(cap)).filter(Boolean).join(' x ');
+          if (captureNotation) {
+            moveText += ` x ${captureNotation}`;
+          }
+        }
+      }
+      
       this.moveHistory.push(moveText);
 
       // Check for winning conditions
@@ -239,6 +285,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       this.isPlayAgainState = false;
       this.updateNextPlayer();
       this.updateMoveHistoryDisplay();
+      this.updateOwlHallaDisplay(); // Update captured pieces display
       this.updateNextPlayerDisplay();
 
       this.updatePlayerTypes(); // Read the radio buttons first
@@ -246,9 +293,11 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       // Check if this was a human move with potential captures
       const isHumanMove = !this.isAIPlayer(piece.split(/(?=[A-Z])/)[0]); // Extract color from piece name
       const hasPotentialCapture = capturedPiece !== null && capturedPiece !== undefined;
+      const isTextInputCapture = capturedPiece && capturedPiece.name === "text_input_capture";
       const isRavenMove = piece.includes('Raven');
       
-      if (isHumanMove && hasPotentialCapture) {
+      // Don't start timer for text input captures (they're already completed)
+      if (isHumanMove && hasPotentialCapture && !isTextInputCapture) {
         console.log(`🕒 Starting 7-second capture decision timer for ${piece}`);
         this.isRavenCaptureInProgress = isRavenMove;
         
@@ -402,7 +451,22 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         this.lastMove.capturedPiece = capturedPiece;
       }
 
+      // Update the move history to include capture notation
+      if (this.moveHistory.length > 0) {
+        const lastMoveIndex = this.moveHistory.length - 1;
+        const lastMove = this.moveHistory[lastMoveIndex];
+        
+        // If it's a simple move string and doesn't already include capture notation
+        if (typeof lastMove === 'string' && !lastMove.includes(' x ')) {
+          const captureNotation = moveNotation.getNotationFromPieceName(capturedPiece);
+          if (captureNotation) {
+            this.moveHistory[lastMoveIndex] = `${lastMove} x ${captureNotation}`;
+          }
+        }
+      }
+
       this.updateMoveHistoryDisplay();
+      this.updateOwlHallaDisplay(); // Update captured pieces display
       console.log(
         "recordCapture completed. Current player:",
         this.currentPlayerTurn
@@ -906,6 +970,316 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       if (pieceName.startsWith("green")) return "green";
 
       return "unknown";
+    },
+
+    // HTML-based move input functionality  
+    initializeMoveInput: function() {
+      // Get HTML elements
+      const moveInput = document.getElementById('move-input');
+      const executeBtn = document.getElementById('execute-move-btn');
+      const clearBtn = document.getElementById('clear-input-btn');
+      const validateBtn = document.getElementById('validate-move-btn');
+      const capturedPiecesEl = document.getElementById('captured-pieces');
+      const moveHistoryEl = document.getElementById('move-history-display');
+      
+      if (!moveInput || !executeBtn || !clearBtn || !validateBtn) {
+        console.warn('Move input elements not found in DOM');
+        return;
+      }
+
+      // Clear button handler
+      clearBtn.addEventListener('click', () => {
+        moveInput.value = '';
+        moveInput.classList.remove('valid', 'invalid');
+      });
+
+      // Real-time validation on input
+      moveInput.addEventListener('input', () => {
+        const input = moveInput.value.trim();
+        if (!input) {
+          moveInput.classList.remove('valid', 'invalid');
+          return;
+        }
+
+        const parsedMove = moveNotation.parseMove(input);
+        if (parsedMove && parsedMove.valid) {
+          moveInput.classList.remove('invalid');
+          moveInput.classList.add('valid');
+        } else {
+          moveInput.classList.remove('valid');
+          moveInput.classList.add('invalid');
+        }
+      });
+
+      // Validate button handler
+      validateBtn.addEventListener('click', () => {
+        const input = moveInput.value.trim();
+        if (!input) {
+          displayInfoMessage("Enter a move to validate");
+          return;
+        }
+
+        const parsedMove = moveNotation.parseMove(input);
+        if (parsedMove && parsedMove.valid) {
+          displayInfoMessage(`✓ Valid notation: ${moveNotation.moveToNotation(parsedMove)}`);
+        } else {
+          displayInfoMessage("✗ Invalid move notation");
+        }
+      });
+
+      // Execute button handler
+      executeBtn.addEventListener('click', () => {
+        const input = moveInput.value.trim();
+        if (!input) {
+          displayInfoMessage("Enter a move to execute");
+          return;
+        }
+
+        const parsedMove = moveNotation.parseMove(input);
+        if (!parsedMove || !parsedMove.valid) {
+          displayInfoMessage("✗ Invalid move notation");
+          return;
+        }
+
+        // Execute the move
+        this.executeParsedMove(parsedMove);
+        moveInput.value = ''; // Clear input after execution
+        moveInput.classList.remove('valid', 'invalid');
+      });
+
+      // Enter key handler for move input
+      moveInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          executeBtn.click();
+        }
+      });
+
+      // Initialize display
+      this.updateOwlHallaDisplay();
+      this.updateMoveHistoryDisplay();
+    },
+
+    executeParsedMove: function(parsedMove) {
+      try {
+        switch (parsedMove.type) {
+          case 'move':
+            this.executeRegularMove(parsedMove);
+            break;
+          case 'capture':
+            this.executeDirectCapture(parsedMove);
+            break;
+          case 'restore':
+            this.executeRestore(parsedMove);
+            break;
+          default:
+            displayInfoMessage("Unknown move type");
+        }
+      } catch (error) {
+        console.error("Move execution error:", error);
+        displayInfoMessage("Move execution failed: " + error.message);
+      }
+    },
+
+    executeRegularMove: function(parsedMove) {
+      const pieceName = moveNotation.getPieceName(parsedMove.piece);
+      const currentPosition = this.piecePositions[pieceName];
+      
+      if (!pieceName || currentPosition === "captured") {
+        displayInfoMessage(`Piece ${parsedMove.piece} not found or captured`);
+        return;
+      }
+
+      // Find the piece in the 3D scene
+      const piece3D = findPieceInScene(pieceName);
+      if (!piece3D) {
+        displayInfoMessage(`3D piece ${pieceName} not found in scene`);
+        return;
+      }
+
+      // Find the target cube/square in the 3D scene
+      const targetCube = findCubeInScene(parsedMove.destination);
+      if (!targetCube) {
+        displayInfoMessage(`Target square ${parsedMove.destination} not found in scene`);
+        return;
+      }
+
+      // Calculate target position and rotation
+      const targetPosition = calculateTargetPosition(targetCube);
+      const targetRotation = targetCube.rotation.clone();
+
+      // Animate the piece movement
+      animatePieceMovement(
+        piece3D,
+        targetPosition,
+        targetRotation,
+        30, // duration
+        () => {
+          // Animation complete callback - update game state
+          this.piecePositions[pieceName] = parsedMove.destination;
+          
+          // Handle captures after animation
+          if (parsedMove.victims && parsedMove.victims.length > 0) {
+            console.log(`📥 TEXT INPUT: Processing ${parsedMove.victims.length} captures:`, parsedMove.victims);
+            for (const victim of parsedMove.victims) {
+              const victimPieceName = moveNotation.getPieceName(victim);
+              console.log(`📥 TEXT INPUT: Capturing: ${victim} -> ${victimPieceName}`);
+              console.log(`📥 TEXT INPUT: Current position of ${victimPieceName}:`, this.piecePositions[victimPieceName]);
+              
+              if (victimPieceName && this.piecePositions[victimPieceName] !== "captured") {
+                this.piecePositions[victimPieceName] = "captured";
+                console.log(`📥 TEXT INPUT: Updated game state: ${victimPieceName} is now captured`);
+                
+                // Call the same recordCapture function used by click-based captures
+                this.recordCapture(victimPieceName);
+                
+                // Hide the 3D piece
+                const victimPiece3D = findPieceInScene(victimPieceName);
+                if (victimPiece3D) {
+                  console.log(`📥 TEXT INPUT: Hiding 3D piece: ${victimPieceName}`);
+                  victimPiece3D.setEnabled(false);
+                } else {
+                  console.log(`📥 TEXT INPUT: WARNING: Could not find 3D piece to hide: ${victimPieceName}`);
+                }
+              } else {
+                console.log(`📥 TEXT INPUT: Piece ${victimPieceName} was already captured or not found`);
+              }
+            }
+          }
+
+          // Add to move history (this will also update the display)
+          this.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, 
+                               parsedMove.victims.length > 0 ? { name: "text_input_capture" } : null);
+          
+          displayInfoMessage(`Executed: ${moveNotation.moveToNotation(parsedMove)}`);
+        }
+      );
+    },
+
+    executeDirectCapture: function(parsedMove) {
+      for (const victim of parsedMove.victims) {
+        const victimPieceName = moveNotation.getPieceName(victim);
+        if (victimPieceName && this.piecePositions[victimPieceName] !== "captured") {
+          this.piecePositions[victimPieceName] = "captured";
+          
+          // Handle 3D piece
+          const victimPiece3D = findPieceInScene(victimPieceName);
+          if (victimPiece3D) {
+            victimPiece3D.setEnabled(false); // Hide for now
+          }
+          
+          displayInfoMessage(`Captured: ${victim}`);
+        } else {
+          displayInfoMessage(`Piece ${victim} not found or already captured`);
+        }
+      }
+      this.updateOwlHallaDisplay();
+    },
+
+    executeRestore: function(parsedMove) {
+      const pieceName = moveNotation.getPieceName(parsedMove.piece);
+      if (pieceName && this.piecePositions[pieceName] === "captured") {
+        // TODO: Restore to original position or allow position selection
+        displayInfoMessage(`Restore functionality not yet implemented for ${parsedMove.piece}`);
+      } else {
+        displayInfoMessage(`Piece ${parsedMove.piece} is not in Owl Halla`);
+      }
+    },
+
+    updateOwlHallaDisplay: function() {
+      const capturedPiecesEl = document.getElementById('captured-pieces');
+      if (!capturedPiecesEl) return;
+
+      console.log('=== Updating Owl Halla Display ===');
+      console.log('Current piece positions:', this.piecePositions);
+
+      const capturedPieces = [];
+      for (const [pieceName, position] of Object.entries(this.piecePositions)) {
+        if (position === "captured") {
+          const notation = moveNotation.getNotationFromPieceName(pieceName);
+          console.log(`Found captured piece: ${pieceName} -> ${notation}`);
+          if (notation) {
+            capturedPieces.push(notation);
+          }
+        }
+      }
+
+      console.log('Captured pieces for display:', capturedPieces);
+
+      // Clear existing content
+      capturedPiecesEl.innerHTML = '';
+      
+      if (capturedPieces.length === 0) {
+        capturedPiecesEl.innerHTML = '<span class="empty-message">none</span>';
+      } else {
+        capturedPieces.forEach(piece => {
+          const pieceEl = document.createElement('span');
+          pieceEl.className = 'captured-piece';
+          pieceEl.textContent = piece;
+          pieceEl.title = 'Click to restore (not yet implemented)';
+          capturedPiecesEl.appendChild(pieceEl);
+        });
+      }
+    },
+
+    updateMoveHistoryDisplay: function() {
+      const moveHistoryEl = document.getElementById('move-history-display');
+      if (!moveHistoryEl) return;
+
+      // Clear existing content except for template
+      moveHistoryEl.innerHTML = '';
+
+      // Add moves from history
+      if (this.moveHistory && this.moveHistory.length > 0) {
+        this.moveHistory.forEach((move, index) => {
+          const moveEl = document.createElement('div');
+          moveEl.className = 'move-entry';
+          if (index === this.moveHistory.length - 1) {
+            moveEl.classList.add('new-move');
+          }
+
+          // Handle both string moves (existing) and object moves (new)
+          const moveText = typeof move === 'string' ? move : (move.notation || this.formatMoveForDisplay(move));
+
+          moveEl.innerHTML = `
+            <span class="move-number">${index + 1}.</span>
+            <span class="move-notation">${moveText}</span>
+            <button class="takeback-btn" data-move-index="${index}" title="Take back this move">×</button>
+          `;
+
+          moveHistoryEl.appendChild(moveEl);
+        });
+
+        // Add takeback listeners
+        moveHistoryEl.querySelectorAll('.takeback-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const moveIndex = parseInt(e.target.dataset.moveIndex);
+            this.takebackToMove(moveIndex);
+          });
+        });
+      }
+    },
+
+    formatMoveForDisplay: function(move) {
+      // Format move for display - convert internal move to notation
+      const piece = moveNotation.getNotationFromPieceName(move.piece);
+      const destination = move.destination;
+      const captures = move.capturedPiece ? ' x ??' : '';
+      return `${piece}-${destination}${captures}`;
+    },
+
+    takebackToMove: function(moveIndex) {
+      // TODO: Implement takeback functionality
+      displayInfoMessage(`Takeback to move ${moveIndex + 1} not yet implemented`);
+    },
+
+    getRecentCaptures: function() {
+      const captured = [];
+      for (const [pieceName, position] of Object.entries(this.piecePositions)) {
+        if (position === "captured") {
+          captured.push(pieceName);
+        }
+      }
+      return captured;
     },
 
     displayInfoMessage: displayInfoMessage,

@@ -184,6 +184,56 @@
           </button>
           <button id="reset-game" class="control-button">Reset Game</button>
         </div>
+
+        <div class="move-panel">
+          <h3>Move History & Input</h3>
+          
+          <div class="move-history-section">
+            <div class="move-history-header">
+              <span class="history-title">Game Moves</span>
+              <button id="clear-history-btn" class="small-button" title="Clear History">⊗</button>
+            </div>
+            <div id="move-history-display" class="move-history-list">
+              <!-- Moves will be added dynamically -->
+            </div>
+          </div>
+
+          <div class="move-input-section">
+            <label for="move-input" class="input-label">Enter Move:</label>
+            <div class="input-row">
+              <input 
+                type="text" 
+                id="move-input" 
+                class="move-input" 
+                placeholder="e.g., bO-b72"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button id="validate-move-btn" class="small-button" title="Validate move">✓</button>
+            </div>
+            <div class="button-row">
+              <button id="execute-move-btn" class="control-button primary">Execute</button>
+              <button id="clear-input-btn" class="control-button secondary">Clear</button>
+            </div>
+          </div>
+
+          <div class="owl-halla-section">
+            <h4>Owl Halla</h4>
+            <div id="captured-pieces" class="captured-pieces">
+              <span class="empty-message">none</span>
+              <!-- Captured pieces will be added here -->
+            </div>
+          </div>
+
+          <div class="mode-section">
+            <div class="mode-toggle">
+              <span class="mode-label">Mode:</span>
+              <button id="mode-toggle-btn" class="mode-button" data-mode="game">
+                <span class="mode-text">Game</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </aside>
 
