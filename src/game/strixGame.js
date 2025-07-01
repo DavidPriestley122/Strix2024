@@ -6,6 +6,7 @@ import { createCheckerBoards } from "./gameCheckerBoards.js";
 import { createOwlSquareToruses } from "./gameCheckerBoards.js";
 import { createPlayingPieces } from "./gamePieces.js";
 import { createAI } from "./gameAI.js";
+import { checkRavenCaptureOpportunities } from "./rules/ravenRules.js";
 
 import {
   Scene,
@@ -425,23 +426,15 @@ export default function createScene(engine, canvas) {
                   }
                 }
               } else if (selectedPiece.name.includes('Raven')) {
-                // Raven captures: check if this is a cross-face move AND if mobbing is possible
-                const startFace = currentPosition[0];
-                const endFace = clickedCube.name[0];
-                if (startFace !== endFace) {
-                  // Cross-face move - check for actual mobbing opportunities
-                  // This is complex, so for now just check if there are any potential victims on different faces
-                  const hasOpponents = Object.entries(gameStateManager.piecePositions).some(([pieceName, piecePos]) => {
-                    if (piecePos === "captured" || pieceName === selectedPiece.name) return false;
-                    const ravenColor = selectedPiece.name.split(/(?=[A-Z])/)[0];
-                    const victimColor = pieceName.split(/(?=[A-Z])/)[0];
-                    const victimFace = piecePos[0];
-                    return ravenColor !== victimColor && victimFace !== endFace; // Different team, different face
-                  });
-                  
-                  if (hasOpponents) {
-                    capturedPiece = { name: "potential_raven_mobbing" };
-                  }
+                // Raven captures: check if the Raven actually has mobbing opportunities at the destination
+                const hasActualCaptures = checkRavenCaptureOpportunities(
+                  clickedCube.name, 
+                  gameStateManager.piecePositions, 
+                  selectedPiece.name
+                );
+                
+                if (hasActualCaptures) {
+                  capturedPiece = { name: "potential_raven_mobbing" };
                 }
               }
 

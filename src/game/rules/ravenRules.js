@@ -267,11 +267,31 @@ function isValidMobbingFlightwayPattern(attackingFW, passiveFW, victimFW, attack
 }
 
 // Helper function to find which piece is at a given square
-function findPieceAtSquare(square, piecePositions) {
+export function findPieceAtSquare(square, piecePositions) {
   for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
     if (piecePos === square && piecePos !== "captured") {
       return pieceName;
     }
   }
   return null;
+}
+
+// Check if a Raven at a specific position has any actual capture opportunities
+export function checkRavenCaptureOpportunities(ravenPosition, piecePositions, ravenName) {
+  if (ENABLE_MECHANISTIC_LOGGING) console.log(`🔍 Checking capture opportunities for ${ravenName} at ${ravenPosition}`);
+  
+  // Use existing mobbing detection logic
+  const mobbingOpportunities = findMobbingOpportunities(ravenPosition, piecePositions, ravenName);
+  
+  const hasCaptures = mobbingOpportunities.length > 0;
+  
+  if (ENABLE_MECHANISTIC_LOGGING) {
+    if (hasCaptures) {
+      console.log(`✅ ${ravenName} has ${mobbingOpportunities.length} capture opportunities:`, mobbingOpportunities);
+    } else {
+      console.log(`❌ No capture opportunities found for ${ravenName} at ${ravenPosition}`);
+    }
+  }
+  
+  return hasCaptures;
 }
