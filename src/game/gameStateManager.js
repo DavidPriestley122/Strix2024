@@ -280,9 +280,21 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         this.gameOver = true;
       }
 
+      // Check if this is a hybrid capture in progress FIRST
+      const isHybridInProgress = capturedPiece && capturedPiece.name === "hybrid_in_progress";
+      
       // Update game state
       this.lastMove = { piece, sourceSquare, destinationSquare, moveText };
       this.isPlayAgainState = false;
+      
+      // Don't advance turn if this is a hybrid capture in progress
+      if (isHybridInProgress) {
+        console.log(`🔄 Hybrid capture in progress - NOT advancing turn or updating displays yet`);
+        this.updateMoveHistoryDisplay();
+        return; // Exit early, don't advance turn or call proceedToNextTurn()
+      }
+      
+      // Normal flow for non-hybrid moves
       this.updateNextPlayer();
       this.updateMoveHistoryDisplay();
       this.updateOwlHallaDisplay(); // Update captured pieces display
@@ -1003,11 +1015,43 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
         const parsedMove = moveNotation.parseMove(input);
         if (parsedMove && parsedMove.valid) {
-          moveInput.classList.remove('invalid');
-          moveInput.classList.add('valid');
+          // Check notation validity first
+          if (parsedMove.type === 'move') {
+            // For regular moves, also validate game rules
+            const pieceName = moveNotation.getPieceName(parsedMove.piece);
+            const currentPosition = this.piecePositions[pieceName];
+            
+            if (pieceName && currentPosition && currentPosition !== "captured") {
+              // Only validate if we have the validation function available
+              if (typeof window.validateMove === 'function') {
+                const validation = window.validateMove(pieceName, currentPosition, parsedMove.destination);
+                if (validation.valid) {
+                  moveInput.classList.remove('invalid');
+                  moveInput.classList.add('valid');
+                } else {
+                  moveInput.classList.remove('valid');
+                  moveInput.classList.add('invalid');
+                  moveInput.title = validation.reason; // Show reason on hover
+                }
+              } else {
+                // Fallback to notation-only validation
+                moveInput.classList.remove('invalid');
+                moveInput.classList.add('valid');
+              }
+            } else {
+              moveInput.classList.remove('valid');
+              moveInput.classList.add('invalid');
+              moveInput.title = 'Piece not found or captured';
+            }
+          } else {
+            // For non-move commands (captures, restore), just check notation
+            moveInput.classList.remove('invalid');
+            moveInput.classList.add('valid');
+          }
         } else {
           moveInput.classList.remove('valid');
           moveInput.classList.add('invalid');
+          moveInput.title = 'Invalid notation format';
         }
       });
 
@@ -1021,7 +1065,29 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
         const parsedMove = moveNotation.parseMove(input);
         if (parsedMove && parsedMove.valid) {
-          displayInfoMessage(`✓ Valid notation: ${moveNotation.moveToNotation(parsedMove)}`);
+          if (parsedMove.type === 'move') {
+            // For regular moves, validate both notation and game rules
+            const pieceName = moveNotation.getPieceName(parsedMove.piece);
+            const currentPosition = this.piecePositions[pieceName];
+            
+            if (!pieceName || !currentPosition || currentPosition === "captured") {
+              displayInfoMessage("✗ Piece not found or captured");
+              return;
+            }
+            
+            if (typeof window.validateMove === 'function') {
+              const validation = window.validateMove(pieceName, currentPosition, parsedMove.destination);
+              if (validation.valid) {
+                displayInfoMessage(`✓ Valid move: ${moveNotation.moveToNotation(parsedMove)} - ${validation.reason}`);
+              } else {
+                displayInfoMessage(`✗ Invalid move: ${validation.reason}`);
+              }
+            } else {
+              displayInfoMessage(`✓ Valid notation: ${moveNotation.moveToNotation(parsedMove)} (rule validation unavailable)`);
+            }
+          } else {
+            displayInfoMessage(`✓ Valid notation: ${moveNotation.moveToNotation(parsedMove)}`);
+          }
         } else {
           displayInfoMessage("✗ Invalid move notation");
         }
@@ -1081,13 +1147,474 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     },
 
     executeRegularMove: function(parsedMove) {
+      console.log(`🎯 executeRegularMove called with:`, parsedMove);
+      
       const pieceName = moveNotation.getPieceName(parsedMove.piece);
       const currentPosition = this.piecePositions[pieceName];
+      
+      console.log(`📍 Piece: ${parsedMove.piece} -> ${pieceName}, Current position: ${currentPosition}`);
       
       if (!pieceName || currentPosition === "captured") {
         displayInfoMessage(`Piece ${parsedMove.piece} not found or captured`);
         return;
       }
+
+      // VALIDATE THE MOVE using existing rule systems
+      if (typeof window.validateMove === 'function') {
+        const validation = window.validateMove(pieceName, currentPosition, parsedMove.destination);
+        if (!validation.valid) {
+          console.log(`❌ Move validation failed: ${validation.reason}`);
+          displayInfoMessage(`Invalid move: ${validation.reason}`);
+          return;
+        }
+        console.log(`✅ Move validation passed: ${validation.reason}`);
+      } else {
+        console.log(`⚠️ Move validation function not available - proceeding without validation`);
+      }
+
+      // Check if this move has potential captures but no capture notation specified
+      const hasPotentialCaptures = this.checkPotentialCaptures(pieceName, parsedMove.destination);
+      const hasSpecifiedCaptures = parsedMove.victims && parsedMove.victims.length > 0;
+      
+      console.log(`🔍 Capture analysis: hasPotentialCaptures=${hasPotentialCaptures}, hasSpecifiedCaptures=${hasSpecifiedCaptures}`);
+      console.log(`📋 Parsed move victims:`, parsedMove.victims);
+      
+      if (hasPotentialCaptures && !hasSpecifiedCaptures) {
+        console.log(`🚀 Move first, then start hybrid capture mode!`);
+        // Execute the move first, then start capture mode
+        this.executeMovementThenCaptures(parsedMove);
+        return;
+      }
+
+      console.log(`⚡ Executing move immediately (no hybrid mode needed)`);
+      // Execute the move immediately (either no captures possible or captures already specified)
+      this.executeMovementAndCaptures(parsedMove);
+    },
+
+    checkPotentialCaptures: function(pieceName, destination) {
+      console.log(`🔍 Checking potential captures for ${pieceName} moving to ${destination}`);
+      
+      // Use existing capture detection logic from strixGame.js
+      const piece3D = findPieceInScene(pieceName);
+      if (!piece3D) {
+        console.log(`❌ Piece ${pieceName} not found in 3D scene`);
+        return false;
+      }
+
+      if (pieceName.includes('Owl')) {
+        // Owl captures: direct occupation - check if destination has enemy piece
+        console.log(`🦉 Checking Owl captures for ${pieceName}`);
+        const targetPieces = [];
+        for (const [otherPieceName, position] of Object.entries(this.piecePositions)) {
+          if (position === destination && otherPieceName !== pieceName) {
+            const pieceColor = this.getColorFromPieceName(pieceName);
+            const otherColor = this.getColorFromPieceName(otherPieceName);
+            if (pieceColor !== otherColor) {
+              targetPieces.push(otherPieceName);
+              console.log(`🎯 Owl can capture ${otherPieceName} at ${destination}`);
+            }
+          }
+        }
+        return targetPieces.length > 0;
+      } else if (pieceName.includes('Kite')) {
+        // Kite captures: cross-face moves with adjacent victims
+        console.log(`🪁 Checking Kite captures for ${pieceName}`);
+        const currentPosition = this.piecePositions[pieceName];
+        const startFace = currentPosition[0];
+        const endFace = destination[0];
+        
+        console.log(`📍 Kite move: ${currentPosition} -> ${destination} (${startFace} to ${endFace})`);
+        
+        if (startFace !== endFace) {
+          console.log(`🔄 Cross-face move detected - checking for adjacent victims`);
+          // Cross-face move - check for adjacent victims
+          const adjacentSquares = this.getAdjacentSquares(destination);
+          console.log(`📋 Adjacent squares to ${destination}:`, adjacentSquares);
+          
+          const hasVictims = adjacentSquares.some(square => {
+            const occupyingPiece = this.findPieceAtSquare(square);
+            console.log(`🔍 Square ${square}: ${occupyingPiece || 'empty'}`);
+            console.log(`🔍 Checking positions for square ${square}:`);
+            
+            // Debug: show all piece positions to see the format mismatch
+            for (const [piece, pos] of Object.entries(this.piecePositions)) {
+              if (pos.startsWith(square[0])) { // Same face
+                console.log(`  ${piece}: ${pos}`);
+              }
+            }
+            
+            if (occupyingPiece) {
+              const kiteColor = this.getColorFromPieceName(pieceName);
+              const victimColor = this.getColorFromPieceName(occupyingPiece);
+              console.log(`🎨 Colors: ${pieceName}(${kiteColor}) vs ${occupyingPiece}(${victimColor})`);
+              if (kiteColor !== victimColor) {
+                console.log(`🎯 Kite can capture ${occupyingPiece} at ${square}`);
+                return true;
+              }
+            }
+            return false;
+          });
+          
+          console.log(`✅ Kite has potential victims: ${hasVictims}`);
+          return hasVictims;
+        }
+        console.log(`❌ Same-face move - no Kite captures possible`);
+        return false;
+      } else if (pieceName.includes('Raven')) {
+        // Use existing Raven capture detection from imported modules
+        console.log(`🐦 Checking Raven captures for ${pieceName}`);
+        // Note: checkRavenCaptureOpportunities should be available in global scope
+        if (typeof checkRavenCaptureOpportunities === 'function') {
+          const hasCaptures = checkRavenCaptureOpportunities(destination, this.piecePositions, pieceName);
+          console.log(`✅ Raven has potential captures: ${hasCaptures}`);
+          return hasCaptures;
+        }
+        console.log(`❌ checkRavenCaptureOpportunities function not available`);
+        return false;
+      }
+      
+      console.log(`❌ No potential captures found for ${pieceName}`);
+      return false;
+    },
+
+    executeMovementThenCaptures: function(parsedMove) {
+      console.log(`🎯 executeMovementThenCaptures: Moving piece first, then starting capture mode`);
+      
+      const pieceName = moveNotation.getPieceName(parsedMove.piece);
+      const currentPosition = this.piecePositions[pieceName];
+
+      // Find the piece in the 3D scene
+      const piece3D = findPieceInScene(pieceName);
+      if (!piece3D) {
+        displayInfoMessage(`3D piece ${pieceName} not found in scene`);
+        return;
+      }
+
+      // Find the target cube/square in the 3D scene
+      const targetCube = findCubeInScene(parsedMove.destination);
+      if (!targetCube) {
+        displayInfoMessage(`Target square ${parsedMove.destination} not found in scene`);
+        return;
+      }
+
+      // Calculate target position and rotation
+      const targetPosition = calculateTargetPosition(targetCube);
+      const targetRotation = targetCube.rotation.clone();
+
+      // Store the parsed move for after animation
+      this.pendingHybridMove = parsedMove;
+
+      // Animate the piece movement FIRST
+      animatePieceMovement(
+        piece3D,
+        targetPosition,
+        targetRotation,
+        30, // duration
+        () => {
+          console.log(`✅ Movement animation complete - now starting hybrid capture mode`);
+          
+          // Update game state after movement
+          this.piecePositions[pieceName] = parsedMove.destination;
+          
+          // Add basic move to history (captures will be added later)
+          // Note: We pass a special flag to indicate this is a hybrid move in progress
+          this.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, { name: "hybrid_in_progress" });
+          
+          // NOW start the hybrid capture mode
+          this.startHybridCaptureMode(parsedMove);
+        }
+      );
+    },
+
+    startHybridCaptureMode: function(parsedMove) {
+      console.log('🔄 Starting hybrid capture mode for move:', parsedMove);
+      
+      // Store the pending move
+      this.pendingHybridMove = parsedMove;
+      this.hybridCaptureMode = true;
+      this.hybridCaptureVictims = [];
+      
+      // Update text input to show move is being processed
+      const moveInput = document.getElementById('move-input');
+      if (moveInput) {
+        moveInput.value = moveNotation.moveToNotation(parsedMove);
+        moveInput.classList.add('hybrid-capture');
+      }
+      
+      // Start capture timer with visual feedback
+      this.startHybridCaptureTimer();
+      
+      // Display instructions
+      displayInfoMessage('Piece moved! Click pieces to capture them, or wait 7s to proceed without capturing');
+      
+      // Enable piece clicking for captures
+      this.enableHybridPieceClicking();
+    },
+
+    startHybridCaptureTimer: function() {
+      this.hybridCaptureTimeRemaining = 7;
+      
+      // Update capture timer display
+      captureTimerText.text = `Hybrid Capture: ${this.hybridCaptureTimeRemaining}s (click pieces to capture)`;
+      captureTimerText.isVisible = true;
+      
+      // Start countdown
+      this.hybridCaptureTimer = setInterval(() => {
+        this.hybridCaptureTimeRemaining--;
+        captureTimerText.text = `Hybrid Capture: ${this.hybridCaptureTimeRemaining}s (click pieces to capture)`;
+        
+        if (this.hybridCaptureTimeRemaining <= 0) {
+          this.finishHybridCapture();
+        }
+      }, 1000);
+    },
+
+    enableHybridPieceClicking: function() {
+      // Add temporary click handlers to all pieces for capture selection
+      this.hybridClickHandlers = new Map();
+      
+      const potentialVictims = this.getPotentialVictims(this.pendingHybridMove);
+      
+      // Store reference to gameStateManager for use in click handlers
+      const gameStateManager = this;
+      
+      potentialVictims.forEach(victimPieceName => {
+        const piece3D = findPieceInScene(victimPieceName);
+        if (piece3D && piece3D.actionManager) {
+          // Create a unique action for hybrid capture clicking
+          // Use the same ExecuteCodeAction that's already imported in the file
+          const clickAction = {
+            trigger: 1, // OnPickTrigger
+            _actionCallback: function() {
+              gameStateManager.addHybridCaptureVictim(victimPieceName);
+            }
+          };
+          
+          // Store action for later removal
+          this.hybridClickHandlers.set(victimPieceName, clickAction);
+          
+          // Add custom event listener as fallback
+          piece3D._hybridCaptureHandler = () => {
+            console.log(`🎯 Hybrid capture handler called for ${victimPieceName}`);
+            gameStateManager.addHybridCaptureVictim(victimPieceName);
+          };
+        }
+      });
+    },
+
+    getPotentialVictims: function(parsedMove) {
+      const pieceName = moveNotation.getPieceName(parsedMove.piece);
+      const destination = parsedMove.destination;
+      const victims = [];
+      
+      if (pieceName.includes('Owl')) {
+        // Check for direct occupation victims
+        for (const [otherPieceName, position] of Object.entries(this.piecePositions)) {
+          if (position === destination && otherPieceName !== pieceName) {
+            const pieceColor = this.getColorFromPieceName(pieceName);
+            const otherColor = this.getColorFromPieceName(otherPieceName);
+            if (pieceColor !== otherColor) {
+              victims.push(otherPieceName);
+            }
+          }
+        }
+      } else if (pieceName.includes('Kite')) {
+        // Check for adjacent victims on cross-face moves
+        const currentPosition = this.piecePositions[pieceName];
+        const startFace = currentPosition[0];
+        const endFace = destination[0];
+        
+        if (startFace !== endFace) {
+          const adjacentSquares = this.getAdjacentSquares(destination);
+          adjacentSquares.forEach(square => {
+            const occupyingPiece = this.findPieceAtSquare(square);
+            if (occupyingPiece) {
+              const kiteColor = this.getColorFromPieceName(pieceName);
+              const victimColor = this.getColorFromPieceName(occupyingPiece);
+              if (kiteColor !== victimColor) {
+                victims.push(occupyingPiece);
+              }
+            }
+          });
+        }
+      } else if (pieceName.includes('Raven')) {
+        // Get all possible mobbing victims using existing functions
+        // Note: findMobbingOpportunities should be available from ravenRules.js import
+        if (typeof findMobbingOpportunities === 'function') {
+          const mobbingOps = findMobbingOpportunities(destination, this.piecePositions, pieceName);
+          mobbingOps.forEach(op => {
+            if (op.victim) victims.push(op.victim);
+          });
+        }
+      }
+      
+      return victims;
+    },
+
+    addHybridCaptureVictim: function(victimPieceName) {
+      console.log(`🎯 addHybridCaptureVictim called for ${victimPieceName}`);
+      
+      // Add victim to capture list if not already included
+      if (!this.hybridCaptureVictims.includes(victimPieceName)) {
+        this.hybridCaptureVictims.push(victimPieceName);
+        console.log(`📋 Added ${victimPieceName} to hybrid capture victims list:`, this.hybridCaptureVictims);
+        
+        // Update text input to show capture notation
+        const victimNotation = moveNotation.getNotationFromPieceName(victimPieceName);
+        if (victimNotation) {
+          const moveInput = document.getElementById('move-input');
+          if (moveInput) {
+            const baseMove = moveNotation.moveToNotation(this.pendingHybridMove);
+            const captureNotation = this.hybridCaptureVictims.map(v => 
+              moveNotation.getNotationFromPieceName(v)).join(' ');
+            moveInput.value = `${baseMove} x ${captureNotation}`;
+            console.log(`📝 Updated text input to: ${moveInput.value}`);
+          }
+        }
+        
+        // Visual feedback
+        const piece3D = findPieceInScene(victimPieceName);
+        if (piece3D) {
+          // Add visual indicator that piece is selected for capture
+          piece3D.scaling = piece3D.scaling.clone().scale(1.1);
+        }
+        
+        displayInfoMessage(`Added ${victimNotation} to capture list`);
+      } else {
+        console.log(`⚠️ ${victimPieceName} already in capture list`);
+      }
+    },
+
+    finishHybridCapture: function() {
+      console.log('🏁 Finishing hybrid capture mode');
+      
+      // Stop timer
+      if (this.hybridCaptureTimer) {
+        clearInterval(this.hybridCaptureTimer);
+        this.hybridCaptureTimer = null;
+      }
+      
+      // Hide timer display
+      captureTimerText.isVisible = false;
+      
+      // Remove temporary click handlers
+      this.disableHybridPieceClicking();
+      
+      // Check if any captures were made (either through hybrid list or traditional double-click)
+      const recentCapturedPieces = [];
+      for (const [pieceName, position] of Object.entries(this.piecePositions)) {
+        if (position === "captured") {
+          recentCapturedPieces.push(pieceName);
+        }
+      }
+      
+      console.log(`🔍 Checking captures - Hybrid victims: ${this.hybridCaptureVictims.length}, Recent captured pieces: ${recentCapturedPieces.length}`);
+      
+      // Process any selected captures (piece has already moved)
+      if (this.hybridCaptureVictims.length > 0) {
+        console.log(`🎯 Processing ${this.hybridCaptureVictims.length} hybrid captures:`, this.hybridCaptureVictims);
+        
+        for (const victimPieceName of this.hybridCaptureVictims) {
+          console.log(`📥 HYBRID: Capturing: ${victimPieceName}`);
+          
+          if (this.piecePositions[victimPieceName] !== "captured") {
+            this.piecePositions[victimPieceName] = "captured";
+            
+            // Call the same recordCapture function used by click-based captures
+            this.recordCapture(victimPieceName);
+            
+            // Animate the 3D piece to Owl Halla
+            console.log(`📥 HYBRID: Animating piece to Owl Halla: ${victimPieceName}`);
+            if (typeof window.animateCapturedPieceToOwlHalla === 'function') {
+              window.animateCapturedPieceToOwlHalla(victimPieceName);
+            } else {
+              console.log(`📥 HYBRID: WARNING: animateCapturedPieceToOwlHalla function not available`);
+            }
+          }
+        }
+        
+        // Update move history to include capture notation
+        if (this.moveHistory.length > 0) {
+          const lastMoveIndex = this.moveHistory.length - 1;
+          const lastMove = this.moveHistory[lastMoveIndex];
+          
+          if (typeof lastMove === 'string' && !lastMove.includes(' x ')) {
+            const captureNotations = this.hybridCaptureVictims.map(pieceName => 
+              moveNotation.getNotationFromPieceName(pieceName)).filter(Boolean);
+            if (captureNotations.length > 0) {
+              this.moveHistory[lastMoveIndex] = `${lastMove} x ${captureNotations.join(' ')}`;
+              this.updateMoveHistoryDisplay();
+            }
+          }
+        }
+        
+        displayInfoMessage(`Captured: ${this.hybridCaptureVictims.map(p => moveNotation.getNotationFromPieceName(p)).join(', ')}`);
+      } else if (recentCapturedPieces.length > 0) {
+        // Captures were made through traditional double-click during hybrid mode
+        console.log(`🎯 Traditional captures detected during hybrid mode:`, recentCapturedPieces);
+        const captureNotations = recentCapturedPieces.map(pieceName => 
+          moveNotation.getNotationFromPieceName(pieceName)).filter(Boolean);
+        displayInfoMessage(`Captured: ${captureNotations.join(', ')}`);
+        
+        // Update move history to include capture notation
+        if (this.moveHistory.length > 0) {
+          const lastMoveIndex = this.moveHistory.length - 1;
+          const lastMove = this.moveHistory[lastMoveIndex];
+          
+          if (typeof lastMove === 'string' && !lastMove.includes(' x ')) {
+            if (captureNotations.length > 0) {
+              this.moveHistory[lastMoveIndex] = `${lastMove} x ${captureNotations.join(' ')}`;
+              this.updateMoveHistoryDisplay();
+            }
+          }
+        }
+      } else {
+        displayInfoMessage('Move completed without captures');
+      }
+      
+      // Clean up
+      this.hybridCaptureMode = false;
+      this.pendingHybridMove = null;
+      this.hybridCaptureVictims = [];
+      
+      // Reset text input styling
+      const moveInput = document.getElementById('move-input');
+      if (moveInput) {
+        moveInput.value = '';
+        moveInput.classList.remove('valid', 'invalid', 'hybrid-capture');
+      }
+      
+      // NOW update displays and advance the turn (this was delayed during hybrid capture)
+      console.log(`🔄 Hybrid capture complete - now updating displays and advancing turn`);
+      this.updateNextPlayer();
+      this.updateOwlHallaDisplay();
+      this.updateNextPlayerDisplay();
+      this.updatePlayerTypes();
+      this.proceedToNextTurn();
+    },
+
+    disableHybridPieceClicking: function() {
+      // Remove temporary click handlers and reset piece scaling
+      if (this.hybridClickHandlers) {
+        this.hybridClickHandlers.forEach((_, pieceName) => {
+          const piece3D = findPieceInScene(pieceName);
+          if (piece3D) {
+            // Reset scaling using Vector3 import that should be available
+            piece3D.scaling = new Vector3(1, 1, 1);
+            
+            // Remove custom hybrid capture handler
+            if (piece3D._hybridCaptureHandler) {
+              delete piece3D._hybridCaptureHandler;
+            }
+          }
+        });
+        this.hybridClickHandlers.clear();
+      }
+    },
+
+    executeMovementAndCaptures: function(parsedMove) {
+      const pieceName = moveNotation.getPieceName(parsedMove.piece);
+      const currentPosition = this.piecePositions[pieceName];
 
       // Find the piece in the 3D scene
       const piece3D = findPieceInScene(pieceName);
@@ -1123,36 +1650,104 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
             for (const victim of parsedMove.victims) {
               const victimPieceName = moveNotation.getPieceName(victim);
               console.log(`📥 TEXT INPUT: Capturing: ${victim} -> ${victimPieceName}`);
-              console.log(`📥 TEXT INPUT: Current position of ${victimPieceName}:`, this.piecePositions[victimPieceName]);
               
               if (victimPieceName && this.piecePositions[victimPieceName] !== "captured") {
                 this.piecePositions[victimPieceName] = "captured";
-                console.log(`📥 TEXT INPUT: Updated game state: ${victimPieceName} is now captured`);
                 
                 // Call the same recordCapture function used by click-based captures
                 this.recordCapture(victimPieceName);
                 
-                // Hide the 3D piece
-                const victimPiece3D = findPieceInScene(victimPieceName);
-                if (victimPiece3D) {
-                  console.log(`📥 TEXT INPUT: Hiding 3D piece: ${victimPieceName}`);
-                  victimPiece3D.setEnabled(false);
+                // Animate the 3D piece to Owl Halla
+                console.log(`📥 TEXT INPUT: Animating piece to Owl Halla: ${victimPieceName}`);
+                if (typeof window.animateCapturedPieceToOwlHalla === 'function') {
+                  window.animateCapturedPieceToOwlHalla(victimPieceName);
                 } else {
-                  console.log(`📥 TEXT INPUT: WARNING: Could not find 3D piece to hide: ${victimPieceName}`);
+                  console.log(`📥 TEXT INPUT: WARNING: animateCapturedPieceToOwlHalla function not available`);
                 }
-              } else {
-                console.log(`📥 TEXT INPUT: Piece ${victimPieceName} was already captured or not found`);
               }
             }
           }
 
-          // Add to move history (this will also update the display)
+          // Add to move history
           this.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, 
-                               parsedMove.victims.length > 0 ? { name: "text_input_capture" } : null);
+                               parsedMove.victims && parsedMove.victims.length > 0 ? { name: "text_input_capture" } : null);
           
           displayInfoMessage(`Executed: ${moveNotation.moveToNotation(parsedMove)}`);
         }
       );
+    },
+
+    getAdjacentSquares: function(square) {
+      // Helper function - implement based on existing logic in strixGame.js
+      console.log(`🔍 getAdjacentSquares called with: ${square}`);
+      
+      const face = square[0];
+      let coords;
+      
+      // Handle both formats: "g61" and "g6-1"
+      if (square.includes('-')) {
+        coords = square.substring(1).split("-");
+      } else {
+        // Parse format like "g61" -> row=6, col=1
+        const numberPart = square.substring(1);
+        if (numberPart.length >= 2) {
+          coords = [numberPart.substring(0, numberPart.length - 1), numberPart.substring(numberPart.length - 1)];
+        } else {
+          console.log(`❌ Invalid square format: ${square}`);
+          return [];
+        }
+      }
+      
+      const row = parseInt(coords[0]);
+      const col = parseInt(coords[1]);
+      
+      console.log(`📍 Parsed ${square} -> face: ${face}, row: ${row}, col: ${col}`);
+      
+      const adjacent = [];
+      const directions = [
+        [0, 1], [0, -1], [1, 0], [-1, 0]  // right, left, down, up
+      ];
+      
+      for (const [dr, dc] of directions) {
+        const newRow = row + dr;
+        const newCol = col + dc;
+        
+        if (newRow >= 1 && newRow <= 7 && newCol >= 1 && newCol <= 7) {
+          // Use the same format as the input square
+          const adjacentSquare = square.includes('-') ? 
+            `${face}${newRow}-${newCol}` : 
+            `${face}${newRow}${newCol}`;
+          adjacent.push(adjacentSquare);
+        }
+      }
+      
+      console.log(`📋 Adjacent squares to ${square}:`, adjacent);
+      return adjacent;
+    },
+
+    findPieceAtSquare: function(square) {
+      // Convert square format to match stored positions
+      // Input: "g62" -> Output: "g6-2" to match stored format
+      let normalizedSquare = square;
+      if (!square.includes('-') && square.length >= 3) {
+        const face = square[0];
+        const numbers = square.substring(1);
+        if (numbers.length >= 2) {
+          const row = numbers.substring(0, numbers.length - 1);
+          const col = numbers.substring(numbers.length - 1);
+          normalizedSquare = `${face}${row}-${col}`;
+        }
+      }
+      
+      console.log(`🔍 findPieceAtSquare: ${square} -> ${normalizedSquare}`);
+      
+      for (const [pieceName, position] of Object.entries(this.piecePositions)) {
+        if (position === normalizedSquare && position !== "captured") {
+          console.log(`🎯 Found piece ${pieceName} at ${position}`);
+          return pieceName;
+        }
+      }
+      return null;
     },
 
     executeDirectCapture: function(parsedMove) {
@@ -1161,10 +1756,12 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         if (victimPieceName && this.piecePositions[victimPieceName] !== "captured") {
           this.piecePositions[victimPieceName] = "captured";
           
-          // Handle 3D piece
-          const victimPiece3D = findPieceInScene(victimPieceName);
-          if (victimPiece3D) {
-            victimPiece3D.setEnabled(false); // Hide for now
+          // Animate the 3D piece to Owl Halla
+          console.log(`📥 DIRECT CAPTURE: Animating piece to Owl Halla: ${victimPieceName}`);
+          if (typeof window.animateCapturedPieceToOwlHalla === 'function') {
+            window.animateCapturedPieceToOwlHalla(victimPieceName);
+          } else {
+            console.log(`📥 DIRECT CAPTURE: WARNING: animateCapturedPieceToOwlHalla function not available`);
           }
           
           displayInfoMessage(`Captured: ${victim}`);

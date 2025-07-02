@@ -598,6 +598,13 @@ export default function createScene(engine, canvas) {
 
   function handlePieceSingleClick(piece) {
     const pieceName = piece.name;
+    
+    // Check if we're in hybrid capture mode and this piece can be captured
+    if (gameStateManager.hybridCaptureMode && piece._hybridCaptureHandler) {
+      piece._hybridCaptureHandler();
+      return;
+    }
+    
     const currentPosition = gameStateManager.piecePositions[pieceName];
 
     if (currentPosition && currentPosition.endsWith("--1")) {
@@ -645,6 +652,14 @@ export default function createScene(engine, canvas) {
   // Function to handle the double click event for a piece
   function handlePieceDoubleClick(piece) {
     const pieceName = piece.name;
+    
+    // Check if we're in hybrid capture mode and this piece can be captured
+    if (gameStateManager.hybridCaptureMode && piece._hybridCaptureHandler) {
+      console.log(`🔄 Double-click during hybrid capture mode - adding ${pieceName} to capture list`);
+      piece._hybridCaptureHandler();
+      return;
+    }
+    
     const originalPosition = originalPositions[pieceName];
 
     if (originalPosition) {
@@ -773,6 +788,144 @@ export default function createScene(engine, canvas) {
   greenOwl.actionManager = createPieceActionManager(greenOwl);
   greenKite.actionManager = createPieceActionManager(greenKite);
   greenRaven.actionManager = createPieceActionManager(greenRaven);
+
+  // Function to animate captured pieces to Owl Halla
+  function animateCapturedPieceToOwlHalla(pieceName) {
+    console.log(`🎯 Animating captured piece ${pieceName} to Owl Halla`);
+    
+    const piece3D = scene.getMeshByName(pieceName);
+    if (!piece3D) {
+      console.log(`❌ Could not find 3D piece: ${pieceName}`);
+      return;
+    }
+
+    const owlHallaCubeName = getOwlHallaCubeName(pieceName);
+    if (!owlHallaCubeName) {
+      console.log(`❌ Could not determine Owl Halla cube for: ${pieceName}`);
+      return;
+    }
+
+    const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
+    if (!owlHallaPosition) {
+      console.log(`❌ Could not get Owl Halla position for: ${owlHallaCubeName}`);
+      return;
+    }
+
+    // Apply the offset based on the color of the piece
+    if (pieceName.startsWith("brown")) {
+      owlHallaPosition.y += 3.5;
+    } else if (pieceName.startsWith("yellow")) {
+      owlHallaPosition.x += 3.5;
+    } else if (pieceName.startsWith("green")) {
+      owlHallaPosition.z += 3.5;
+    }
+
+    const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
+    const targetRotation = owlHallaCube ? owlHallaCube.rotation.clone() : piece3D.rotation.clone();
+
+    console.log(`📍 Animating ${pieceName} to Owl Halla position:`, owlHallaPosition);
+
+    // Animate the piece to Owl Halla
+    animatePieceMovement(
+      piece3D,
+      owlHallaPosition,
+      targetRotation,
+      30, // duration
+      () => {
+        console.log(`✅ ${pieceName} arrived at Owl Halla`);
+        
+        // Update piece position to Owl Halla cube name
+        gameStateManager.updatePiecePosition(pieceName, owlHallaCubeName);
+        
+        // Add to pieces on Owl Halla array
+        updatePiecesArrivingOnOwlHalla(pieceName);
+        
+        // Set visibility based on current Owl Halla visibility state
+        const owlHallaVisible = owlHallaCubes[0].visibility;
+        piece3D.visibility = owlHallaVisible;
+        
+        console.log(`🎭 Set ${pieceName} visibility to ${owlHallaVisible} (matching Owl Halla state)`);
+      }
+    );
+  }
+
+  // Function to validate moves using existing rule systems
+  function validateMove(pieceName, fromSquare, toSquare) {
+    console.log(`🔍 Validating move: ${pieceName} from ${fromSquare} to ${toSquare}`);
+    
+    // Find the piece in 3D scene
+    const piece3D = scene.getMeshByName(pieceName);
+    if (!piece3D) {
+      return { valid: false, reason: `Piece ${pieceName} not found in scene` };
+    }
+    
+    // Check if piece is at the claimed starting position
+    const actualPosition = gameStateManager.piecePositions[pieceName];
+    if (actualPosition !== fromSquare) {
+      return { valid: false, reason: `${pieceName} is not at ${fromSquare} (actually at ${actualPosition})` };
+    }
+    
+    // Check if piece is captured
+    if (actualPosition === "captured") {
+      return { valid: false, reason: `${pieceName} is captured and cannot move` };
+    }
+    
+    // Find the target cube
+    const targetCube = cubesOnTheThreeFaces.find(cube => cube.name === toSquare.replace(/(\d)(\d)$/, '$1-$2'));
+    if (!targetCube) {
+      return { valid: false, reason: `Target square ${toSquare} not found on board` };
+    }
+    
+    // Check if target is an Owl Halla cube
+    if (targetCube.name.endsWith("--1")) {
+      return { valid: false, reason: `Cannot move to Owl Halla square ${toSquare}` };
+    }
+    
+    // Check if target square is already occupied
+    const occupyingPiece = scene.meshes.find((mesh) => {
+      return (
+        mesh !== piece3D &&
+        (mesh.name.endsWith("Owl") ||
+          mesh.name.endsWith("Kite") ||
+          mesh.name.endsWith("Raven")) &&
+        mesh.position.x.toFixed(2) ===
+          (
+            targetCube.position.x +
+            (targetCube.name.startsWith("y") ? 3.75 : 0)
+          ).toFixed(2) &&
+        mesh.position.y.toFixed(2) ===
+          (
+            targetCube.position.y +
+            (targetCube.name.startsWith("b") ? 3.75 : 0)
+          ).toFixed(2) &&
+        mesh.position.z.toFixed(2) ===
+          (
+            targetCube.position.z +
+            (targetCube.name.startsWith("g") ? 3.75 : 0)
+          ).toFixed(2)
+      );
+    });
+    
+    if (occupyingPiece) {
+      return { valid: false, reason: `Square ${toSquare} is already occupied by ${occupyingPiece.name}` };
+    }
+    
+    // Check shadowing rules
+    gameStateManager.updateShadowedRows(pieceName);
+    if (isMoveCollidingWithShadowedRows(targetCube.name, piece3D)) {
+      return { valid: false, reason: `Square ${toSquare} is shadowed and cannot be moved to` };
+    }
+    
+    // Additional piece-specific movement validation could go here
+    // For now, we'll rely on the existing capture detection for move legality
+    
+    console.log(`✅ Move validation passed for ${pieceName}: ${fromSquare} → ${toSquare}`);
+    return { valid: true, reason: "Move is valid" };
+  }
+
+  // Make functions available to gameStateManager
+  window.animateCapturedPieceToOwlHalla = animateCapturedPieceToOwlHalla;
+  window.validateMove = validateMove;
 
   updateProgress(100);
 

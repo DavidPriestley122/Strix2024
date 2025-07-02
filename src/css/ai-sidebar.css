@@ -429,3 +429,15 @@ input[type="radio"] {
   border-color: var(--kite-color);
   box-shadow: 0 0 5px rgba(139, 0, 0, 0.4);
 }
+
+.move-input.hybrid-capture {
+  border-color: #FFA500;
+  box-shadow: 0 0 8px rgba(255, 165, 0, 0.6);
+  animation: hybridPulse 2s infinite;
+}
+
+@keyframes hybridPulse {
+  0% { box-shadow: 0 0 8px rgba(255, 165, 0, 0.6); }
+  50% { box-shadow: 0 0 12px rgba(255, 165, 0, 0.8); }
+  100% { box-shadow: 0 0 8px rgba(255, 165, 0, 0.6); }
+}
