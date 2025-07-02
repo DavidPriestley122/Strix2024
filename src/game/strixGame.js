@@ -449,16 +449,27 @@ export default function createScene(engine, canvas) {
                 targetRotation,
                 30,
                 function () {
+                  // Capture game state BEFORE updating positions for takeback
+                  const gameStateBeforeMove = {
+                    piecePositions: JSON.parse(JSON.stringify(gameStateManager.piecePositions)),
+                    currentPlayer: gameStateManager.currentPlayerTurn,
+                    captureHistory: JSON.parse(JSON.stringify(gameStateManager.captureHistory)),
+                    knockedOutTeam: gameStateManager.knockedOutTeam,
+                    isPlayAgainState: gameStateManager.isPlayAgainState,
+                    gameOver: gameStateManager.gameOver
+                  };
+                  
                   // Update the position of the moved piece in gameStateManager.piecePositions
                   gameStateManager.piecePositions[selectedPiece.name] =
                     clickedCube.name;
 
-                  // Add the move to the move history
+                  // Add the move to the move history (with pre-move state)
                   gameStateManager.addMoveToHistory(
                     selectedPiece.name,
                     currentPosition,
                     clickedCube.name,
-                    capturedPiece
+                    capturedPiece,
+                    gameStateBeforeMove
                   );
 
                   // Store the selected piece name before setting it to null

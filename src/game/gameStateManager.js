@@ -123,8 +123,15 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
   }
 
   function findCubeInScene(squareNotation) {
-    // Convert notation from "b72" to "b7-2" format used in scene
-    const cubeName = squareNotation.slice(0, -1) + '-' + squareNotation.slice(-1);
+    // Handle both formats: "b72" and "b7-2"
+    let cubeName;
+    if (squareNotation.includes('-')) {
+      // Already in correct format
+      cubeName = squareNotation;
+    } else {
+      // Convert notation from "b72" to "b7-2" format used in scene
+      cubeName = squareNotation.slice(0, -1) + '-' + squareNotation.slice(-1);
+    }
     console.log(`Looking for cube: ${squareNotation} -> ${cubeName}`);
     const cube = scene.meshes.find(mesh => mesh.name === cubeName);
     console.log(`Found cube:`, cube ? cube.name : 'NOT FOUND');
@@ -247,7 +254,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       green: "human",
     },
 
-    addMoveToHistory: function (piece, sourceSquare, destinationSquare, capturedPiece) {
+    addMoveToHistory: function (piece, sourceSquare, destinationSquare, capturedPiece, gameStateBeforeMove = null) {
       console.log(
         `=== addMoveToHistory called: ${piece} from ${sourceSquare} to ${destinationSquare} ===`
       );
@@ -267,7 +274,30 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         }
       }
       
-      this.moveHistory.push(moveText);
+      // Create move record with game state snapshot for takeback
+      const moveRecord = {
+        notation: moveText,
+        piece: piece,
+        from: sourceSquare,
+        to: destinationSquare,
+        captured: capturedPiece,
+        moveNumber: this.moveHistory.length + 1,
+        
+        // Store complete game state BEFORE this move for restoration
+        gameState: gameStateBeforeMove || {
+          piecePositions: JSON.parse(JSON.stringify(this.piecePositions)),
+          currentPlayer: this.currentPlayerTurn,
+          captureHistory: JSON.parse(JSON.stringify(this.captureHistory)),
+          knockedOutTeam: this.knockedOutTeam,
+          isPlayAgainState: this.isPlayAgainState,
+          gameOver: this.gameOver
+        }
+      };
+      
+      console.log(`💾 Saving move record for takeback:`, moveRecord);
+      console.log(`💾 Game state snapshot:`, moveRecord.gameState);
+      
+      this.moveHistory.push(moveRecord);
 
       // Check for winning conditions
       const winningMessage = this.checkWinningConditions(
@@ -1313,12 +1343,22 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         () => {
           console.log(`✅ Movement animation complete - now starting hybrid capture mode`);
           
+          // Capture game state BEFORE updating positions for takeback
+          const gameStateBeforeMove = {
+            piecePositions: JSON.parse(JSON.stringify(this.piecePositions)),
+            currentPlayer: this.currentPlayerTurn,
+            captureHistory: JSON.parse(JSON.stringify(this.captureHistory)),
+            knockedOutTeam: this.knockedOutTeam,
+            isPlayAgainState: this.isPlayAgainState,
+            gameOver: this.gameOver
+          };
+          
           // Update game state after movement
           this.piecePositions[pieceName] = parsedMove.destination;
           
           // Add basic move to history (captures will be added later)
           // Note: We pass a special flag to indicate this is a hybrid move in progress
-          this.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, { name: "hybrid_in_progress" });
+          this.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, { name: "hybrid_in_progress" }, gameStateBeforeMove);
           
           // NOW start the hybrid capture mode
           this.startHybridCaptureMode(parsedMove);
@@ -1641,6 +1681,16 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         targetRotation,
         30, // duration
         () => {
+          // Capture game state BEFORE updating positions for takeback
+          const gameStateBeforeMove = {
+            piecePositions: JSON.parse(JSON.stringify(this.piecePositions)),
+            currentPlayer: this.currentPlayerTurn,
+            captureHistory: JSON.parse(JSON.stringify(this.captureHistory)),
+            knockedOutTeam: this.knockedOutTeam,
+            isPlayAgainState: this.isPlayAgainState,
+            gameOver: this.gameOver
+          };
+          
           // Animation complete callback - update game state
           this.piecePositions[pieceName] = parsedMove.destination;
           
@@ -1670,7 +1720,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
           // Add to move history
           this.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, 
-                               parsedMove.victims && parsedMove.victims.length > 0 ? { name: "text_input_capture" } : null);
+                               parsedMove.victims && parsedMove.victims.length > 0 ? { name: "text_input_capture" } : null,
+                               gameStateBeforeMove);
           
           displayInfoMessage(`Executed: ${moveNotation.moveToNotation(parsedMove)}`);
         }
@@ -1834,13 +1885,13 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
             moveEl.classList.add('new-move');
           }
 
-          // Handle both string moves (existing) and object moves (new)
+          // Handle both string moves (legacy) and object moves (new format)
           const moveText = typeof move === 'string' ? move : (move.notation || this.formatMoveForDisplay(move));
 
           moveEl.innerHTML = `
             <span class="move-number">${index + 1}.</span>
             <span class="move-notation">${moveText}</span>
-            <button class="takeback-btn" data-move-index="${index}" title="Take back this move">×</button>
+            <button class="takeback-btn" data-move-index="${index}" title="Restore game to this position">↺</button>
           `;
 
           moveHistoryEl.appendChild(moveEl);
@@ -1849,7 +1900,9 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         // Add takeback listeners
         moveHistoryEl.querySelectorAll('.takeback-btn').forEach(btn => {
           btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event bubbling
             const moveIndex = parseInt(e.target.dataset.moveIndex);
+            console.log(`🖱️ Takeback button clicked for move index: ${moveIndex}`);
             this.takebackToMove(moveIndex);
           });
         });
@@ -1865,8 +1918,178 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     },
 
     takebackToMove: function(moveIndex) {
-      // TODO: Implement takeback functionality
-      displayInfoMessage(`Takeback to move ${moveIndex + 1} not yet implemented`);
+      console.log(`🔄 Taking back to move ${moveIndex + 1}`);
+      console.log(`📊 Current move history length: ${this.moveHistory.length}`);
+      console.log(`📊 Current moveHistory:`, this.moveHistory);
+      
+      if (moveIndex < 0 || moveIndex >= this.moveHistory.length) {
+        console.log(`❌ Invalid move index: ${moveIndex} (length: ${this.moveHistory.length})`);
+        displayInfoMessage(`Invalid move index: ${moveIndex + 1}`);
+        return;
+      }
+      
+      const targetMove = this.moveHistory[moveIndex];
+      console.log(`🎯 Target move:`, targetMove);
+      
+      // Handle legacy string format moves
+      if (typeof targetMove === 'string') {
+        console.log(`❌ Legacy string format move: ${targetMove}`);
+        displayInfoMessage('Cannot takeback to legacy move format');
+        return;
+      }
+      
+      if (!targetMove.gameState) {
+        console.log(`❌ No game state in target move:`, targetMove);
+        displayInfoMessage('No game state saved for this move');
+        return;
+      }
+      
+      console.log(`📍 Restoring game state to move ${moveIndex + 1}: ${targetMove.notation}`);
+      console.log(`📊 Target game state:`, targetMove.gameState);
+      
+      // Store current positions for animation
+      const currentPositions = JSON.parse(JSON.stringify(this.piecePositions));
+      console.log(`📊 Current positions before restore:`, currentPositions);
+      console.log(`📊 Target positions after restore:`, targetMove.gameState.piecePositions);
+      
+      // Restore the game state
+      this.piecePositions = JSON.parse(JSON.stringify(targetMove.gameState.piecePositions));
+      this.currentPlayerTurn = targetMove.gameState.currentPlayer;
+      this.captureHistory = JSON.parse(JSON.stringify(targetMove.gameState.captureHistory));
+      this.knockedOutTeam = targetMove.gameState.knockedOutTeam;
+      this.isPlayAgainState = targetMove.gameState.isPlayAgainState;
+      this.gameOver = targetMove.gameState.gameOver;
+      
+      // Pause AI game temporarily to prevent immediate AI move after takeback
+      const wasAIGameRunning = this.aiGameRunning;
+      if (this.aiGameRunning) {
+        console.log('🔄 Temporarily pausing AI game during takeback');
+        this.aiGamePaused = true;
+      }
+      
+      console.log(`✅ Game state restored. New current player: ${this.currentPlayerTurn}`);
+      
+      // Truncate move history to the target move
+      const oldHistoryLength = this.moveHistory.length;
+      this.moveHistory = this.moveHistory.slice(0, moveIndex + 1);
+      console.log(`✂️ Truncated move history from ${oldHistoryLength} to ${this.moveHistory.length} moves`);
+      
+      // Animate all pieces to their restored positions
+      this.animatePiecesToRestoredPositions(currentPositions, this.piecePositions);
+      
+      // Update all displays
+      this.updateMoveHistoryDisplay();
+      this.updateOwlHallaDisplay();
+      this.updateNextPlayerDisplay();
+      
+      // Resume AI game after a short delay to allow animation to complete
+      if (wasAIGameRunning) {
+        setTimeout(() => {
+          console.log('🔄 Resuming AI game after takeback animation');
+          this.aiGamePaused = false;
+          
+          // Only trigger AI move if current player is AI
+          if (this.isAIPlayer(this.currentPlayerTurn)) {
+            console.log(`🤖 Current player ${this.currentPlayerTurn} is AI - triggering move`);
+            this.proceedToNextTurn();
+          } else {
+            console.log(`👤 Current player ${this.currentPlayerTurn} is human - waiting for input`);
+          }
+        }, 1000); // Wait 1 second for animation to complete
+      }
+      
+      displayInfoMessage(`Restored to move ${moveIndex + 1}: ${targetMove.notation}`);
+    },
+
+    animatePiecesToRestoredPositions: function(fromPositions, toPositions) {
+      console.log('🎬 Animating pieces to restored positions');
+      console.log('📊 From positions:', fromPositions);
+      console.log('📊 To positions:', toPositions);
+      
+      let changesFound = 0;
+      
+      // Animate each piece that has changed position
+      for (const [pieceName, toPosition] of Object.entries(toPositions)) {
+        const fromPosition = fromPositions[pieceName];
+        
+        if (fromPosition !== toPosition) {
+          changesFound++;
+          console.log(`📍 Change #${changesFound}: ${pieceName}: ${fromPosition} → ${toPosition}`);
+          
+          const piece3D = findPieceInScene(pieceName);
+          if (!piece3D) {
+            console.log(`❌ Could not find 3D piece: ${pieceName}`);
+            continue;
+          }
+          
+          if (toPosition === "captured") {
+            console.log(`🎯 ${pieceName} should go to Owl Halla`);
+            // Piece should be in Owl Halla - animate to Owl Halla
+            if (typeof window.animateCapturedPieceToOwlHalla === 'function') {
+              window.animateCapturedPieceToOwlHalla(pieceName);
+            } else {
+              console.log(`❌ animateCapturedPieceToOwlHalla function not available for ${pieceName}`);
+              piece3D.setEnabled(false);
+            }
+          } else if (fromPosition === "captured") {
+            console.log(`🎯 ${pieceName} should come back from Owl Halla to ${toPosition}`);
+            // Piece is coming back from Owl Halla - make visible and animate to board
+            piece3D.setEnabled(true);
+            piece3D.visibility = true;
+            this.animatePieceToBoard(pieceName, toPosition);
+          } else {
+            console.log(`🎯 ${pieceName} should move from ${fromPosition} to ${toPosition}`);
+            // Regular board-to-board move
+            this.animatePieceToBoard(pieceName, toPosition);
+          }
+        } else {
+          console.log(`⏸️ ${pieceName} stays at ${toPosition} (no change)`);
+        }
+      }
+      
+      console.log(`📊 Total position changes found: ${changesFound}`);
+    },
+
+    animatePieceToBoard: function(pieceName, targetSquare) {
+      console.log(`🎬 animatePieceToBoard called: ${pieceName} → ${targetSquare}`);
+      
+      const piece3D = findPieceInScene(pieceName);
+      if (!piece3D) {
+        console.log(`❌ Could not find 3D piece for animation: ${pieceName}`);
+        return;
+      }
+      console.log(`✅ Found 3D piece: ${pieceName}`);
+      
+      // Find target cube and calculate position
+      const targetCube = findCubeInScene(targetSquare);
+      if (!targetCube) {
+        console.log(`❌ Could not find target cube: ${targetSquare}`);
+        return;
+      }
+      console.log(`✅ Found target cube: ${targetSquare}`);
+      
+      const targetPosition = calculateTargetPosition(targetCube);
+      const targetRotation = targetCube.rotation.clone();
+      
+      console.log(`🎬 Starting animation for ${pieceName} to board position: ${targetSquare}`);
+      console.log(`📍 Target position:`, targetPosition);
+      
+      if (typeof animatePieceMovement === 'function') {
+        animatePieceMovement(
+          piece3D,
+          targetPosition,
+          targetRotation,
+          20, // Faster animation for takeback
+          () => {
+            console.log(`✅ ${pieceName} animation to ${targetSquare} complete`);
+          }
+        );
+      } else {
+        console.log(`❌ animatePieceMovement function not available`);
+        // Fallback: instant position change
+        piece3D.position = targetPosition;
+        piece3D.rotation = targetRotation;
+      }
     },
 
     getRecentCaptures: function() {

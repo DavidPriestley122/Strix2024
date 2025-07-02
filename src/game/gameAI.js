@@ -255,6 +255,16 @@ export function createAI(scene, gameStateManager, gameFunctions) {
         }
       }
 
+      // Capture game state BEFORE updating positions for takeback
+      const gameStateBeforeMove = {
+        piecePositions: JSON.parse(JSON.stringify(this.gameState.piecePositions)),
+        currentPlayer: gameStateManager.currentPlayerTurn,
+        captureHistory: JSON.parse(JSON.stringify(gameStateManager.captureHistory)),
+        knockedOutTeam: gameStateManager.knockedOutTeam,
+        isPlayAgainState: gameStateManager.isPlayAgainState,
+        gameOver: gameStateManager.gameOver
+      };
+      
       // Now move the piece to the target square
       this.gameState.piecePositions[piece.name] = targetSquare.name;
 
@@ -407,7 +417,8 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             piece.name,
             oldPosition,
             targetSquare.name,
-            capturedPieceForHistory
+            capturedPieceForHistory,
+            gameStateBeforeMove
           );
           
           // Debug: Log remaining Owls after move
