@@ -441,8 +441,11 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     },
 
     recordCapture: function (capturedPiece) {
-      console.log("Capturing piece:", capturedPiece);
-      console.log("Current player before capture:", this.currentPlayerTurn);
+      console.log("📥 Capturing piece:", capturedPiece);
+      console.log("📥 Current player before capture:", this.currentPlayerTurn);
+
+      // Track if this is a timer-based capture before we cancel the timer
+      const isTimerCapture = !!this.captureDecisionTimer;
 
       // For Raven captures, let the timer run to completion (multiple victims possible)
       // For Owl/Kite captures, cancel timer immediately (single victim only)
@@ -451,6 +454,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         this.cancelCaptureDecisionTimer();
       } else if (this.captureDecisionTimer) {
         console.log("🐦 Raven capture - timer continues running for additional victims");
+      } else {
+        console.log("📥 No active timer to cancel");
       }
 
       const abbreviatedCaptured = this.abbreviatePiece(capturedPiece);
@@ -462,19 +467,25 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         text: captureText,
       });
 
-      // Update the move notation to include the capture
-      if (this.moveHistory.length > 0) {
-        const lastMoveIndex = this.moveHistory.length - 1;
-        const lastMove = this.moveHistory[lastMoveIndex];
-        
-        if (typeof lastMove === 'object' && lastMove.notation) {
-          // Add capture notation to the move if not already present
-          const captureNotation = this.abbreviatePiece(capturedPiece);
-          if (!lastMove.notation.includes(` x ${captureNotation}`)) {
-            lastMove.notation += ` x ${captureNotation}`;
-            console.log(`📝 Updated move notation to: ${lastMove.notation}`);
+      // For captures that happen during timer periods, we need to update the current move notation
+      // since the move has already been added to history
+      if (isTimerCapture || this.hybridCaptureMode) {
+        // This is a timer-based or hybrid capture - update the last move notation
+        if (this.moveHistory.length > 0) {
+          const lastMoveIndex = this.moveHistory.length - 1;
+          const lastMove = this.moveHistory[lastMoveIndex];
+          
+          if (typeof lastMove === 'object' && lastMove.notation) {
+            // Add capture notation to the move if not already present
+            const captureNotation = this.abbreviatePiece(capturedPiece);
+            if (!lastMove.notation.includes(` x ${captureNotation}`)) {
+              lastMove.notation += ` x ${captureNotation}`;
+              console.log(`📝 Updated move notation for timer/hybrid capture: ${lastMove.notation}`);
+            }
           }
         }
+      } else {
+        console.log(`📝 Regular capture - notation will be handled by addMoveToHistory`);
       }
 
       // Update the piece positions
@@ -1892,7 +1903,10 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
     updateOwlHallaDisplay: function() {
       const capturedPiecesEl = document.getElementById('captured-pieces');
-      if (!capturedPiecesEl) return;
+      if (!capturedPiecesEl) {
+        console.log('❌ Owl Halla display element not found');
+        return;
+      }
 
       console.log('=== Updating Owl Halla Display ===');
       console.log('Current piece positions:', this.piecePositions);
@@ -1904,6 +1918,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
           console.log(`Found captured piece: ${pieceName} -> ${notation}`);
           if (notation) {
             capturedPieces.push(notation);
+          } else {
+            console.log(`❌ Could not get notation for captured piece: ${pieceName}`);
           }
         }
       }

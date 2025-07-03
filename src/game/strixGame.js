@@ -521,7 +521,7 @@ export default function createScene(engine, canvas) {
     }
 
     piece.visibility = false;
-    gameStateManager.updatePiecePosition(pieceName, owlHallaCubeName);
+    gameStateManager.updatePiecePosition(pieceName, "captured");
     gameStateManager.addOwlHallaMove(pieceName, true);
     updatePiecesArrivingOnOwlHalla(pieceName);
     
