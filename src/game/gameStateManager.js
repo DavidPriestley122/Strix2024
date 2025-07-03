@@ -14,6 +14,10 @@ import {
 
 import { moveNotation } from "./moveNotation.js";
 import { Vector3 } from "@babylonjs/core";
+import { createCaptureManager } from "./captureManager.js";
+import { createMoveHistoryManager } from "./moveHistoryManager.js";
+import { createUIManager } from "./uiManager.js";
+import { createInputManager } from "./inputManager.js";
 
 //GUI CREATION FUNCTION
 export function createGUI() {
@@ -163,7 +167,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
   //GAME STATE OBJECT
 
-  return {
+  const gameStateManager = {
     piecePositions: {
       brownOwl: "b7-1",
       brownKite: "b6-2",
@@ -176,12 +180,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       greenRaven: "g5-3",
     },
 
-    // Capture decision timer
-    captureDecisionTimer: null,
-    captureCountdownTimer: null,
-    isRavenCaptureInProgress: false,
-    captureTimeRemaining: 0,
-    capturingPlayer: null, // Track who made the move that can capture
+    // Note: Capture-related properties now managed by captureManager
 
     //GAME STATE UPDATE FUNCTIONS
 
@@ -2177,4 +2176,69 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
     displayInfoMessage: displayInfoMessage,
   };
+
+  // Initialize captureManager with reference to gameStateManager
+  const captureManager = createCaptureManager(gameStateManager, { captureTimerText });
+  
+  // Initialize moveHistoryManager with reference to gameStateManager
+  const moveHistoryManager = createMoveHistoryManager(gameStateManager, resetFunctions);
+  
+  // Initialize uiManager with reference to gameStateManager
+  const uiManager = createUIManager(gameStateManager, { advancedTexture });
+  
+  // Initialize inputManager with reference to gameStateManager
+  const inputManager = createInputManager(gameStateManager, resetFunctions);
+  
+  // Integrate captureManager methods into gameStateManager
+  gameStateManager.captureManager = captureManager;
+  gameStateManager.recordCapture = captureManager.recordCapture.bind(captureManager);
+  gameStateManager.cancelCaptureDecisionTimer = captureManager.cancelCaptureDecisionTimer.bind(captureManager);
+  gameStateManager.startCaptureTimerDisplay = captureManager.startCaptureTimerDisplay.bind(captureManager);
+  gameStateManager.updateCaptureTimerDisplay = captureManager.updateCaptureTimerDisplay.bind(captureManager);
+  gameStateManager.stopCaptureTimerDisplay = captureManager.stopCaptureTimerDisplay.bind(captureManager);
+  gameStateManager.checkPotentialCaptures = captureManager.checkPotentialCaptures.bind(captureManager);
+  gameStateManager.startHybridCaptureMode = captureManager.startHybridCaptureMode.bind(captureManager);
+  gameStateManager.finishHybridCapture = captureManager.finishHybridCapture.bind(captureManager);
+  gameStateManager.executeDirectCapture = captureManager.executeDirectCapture.bind(captureManager);
+  gameStateManager.getAdjacentSquares = captureManager.getAdjacentSquares.bind(captureManager);
+  gameStateManager.findPieceAtSquare = captureManager.findPieceAtSquare.bind(captureManager);
+  
+  // Integrate moveHistoryManager methods into gameStateManager
+  gameStateManager.moveHistoryManager = moveHistoryManager;
+  gameStateManager.addMoveToHistory = moveHistoryManager.addMoveToHistory.bind(moveHistoryManager);
+  gameStateManager.updateMoveHistoryDisplay = moveHistoryManager.updateMoveHistoryDisplay.bind(moveHistoryManager);
+  gameStateManager.formatMoveForDisplay = moveHistoryManager.formatMoveForDisplay.bind(moveHistoryManager);
+  gameStateManager.takebackToMove = moveHistoryManager.takebackToMove.bind(moveHistoryManager);
+  gameStateManager.animatePiecesToRestoredPositions = moveHistoryManager.animatePiecesToRestoredPositions.bind(moveHistoryManager);
+  gameStateManager.animatePieceToBoard = moveHistoryManager.animatePieceToBoard.bind(moveHistoryManager);
+  gameStateManager.getRecentCaptures = moveHistoryManager.getRecentCaptures.bind(moveHistoryManager);
+  
+  // Integrate uiManager methods into gameStateManager
+  gameStateManager.uiManager = uiManager;
+  gameStateManager.updatePlayerTypes = uiManager.updatePlayerTypes.bind(uiManager);
+  gameStateManager.updateNextPlayerDisplay = uiManager.updateNextPlayerDisplay.bind(uiManager);
+  gameStateManager.updateOwlHallaDisplay = uiManager.updateOwlHallaDisplay.bind(uiManager);
+  gameStateManager.updateAllDisplays = uiManager.updateAllDisplays.bind(uiManager);
+  gameStateManager.updateGameOverDisplay = uiManager.updateGameOverDisplay.bind(uiManager);
+  
+  // Integrate inputManager methods into gameStateManager
+  gameStateManager.inputManager = inputManager;
+  gameStateManager.initializeMoveInput = inputManager.initializeMoveInput.bind(inputManager);
+  gameStateManager.executeParsedMove = inputManager.executeParsedMove.bind(inputManager);
+  gameStateManager.executeRegularMove = inputManager.executeRegularMove.bind(inputManager);
+  gameStateManager.executeMovementThenCaptures = inputManager.executeMovementThenCaptures.bind(inputManager);
+  gameStateManager.executeMovementAndCaptures = inputManager.executeMovementAndCaptures.bind(inputManager);
+
+  // Copy capture-related properties from captureManager to gameStateManager
+  gameStateManager.captureDecisionTimer = captureManager.captureDecisionTimer;
+  gameStateManager.captureCountdownTimer = captureManager.captureCountdownTimer;
+  gameStateManager.isRavenCaptureInProgress = captureManager.isRavenCaptureInProgress;
+  gameStateManager.captureTimeRemaining = captureManager.captureTimeRemaining;
+  gameStateManager.capturingPlayer = captureManager.capturingPlayer;
+  gameStateManager.hybridCaptureMode = captureManager.hybridCaptureMode;
+  gameStateManager.pendingHybridMove = captureManager.pendingHybridMove;
+  gameStateManager.hybridCaptureVictims = captureManager.hybridCaptureVictims;
+  gameStateManager.hybridClickHandlers = captureManager.hybridClickHandlers;
+
+  return gameStateManager;
 }
