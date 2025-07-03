@@ -1,6 +1,8 @@
 import { Engine } from "@babylonjs/core/Engines/engine.js";
 import { AssetsManager } from "@babylonjs/core/Misc/assetsManager.js";
-import createScene from "./game/strixGame.js";
+// Choose between original and refactored version
+import createScene from "./game/strixGameRefactored.js"; // Use refactored version
+// import createScene from "./game/strixGame.js"; // Use original version
 import { sidebar } from "./sidebar/sidebar.js";
 import {
   initLoadingScreen,

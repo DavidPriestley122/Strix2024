@@ -1,3 +1,8 @@
+// ORIGINAL STRIX GAME - COMMENTED OUT (REPLACED BY strixGameRefactored.js)
+// This file is preserved for reference but is no longer used
+// All functionality has been moved to the modular architecture
+
+/*
 //IMPORT STATEMENTS
 import { createBaseAndFins } from "./gameBaseAndFins.js";
 import { createGUI } from "./gameStateManager.js";
@@ -1009,3 +1014,4 @@ export default function createScene(engine, canvas) {
 
   return scene;
 }
+*/
