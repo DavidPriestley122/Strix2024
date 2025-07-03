@@ -181,6 +181,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     captureCountdownTimer: null,
     isRavenCaptureInProgress: false,
     captureTimeRemaining: 0,
+    capturingPlayer: null, // Track who made the move that can capture
 
     //GAME STATE UPDATE FUNCTIONS
 
@@ -254,7 +255,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       green: "human",
     },
 
-    addMoveToHistory: function (piece, sourceSquare, destinationSquare, capturedPiece, gameStateBeforeMove = null) {
+    addMoveToHistory: function (piece, sourceSquare, destinationSquare, capturedPiece, gameStateBeforeMove = null, allCapturedPieces = null) {
       console.log(
         `=== addMoveToHistory called: ${piece} from ${sourceSquare} to ${destinationSquare} ===`
       );
@@ -263,11 +264,25 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       let moveText = `${pieceNotation}-${destinationSquare.replace("-", "")}`;
       
       // Add capture notation if there was a capture
-      if (capturedPiece && capturedPiece.name !== "text_input_capture") {
-        // Try to find what was captured by looking at recent captures
-        const recentCaptures = this.getRecentCaptures();
-        if (recentCaptures.length > 0) {
-          const captureNotation = recentCaptures.map(cap => moveNotation.getNotationFromPieceName(cap)).filter(Boolean).join(' x ');
+      if (allCapturedPieces && allCapturedPieces.length > 0) {
+        // Use the explicitly provided captured pieces list
+        const captureNotations = allCapturedPieces
+          .map(cap => moveNotation.getNotationFromPieceName(cap))
+          .filter(Boolean);
+        if (captureNotations.length > 0) {
+          moveText += ` x ${captureNotations.join(' x ')}`;
+        }
+      } else if (capturedPiece && capturedPiece.name !== "text_input_capture" && capturedPiece.name !== "hybrid_in_progress") {
+        // For direct captures, add the captured piece notation
+        if (typeof capturedPiece === 'string') {
+          // Single piece name
+          const captureNotation = moveNotation.getNotationFromPieceName(capturedPiece);
+          if (captureNotation) {
+            moveText += ` x ${captureNotation}`;
+          }
+        } else if (capturedPiece.name && capturedPiece.name !== "potential_kite_capture" && capturedPiece.name !== "potential_raven_mobbing") {
+          // Single piece object with name
+          const captureNotation = moveNotation.getNotationFromPieceName(capturedPiece.name);
           if (captureNotation) {
             moveText += ` x ${captureNotation}`;
           }
@@ -333,7 +348,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       this.updatePlayerTypes(); // Read the radio buttons first
 
       // Check if this was a human move with potential captures
-      const isHumanMove = !this.isAIPlayer(piece.split(/(?=[A-Z])/)[0]); // Extract color from piece name
+      const movingPlayerColor = piece.split(/(?=[A-Z])/)[0]; // Extract color from piece name
+      const isHumanMove = !this.isAIPlayer(movingPlayerColor);
       const hasPotentialCapture = capturedPiece !== null && capturedPiece !== undefined;
       const isTextInputCapture = capturedPiece && capturedPiece.name === "text_input_capture";
       const isRavenMove = piece.includes('Raven');
@@ -341,7 +357,12 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       // Don't start timer for text input captures (they're already completed)
       if (isHumanMove && hasPotentialCapture && !isTextInputCapture) {
         console.log(`🕒 Starting 7-second capture decision timer for ${piece}`);
+        console.log(`🔍 Timer will be set for moving player: ${movingPlayerColor}`);
+        console.log(`🔍 Current turn is now: ${this.currentPlayerTurn}`);
         this.isRavenCaptureInProgress = isRavenMove;
+        
+        // Store the player who made the move (for capture validation)
+        this.capturingPlayer = movingPlayerColor;
         
         // Start visual countdown
         this.startCaptureTimerDisplay();
@@ -351,6 +372,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
           console.log(`⏰ Capture decision timer expired - proceeding to next turn`);
           this.captureDecisionTimer = null;
           this.isRavenCaptureInProgress = false;
+          this.capturingPlayer = null; // Clear capturing player
           this.stopCaptureTimerDisplay();
           this.proceedToNextTurn();
         }, 7000);
@@ -375,12 +397,15 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
     cancelCaptureDecisionTimer: function() {
       if (this.captureDecisionTimer) {
+        console.log("🚫 Capture decision timer cancelled - proceeding to next turn");
         clearTimeout(this.captureDecisionTimer);
         this.captureDecisionTimer = null;
         this.isRavenCaptureInProgress = false;
+        this.capturingPlayer = null; // Clear capturing player
         this.stopCaptureTimerDisplay();
-        console.log("🚫 Capture decision timer cancelled - proceeding to next turn");
         this.proceedToNextTurn();
+      } else {
+        console.log("🤔 cancelCaptureDecisionTimer called but no timer was active");
       }
     },
 
@@ -437,8 +462,39 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         text: captureText,
       });
 
+      // Update the move notation to include the capture
+      if (this.moveHistory.length > 0) {
+        const lastMoveIndex = this.moveHistory.length - 1;
+        const lastMove = this.moveHistory[lastMoveIndex];
+        
+        if (typeof lastMove === 'object' && lastMove.notation) {
+          // Add capture notation to the move if not already present
+          const captureNotation = this.abbreviatePiece(capturedPiece);
+          if (!lastMove.notation.includes(` x ${captureNotation}`)) {
+            lastMove.notation += ` x ${captureNotation}`;
+            console.log(`📝 Updated move notation to: ${lastMove.notation}`);
+          }
+        }
+      }
+
       // Update the piece positions
       this.piecePositions[capturedPiece] = "captured";
+      
+      // Use the existing double-click logic to position piece in Owl Halla
+      console.log(`🏰 Positioning ${capturedPiece} in Owl Halla using original double-click logic`);
+      
+      // Call the original double-click handler directly (it has the proven positioning code)
+      if (typeof window.handlePieceDoubleClickForCapture === 'function') {
+        window.handlePieceDoubleClickForCapture(capturedPiece);
+      } else {
+        console.log(`⚠️ handlePieceDoubleClickForCapture function not available - piece will just disappear`);
+        if (typeof findPieceInScene === 'function') {
+          const piece3D = findPieceInScene(capturedPiece);
+          if (piece3D) {
+            piece3D.visibility = false;
+          }
+        }
+      }
 
       // Check if the captured piece is an Owl
       if (capturedPiece.includes("Owl")) {
@@ -507,7 +563,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         }
       }
 
-      this.updateMoveHistoryDisplay();
+      this.updateMoveHistoryDisplay(); // Update to show new capture notation
       this.updateOwlHallaDisplay(); // Update captured pieces display
       console.log(
         "recordCapture completed. Current player:",
@@ -674,6 +730,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       // Update displays
       this.updateNextPlayerDisplay();
       this.updateMoveHistoryDisplay();
+      this.updateOwlHallaDisplay();
     },
 
     // Add this new function to handle visual piece reset

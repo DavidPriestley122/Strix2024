@@ -487,6 +487,50 @@ export default function createScene(engine, canvas) {
     );
   }
 
+  // Function to handle captured pieces - extracted from original double-click logic
+  function handlePieceDoubleClickForCapture(pieceName) {
+    console.log(`🏰 Using original logic to move ${pieceName} to Owl Halla`);
+    
+    const piece = scene.getMeshByName(pieceName);
+    if (!piece) {
+      console.log(`❌ Could not find piece ${pieceName} in scene`);
+      return;
+    }
+    
+    // This is the exact original logic from the working double-click system
+    originalPositions[pieceName] = piece.position.clone();
+    originalPositions[pieceName + "Rotation"] = piece.rotation.clone();
+    originalPositions[pieceName + "Name"] = gameStateManager.piecePositions[pieceName];
+    
+    const owlHallaCubeName = getOwlHallaCubeName(pieceName);
+    const owlHallaPosition = getPositionFromOwlHallaCubeName(owlHallaCubeName);
+
+    // Apply the offset based on the color of the piece
+    if (pieceName.startsWith("brown")) {
+      owlHallaPosition.y += 3.5;
+    } else if (pieceName.startsWith("yellow")) {
+      owlHallaPosition.x += 3.5;
+    } else if (pieceName.startsWith("green")) {
+      owlHallaPosition.z += 3.5;
+    }
+
+    piece.position = owlHallaPosition;
+    const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
+    if (owlHallaCube) {
+      piece.rotation = owlHallaCube.rotation.clone();
+    }
+
+    piece.visibility = false;
+    gameStateManager.updatePiecePosition(pieceName, owlHallaCubeName);
+    gameStateManager.addOwlHallaMove(pieceName, true);
+    updatePiecesArrivingOnOwlHalla(pieceName);
+    
+    console.log(`✅ ${pieceName} positioned in Owl Halla using proven original logic`);
+  }
+  
+  // Make function available globally
+  window.handlePieceDoubleClickForCapture = handlePieceDoubleClickForCapture;
+
   cubesOnTheThreeFaces.forEach(function (clickedCube) {
     addCubeClickListener(clickedCube);
   });
@@ -663,6 +707,29 @@ export default function createScene(engine, canvas) {
   // Function to handle the double click event for a piece
   function handlePieceDoubleClick(piece) {
     const pieceName = piece.name;
+    console.log(`🖱️ DOUBLE-CLICK EVENT on ${pieceName}`);
+    console.log(`🔍 Timer status: ${gameStateManager.captureDecisionTimer ? 'ACTIVE' : 'INACTIVE'}`);
+    console.log(`🔍 Current player: ${gameStateManager.currentPlayerTurn}`);
+    console.log(`🔍 Hybrid mode: ${gameStateManager.hybridCaptureMode ? 'ACTIVE' : 'INACTIVE'}`);
+    
+    // Check if we're in capture decision timer period (for regular captures)
+    if (gameStateManager.captureDecisionTimer) {
+      console.log(`⏰ Double-click during capture timer - attempting to capture ${pieceName}`);
+      // Only allow capturing opponent pieces, not your own pieces
+      const pieceColor = gameStateManager.getColorFromPieceName(pieceName);
+      const capturingPlayer = gameStateManager.capturingPlayer;
+      console.log(`🔍 Piece color: ${pieceColor}, Capturing player: ${capturingPlayer}`);
+      if (pieceColor !== capturingPlayer) {
+        console.log(`✅ Capturing opponent piece: ${pieceName}`);
+        gameStateManager.recordCapture(pieceName);
+        return;
+      } else {
+        console.log(`❌ Cannot capture your own piece: ${pieceName}`);
+        return;
+      }
+    } else {
+      console.log(`❌ NO CAPTURE TIMER ACTIVE - using generic double-click behavior`);
+    }
     
     // Check if we're in hybrid capture mode and this piece can be captured
     if (gameStateManager.hybridCaptureMode && piece._hybridCaptureHandler) {

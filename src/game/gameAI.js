@@ -418,7 +418,8 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             oldPosition,
             targetSquare.name,
             capturedPieceForHistory,
-            gameStateBeforeMove
+            gameStateBeforeMove,
+            allCapturedPieces.length > 0 ? allCapturedPieces : null
           );
           
           // Debug: Log remaining Owls after move
