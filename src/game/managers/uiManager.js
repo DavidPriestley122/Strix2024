@@ -1,7 +1,7 @@
 // UI MANAGEMENT MODULE
 // Handles all UI updates and display management
 
-import { moveNotation } from "./moveNotation.js";
+import { moveNotation } from "../rules/moveNotation.js";
 import { TextBlock, Rectangle, Control } from "@babylonjs/gui";
 
 export function createUIManager(gameState, guiElements) {

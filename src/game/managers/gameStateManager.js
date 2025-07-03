@@ -12,7 +12,7 @@ import {
   StackPanel,
 } from "@babylonjs/gui";
 
-import { moveNotation } from "./moveNotation.js";
+import { moveNotation } from "../rules/moveNotation.js";
 import { Vector3 } from "@babylonjs/core";
 import { createCaptureManager } from "./captureManager.js";
 import { createMoveHistoryManager } from "./moveHistoryManager.js";

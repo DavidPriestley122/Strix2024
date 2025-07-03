@@ -2,13 +2,13 @@
 // Orchestrates the complete game scene using modular architecture
 
 // IMPORT STATEMENTS
-import { createBaseAndFins } from "./gameBaseAndFins.js";
-import { createGUI } from "./gameStateManager.js";
-import { createGameStateManager } from "./gameStateManager.js";
-import { createCheckerBoards } from "./gameCheckerBoards.js";
-import { createOwlSquareToruses } from "./gameCheckerBoards.js";
-import { createPlayingPieces } from "./gamePieces.js";
-import { createAI } from "./gameAI.js";
+import { createBaseAndFins } from "./board/gameBaseAndFins.js";
+import { createGUI } from "./managers/gameStateManager.js";
+import { createGameStateManager } from "./managers/gameStateManager.js";
+import { createCheckerBoards } from "./board/gameCheckerBoards.js";
+import { createOwlSquareToruses } from "./board/gameCheckerBoards.js";
+import { createPlayingPieces } from "./board/gamePieces.js";
+import { createAI } from "../ai/gameAI.js";
 
 // Rendering modules
 import { createScene, setupCamera, setupLighting, createBackground, createBoardContainer } from "./rendering/sceneSetup.js";

@@ -1,7 +1,7 @@
 // MOVE HISTORY MANAGEMENT MODULE
 // Handles move history, takeback functionality, and move display
 
-import { moveNotation } from "./moveNotation.js";
+import { moveNotation } from "../rules/moveNotation.js";
 
 export function createMoveHistoryManager(gameState, resetFunctions) {
   const { scene, animatePieceMovement } = resetFunctions;

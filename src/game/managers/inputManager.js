@@ -1,7 +1,7 @@
 // INPUT MANAGEMENT MODULE
 // Handles move input, parsing, validation, and execution
 
-import { moveNotation } from "./moveNotation.js";
+import { moveNotation } from "../rules/moveNotation.js";
 
 export function createInputManager(gameState, resetFunctions) {
   const { scene, animatePieceMovement } = resetFunctions;

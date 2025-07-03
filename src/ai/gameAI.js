@@ -1,15 +1,15 @@
 import { Vector3 } from "@babylonjs/core";
 import { AIPlayer } from "../ai/aiPlayer.js";
-import { validateOwlMove } from "./rules/owlRules.js";
-import { validateKiteMove } from "./rules/kiteRules.js";
-import { validateRavenMove, isValidMobbingConfiguration } from "./rules/ravenRules.js";
+import { validateOwlMove } from "../game/rules/owlRules.js";
+import { validateKiteMove } from "../game/rules/kiteRules.js";
+import { validateRavenMove, isValidMobbingConfiguration } from "../game/rules/ravenRules.js";
 
 // Make them globally available for console testing
 import {
   checkCrossAdjacency,
   calculateSimpleGhostingDestination,
   testGhosting,
-} from "./rules/flightwayUtils.js";
+} from "../game/rules/flightwayUtils.js";
 window.checkCrossAdjacency = checkCrossAdjacency;
 window.calculateSimpleGhostingDestination = calculateSimpleGhostingDestination;
 window.testGhosting = testGhosting;

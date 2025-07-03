@@ -1,7 +1,7 @@
 // CAPTURE MANAGEMENT MODULE
 // Handles all capture-related functionality including timers and hybrid captures
 
-import { moveNotation } from "./moveNotation.js";
+import { moveNotation } from "../rules/moveNotation.js";
 
 export function createCaptureManager(gameState, uiElements) {
   const { captureTimerText } = uiElements;
