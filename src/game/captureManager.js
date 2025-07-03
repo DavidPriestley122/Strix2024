@@ -166,7 +166,12 @@ export function createCaptureManager(gameState, uiElements) {
       }
 
       // Check for win condition
-      gameState.checkWinningConditions(capturedPiece, "captured");
+      const winningMessage = gameState.checkWinningConditions(capturedPiece, "captured");
+      if (winningMessage) {
+        gameState.moveHistory.push(winningMessage);
+        gameState.gameOver = true;
+        console.log("Game over after capture:", winningMessage);
+      }
 
       // Update displays
       gameState.updateOwlHallaDisplay();

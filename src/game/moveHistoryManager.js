@@ -70,16 +70,73 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
       gameState.lastMove = moveRecord;
 
       // Check win condition
-      gameState.checkWinningConditions(piece, destinationSquare);
+      const winningMessage = gameState.checkWinningConditions(piece, destinationSquare);
+      if (winningMessage) {
+        gameState.moveHistory.push(winningMessage);
+        gameState.gameOver = true;
+        console.log("Game over:", winningMessage);
+      }
 
-      // Update displays
+      // Check if this is a hybrid capture in progress FIRST
+      const isHybridInProgress = capturedPiece && capturedPiece.name === "hybrid_in_progress";
+      
+      // Update game state
+      gameState.lastMove = { piece, sourceSquare, destinationSquare, moveText };
+      gameState.isPlayAgainState = false;
+      
+      // Don't advance turn if this is a hybrid capture in progress
+      if (isHybridInProgress) {
+        console.log(`🔄 Hybrid capture in progress - NOT advancing turn or updating displays yet`);
+        this.updateMoveHistoryDisplay();
+        return; // Exit early, don't advance turn or call proceedToNextTurn()
+      }
+      
+      // Normal flow for non-hybrid moves
       gameState.updateNextPlayer();
       this.updateMoveHistoryDisplay();
       gameState.updateOwlHallaDisplay(); // Update captured pieces display
       gameState.updateNextPlayerDisplay();
+
+      gameState.updatePlayerTypes(); // Read the radio buttons first
+
+      // Check if this was a human move with potential captures
+      const movingPlayerColor = piece.split(/(?=[A-Z])/)[0]; // Extract color from piece name
+      const isHumanMove = !gameState.isAIPlayer(movingPlayerColor);
+      const hasPotentialCapture = capturedPiece !== null && capturedPiece !== undefined;
+      const isTextInputCapture = capturedPiece && capturedPiece.name === "text_input_capture";
+      const isRavenMove = piece.includes('Raven');
       
-      // Trigger next turn (including AI moves)
-      gameState.proceedToNextTurn();
+      // Don't start timer for text input captures (they're already completed) or if game is over
+      if (isHumanMove && hasPotentialCapture && !isTextInputCapture && !gameState.gameOver) {
+        console.log(`🕒 Starting 7-second capture decision timer for ${piece}`);
+        console.log(`🔍 Timer will be set for moving player: ${movingPlayerColor}`);
+        console.log(`🔍 Current turn is now: ${gameState.currentPlayerTurn}`);
+        
+        // Use captureManager methods to start timer
+        if (gameState.captureManager) {
+          gameState.captureManager.isRavenCaptureInProgress = isRavenMove;
+          gameState.captureManager.capturingPlayer = movingPlayerColor;
+          
+          // Start visual countdown
+          gameState.startCaptureTimerDisplay();
+          
+          // Start 7-second timer for capture decisions
+          gameState.captureManager.captureDecisionTimer = setTimeout(() => {
+            console.log(`⏰ Capture decision timer expired - proceeding to next turn`);
+            gameState.captureManager.captureDecisionTimer = null;
+            gameState.captureManager.isRavenCaptureInProgress = false;
+            gameState.captureManager.capturingPlayer = null;
+            gameState.stopCaptureTimerDisplay();
+            gameState.proceedToNextTurn();
+          }, 7000);
+        } else {
+          // Fallback: proceed immediately if captureManager not available
+          gameState.proceedToNextTurn();
+        }
+      } else {
+        // No capture timer needed - proceed immediately
+        gameState.proceedToNextTurn();
+      }
     },
 
     // MOVE DISPLAY MANAGEMENT  
