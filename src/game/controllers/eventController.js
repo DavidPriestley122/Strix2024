@@ -66,7 +66,147 @@ export function createEventController(dependencies) {
             gameStateManager.resetGame();
           });
         }
+
+        // Add export button listeners
+        this.setupExportButtonListeners();
+        
+        // Add import button listeners
+        this.setupImportButtonListeners();
       }, GAME_CONFIG.TIMERS.BUTTON_LISTENER_DELAY);
+    },
+
+    // EXPORT BUTTON SETUP
+    setupExportButtonListeners() {
+      const exportSgnBtn = document.getElementById("export-sgn-btn");
+      const exportTxtBtn = document.getElementById("export-txt-btn");
+      const exportJsonBtn = document.getElementById("export-json-btn");
+      const copyGameBtn = document.getElementById("copy-game-btn");
+      const saveGameBtn = document.getElementById("save-game-btn");
+
+      let selectedFormat = 'sgn'; // Default format
+
+      if (exportSgnBtn) {
+        exportSgnBtn.addEventListener("click", () => {
+          selectedFormat = 'sgn';
+          this.updateExportButtonStyles('sgn');
+          console.log("SGN format selected");
+        });
+      }
+
+      if (exportTxtBtn) {
+        exportTxtBtn.addEventListener("click", () => {
+          selectedFormat = 'text';
+          this.updateExportButtonStyles('text');
+          console.log("Text format selected");
+        });
+      }
+
+      if (exportJsonBtn) {
+        exportJsonBtn.addEventListener("click", () => {
+          selectedFormat = 'json';
+          this.updateExportButtonStyles('json');
+          console.log("JSON format selected");
+        });
+      }
+
+      if (copyGameBtn) {
+        copyGameBtn.addEventListener("click", () => {
+          console.log(`Copying game in ${selectedFormat} format`);
+          gameStateManager.exportGame(selectedFormat, 'copy');
+        });
+      }
+
+      if (saveGameBtn) {
+        saveGameBtn.addEventListener("click", () => {
+          console.log(`Saving game in ${selectedFormat} format`);
+          gameStateManager.exportGame(selectedFormat, 'download');
+        });
+      }
+
+      // Set initial button state
+      this.updateExportButtonStyles('sgn');
+    },
+
+    updateExportButtonStyles(selectedFormat) {
+      const buttons = {
+        'sgn': document.getElementById("export-sgn-btn"),
+        'text': document.getElementById("export-txt-btn"),
+        'json': document.getElementById("export-json-btn")
+      };
+
+      // Remove active class from all buttons
+      Object.values(buttons).forEach(btn => {
+        if (btn) btn.classList.remove('active');
+      });
+
+      // Add active class to selected button
+      if (buttons[selectedFormat]) {
+        buttons[selectedFormat].classList.add('active');
+      }
+    },
+
+    // IMPORT BUTTON SETUP
+    setupImportButtonListeners() {
+      const importFileBtn = document.getElementById("import-file-btn");
+      const importFileInput = document.getElementById("import-file-input");
+      const importClipboardBtn = document.getElementById("import-clipboard-btn");
+      const replaySpeedSelect = document.getElementById("replay-speed");
+
+      if (importFileBtn && importFileInput) {
+        importFileBtn.addEventListener("click", () => {
+          console.log("Opening file picker for game import");
+          importFileInput.click();
+        });
+
+        importFileInput.addEventListener("change", (event) => {
+          const file = event.target.files[0];
+          if (file) {
+            console.log(`Importing game file: ${file.name}`);
+            
+            const speed = parseInt(replaySpeedSelect?.value || 1000);
+            const options = {
+              speed: speed,
+              autoStart: true,
+              resetFirst: true,
+              showProgress: true
+            };
+            
+            gameStateManager.handleFileUpload(file, options)
+              .then(result => {
+                if (result.success) {
+                  console.log('✅ Game import successful');
+                } else {
+                  console.error('❌ Game import failed:', result.error);
+                }
+              })
+              .catch(error => {
+                console.error('❌ File upload error:', error);
+                gameStateManager.displayInfoMessage(`Import error: ${error.message}`);
+              });
+            
+            // Clear the input for next use
+            event.target.value = '';
+          }
+        });
+      }
+
+      if (importClipboardBtn) {
+        importClipboardBtn.addEventListener("click", () => {
+          console.log("Loading game from clipboard");
+          
+          const speed = parseInt(replaySpeedSelect?.value || 1000);
+          const options = {
+            speed: speed,
+            autoStart: true,
+            resetFirst: true,
+            showProgress: true
+          };
+          
+          gameStateManager.loadGameFromClipboard(options);
+        });
+      }
+
+      console.log("Import button listeners added");
     },
 
     // CUBE CLICK HANDLERS

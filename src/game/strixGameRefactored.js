@@ -17,6 +17,7 @@ import { animatePieceMovement } from "./rendering/animations.js";
 // Controller modules
 import { createGameController } from "./controllers/gameController.js";
 import { createEventController } from "./controllers/eventController.js";
+import { createExportController } from "./controllers/exportController.js";
 
 // Configuration
 import { GAME_CONFIG } from "../config/gameConfig.js";
@@ -116,6 +117,10 @@ export default function createStrixGame(engine, canvas) {
 
   // Initialize move input functionality
   gameStateManager.initializeMoveInput();
+
+  // Create export controller
+  const exportController = createExportController(gameStateManager);
+  exportController.initializeExportControls();
 
   // Create AI and pass it to gameStateManager
   const aiModule = createAI(scene, gameStateManager, {

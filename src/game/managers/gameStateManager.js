@@ -18,6 +18,8 @@ import { createCaptureManager } from "./captureManager.js";
 import { createMoveHistoryManager } from "./moveHistoryManager.js";
 import { createUIManager } from "./uiManager.js";
 import { createInputManager } from "./inputManager.js";
+import { createGameExportManager } from "./gameExportManager.js";
+import { createGameImportManager } from "./gameImportManager.js";
 
 //GUI CREATION FUNCTION
 export function createGUI() {
@@ -269,6 +271,12 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         this.moveHistory.push(winningMessage);
         this.gameOver = true;
         console.log("Game over detected in proceedToNextTurn:", winningMessage);
+        
+        // Finalize export manager
+        if (this.gameExportManager) {
+          this.gameExportManager.finalizeGame();
+        }
+        
         this.updateGameOverDisplay(winningMessage);
         return;
       }
@@ -428,7 +436,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       this.captureHistory = [];
       this.knockedOutTeam = null;
       this.gameOver = false;
-
+      
       // Reset piece positions to starting positions
       this.piecePositions = {
         brownOwl: "b7-1",
@@ -773,6 +781,12 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
   // Initialize inputManager with reference to gameStateManager
   const inputManager = createInputManager(gameStateManager, resetFunctions);
   
+  // Initialize gameExportManager with reference to gameStateManager
+  const gameExportManager = createGameExportManager(gameStateManager);
+  
+  // Initialize gameImportManager with reference to gameStateManager
+  const gameImportManager = createGameImportManager(gameStateManager);
+  
   // Integrate captureManager methods into gameStateManager
   gameStateManager.captureManager = captureManager;
   gameStateManager.recordCapture = captureManager.recordCapture.bind(captureManager);
@@ -812,6 +826,23 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
   gameStateManager.executeRegularMove = inputManager.executeRegularMove.bind(inputManager);
   gameStateManager.executeMovementThenCaptures = inputManager.executeMovementThenCaptures.bind(inputManager);
   gameStateManager.executeMovementAndCaptures = inputManager.executeMovementAndCaptures.bind(inputManager);
+  gameStateManager.executeMoveSequence = inputManager.executeMoveSequence.bind(inputManager);
+  
+  // Integrate gameExportManager methods into gameStateManager
+  gameStateManager.gameExportManager = gameExportManager;
+  gameStateManager.exportToSGN = gameExportManager.exportToSGN.bind(gameExportManager);
+  gameStateManager.exportToSimpleText = gameExportManager.exportToSimpleText.bind(gameExportManager);
+  gameStateManager.exportToJSON = gameExportManager.exportToJSON.bind(gameExportManager);
+  gameStateManager.exportGame = gameExportManager.exportGame.bind(gameExportManager);
+
+  // Integrate gameImportManager methods into gameStateManager  
+  gameStateManager.gameImportManager = gameImportManager;
+  gameStateManager.importFromSGN = gameImportManager.importFromSGN.bind(gameImportManager);
+  gameStateManager.importFromText = gameImportManager.importFromText.bind(gameImportManager);
+  gameStateManager.importFromJSON = gameImportManager.importFromJSON.bind(gameImportManager);
+  gameStateManager.replayGame = gameImportManager.replayGame.bind(gameImportManager);
+  gameStateManager.handleFileUpload = gameImportManager.handleFileUpload.bind(gameImportManager);
+  gameStateManager.loadGameFromClipboard = gameImportManager.loadGameFromClipboard.bind(gameImportManager);
 
   // Create property references that sync with captureManager
   Object.defineProperty(gameStateManager, 'captureDecisionTimer', {

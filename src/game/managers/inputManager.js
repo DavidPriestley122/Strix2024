@@ -188,10 +188,23 @@ export function createInputManager(gameState, resetFunctions) {
 
       // Execute the movement animation first
       const piece3D = scene.getMeshByName(pieceName);
-      const targetCube = scene.getMeshByName(parsedMove.destination);
+      
+      // Convert destination format from "y22" to "y2-2" for scene lookup
+      let sceneDestination = parsedMove.destination;
+      if (!sceneDestination.includes('-') && sceneDestination.length >= 3) {
+        const face = sceneDestination[0];
+        const numbers = sceneDestination.substring(1);
+        if (numbers.length >= 2) {
+          const row = numbers.substring(0, numbers.length - 1);
+          const col = numbers.substring(numbers.length - 1);
+          sceneDestination = `${face}${row}-${col}`;
+        }
+      }
+      
+      const targetCube = scene.getMeshByName(sceneDestination);
       
       if (!piece3D || !targetCube) {
-        gameState.displayInfoMessage(`Could not find piece or destination for ${pieceName}`);
+        gameState.displayInfoMessage(`Could not find piece or destination for ${pieceName} -> ${sceneDestination}`);
         return;
       }
 
