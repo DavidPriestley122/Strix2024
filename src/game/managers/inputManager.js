@@ -157,13 +157,9 @@ export function createInputManager(gameState, resetFunctions) {
       if (parsedMove.victims && parsedMove.victims.length > 0) {
         console.log(`📥 TEXT INPUT: Move has explicit captures:`, parsedMove.victims);
         
-        // Validate that the piece can actually capture the specified victims
-        if (this.validateExplicitCaptures(pieceName, parsedMove.destination, parsedMove.victims)) {
-          // Execute movement then captures
-          this.executeMovementThenCaptures(parsedMove);
-        } else {
-          gameState.displayInfoMessage(`Invalid captures specified for ${parsedMove.piece}`);
-        }
+        // For import/replay scenarios, always use direct capture execution
+        // For interactive play, you might want hybrid capture mode, but for imports we want automation
+        this.executeMovementAndCaptures(parsedMove);
       } else {
         // Regular move execution - check for potential captures
         this.executeMovementAndCaptures(parsedMove);
@@ -299,16 +295,36 @@ export function createInputManager(gameState, resetFunctions) {
 
         // Animate piece movement
         if (typeof animatePieceMovement === 'function') {
-          animatePieceMovement(piece3D, targetPosition, targetRotation, 30);
+          animatePieceMovement(piece3D, targetPosition, targetRotation, 30, () => {
+            // Execute captures AFTER movement animation completes
+            this.executeCapturesFromNotation(parsedMove);
+          });
         } else {
           // Fallback: instant position change
           piece3D.position = targetPosition;
           piece3D.rotation = targetRotation;
+          // Execute captures after a brief delay for instant movement
+          setTimeout(() => {
+            this.executeCapturesFromNotation(parsedMove);
+          }, 100);
         }
+      } else {
+        // No piece3D found, still execute captures if specified
+        this.executeCapturesFromNotation(parsedMove);
       }
 
-      // Execute captures first (from text input)
+      // Add to move history
+      gameState.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, 
+                           parsedMove.victims && parsedMove.victims.length > 0 ? { name: "text_input_capture" } : null,
+                           gameStateBeforeMove);
+      
+      gameState.displayInfoMessage(`Executed: ${moveNotation.moveToNotation(parsedMove)}`);
+    },
+
+    // CAPTURE EXECUTION HELPER
+    executeCapturesFromNotation: function(parsedMove) {
       if (parsedMove.victims && parsedMove.victims.length > 0) {
+        console.log(`🎯 Executing captures after movement:`, parsedMove.victims);
         for (const victim of parsedMove.victims) {
           const victimPieceName = moveNotation.getPieceName(victim);
           console.log(`📥 TEXT INPUT: Capturing: ${victim} -> ${victimPieceName}`);
@@ -329,13 +345,6 @@ export function createInputManager(gameState, resetFunctions) {
           }
         }
       }
-
-      // Add to move history
-      gameState.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, 
-                           parsedMove.victims && parsedMove.victims.length > 0 ? { name: "text_input_capture" } : null,
-                           gameStateBeforeMove);
-      
-      gameState.displayInfoMessage(`Executed: ${moveNotation.moveToNotation(parsedMove)}`);
     },
 
     // VALIDATION HELPERS

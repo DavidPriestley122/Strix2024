@@ -45,8 +45,10 @@ export function createGUI() {
   messageRect.color = "white";
   messageRect.thickness = 4;
   messageRect.background = "rgba(0, 0, 0, 0.7)";
-  messageRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_CENTER;
-  messageRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_CENTER;
+  messageRect.horizontalAlignment = Control.HORIZONTAL_ALIGNMENT_RIGHT;
+  messageRect.verticalAlignment = Control.VERTICAL_ALIGNMENT_TOP;
+  messageRect.top = "20px";
+  messageRect.right = "20px";
   messageRect.isVisible = false;
   advancedTexture.addControl(messageRect);
 
