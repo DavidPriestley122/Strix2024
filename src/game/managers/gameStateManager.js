@@ -263,6 +263,16 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         return;
       }
       
+      // Check for winning conditions after all moves/captures are complete
+      const winningMessage = this.checkWinningConditions(null, null);
+      if (winningMessage) {
+        this.moveHistory.push(winningMessage);
+        this.gameOver = true;
+        console.log("Game over detected in proceedToNextTurn:", winningMessage);
+        this.updateGameOverDisplay(winningMessage);
+        return;
+      }
+      
       // Check if the new current player is AI and game is running (not paused)
       if (this.isAIPlayer(this.currentPlayerTurn) && this.aiGameRunning && !this.aiGamePaused) {
         console.log(this.currentPlayerTurn + " is AI - will make move");
@@ -487,8 +497,9 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     checkWinningConditions: function (piece, destinationSquare) {
       console.log("Checking win condition:", piece, destinationSquare);
 
-      // Check if an Owl has reached the center
+      // Check if an Owl has reached the center (only if piece is specified)
       if (
+        piece &&
         piece.endsWith("Owl") &&
         ["b7-7", "y7-7", "g7-7"].includes(destinationSquare)
       ) {

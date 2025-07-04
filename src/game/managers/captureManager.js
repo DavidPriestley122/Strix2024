@@ -162,7 +162,6 @@ export function createCaptureManager(gameState, uiElements) {
         }
 
         console.log("Current player after Owl capture logic:", gameState.currentPlayerTurn);
-        gameState.updateNextPlayerDisplay();
       }
 
       // Check for win condition
@@ -171,9 +170,14 @@ export function createCaptureManager(gameState, uiElements) {
         gameState.moveHistory.push(winningMessage);
         gameState.gameOver = true;
         console.log("Game over after capture:", winningMessage);
+        gameState.updateGameOverDisplay(winningMessage);
+        return; // Stop processing when game is over
       }
 
-      // Update displays
+      // Update displays only if game continues
+      if (capturedPiece.includes("Owl")) {
+        gameState.updateNextPlayerDisplay();
+      }
       gameState.updateOwlHallaDisplay();
       console.log("recordCapture completed. Current player:", gameState.currentPlayerTurn);
     },

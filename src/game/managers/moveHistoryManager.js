@@ -232,6 +232,9 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
       gameState.isPlayAgainState = targetMove.gameState.isPlayAgainState;
       gameState.gameOver = targetMove.gameState.gameOver;
       
+      // Advance to next player (since we restored to the state BEFORE the turn advanced)
+      gameState.updateNextPlayer();
+      
       // Pause AI game temporarily to prevent immediate AI move after takeback
       const wasAIGameRunning = gameState.aiGameRunning;
       if (gameState.aiGameRunning) {

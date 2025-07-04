@@ -131,7 +131,7 @@ export function createUIManager(gameState, guiElements) {
 
     // GAME STATE UI HELPERS
     updateGameOverDisplay: function(winnerMessage) {
-      console.log('🏆 Game Over - updating UI');
+      console.log('🏆 Game Over - updating UI with message:', winnerMessage);
       gameState.gameOver = true;
       
       // Store the winning message in move history for display
@@ -139,8 +139,11 @@ export function createUIManager(gameState, guiElements) {
         gameState.moveHistory[gameState.moveHistory.length - 1] = winnerMessage;
       }
       
+      // Show popup for prominent winning announcement
+      this.showMessage(winnerMessage, 10000); // Show for 10 seconds
+      
+      // Update next player window to show winning message instead of "X to play"
       this.updateNextPlayerDisplay();
-      this.showMessage(winnerMessage, 5000);
     },
 
     // UTILITY FUNCTIONS
