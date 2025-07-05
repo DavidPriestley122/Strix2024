@@ -610,6 +610,10 @@ export function createAI(scene, gameStateManager, gameFunctions) {
   // Set the moveExecutor reference for all AI players
   for (const playerColor in aiPlayers) {
     aiPlayers[playerColor].moveExecutor = aiSystem;
+    // Also set for minimax AI
+    if (aiPlayers[playerColor].minimaxAI) {
+      aiPlayers[playerColor].minimaxAI.moveExecutor = aiSystem;
+    }
   }
 
   return aiSystem;

@@ -1,17 +1,22 @@
 import { getAllOwlMoves } from "../game/rules/owlRules.js";
 import { getAllKiteMoves } from "../game/rules/kiteRules.js";
 import { getAllRavenMoves, isValidMobbingConfiguration } from "../game/rules/ravenRules.js";
+import { MinimaxAI } from "./aiStrategies.js";
 
 export class AIPlayer {
   constructor(playerColor, gameStateManager, moveExecutor) {
     this.playerColor = playerColor;
     this.gameState = gameStateManager;
     this.moveExecutor = moveExecutor;
-    this.strategy = 'greedy'; // Use greedy strategy to see strategic thinking
+    this.strategy = 'minimax'; // Enhanced tactical AI
     
     // Logging controls
     this.strategicLogging = true;  // Strategic thinking logs
-    this.mechanisticLogging = true; // Detailed move validation logs - temporarily enabled
+    this.mechanisticLogging = false; // Detailed move validation logs - disabled for cleaner output
+    
+    // Initialize minimax AI
+    this.minimaxAI = new MinimaxAI(playerColor, gameStateManager);
+    // moveExecutor will be set later in gameAI.js
   }
 
   // Strategic logging helper
@@ -40,7 +45,20 @@ export class AIPlayer {
 
   // Main decision-making function
   selectMove() {
-    this.logStrategy(`=== TURN START - Analyzing position ===`);
+    this.logStrategy(`=== TURN START - Strategy: ${this.strategy} ===`);
+    
+    // Use minimax AI for enhanced tactical play
+    if (this.strategy === 'minimax') {
+      return this.minimaxAI.selectBestMove();
+    }
+    
+    // Fallback to original greedy strategy
+    return this.selectMoveGreedy();
+  }
+
+  // Original greedy move selection (as fallback)
+  selectMoveGreedy() {
+    this.logStrategy(`=== GREEDY STRATEGY ===`);
     
     // Get all pieces belonging to this player
     const playerPieces = this.getPlayerPieces();
@@ -632,5 +650,13 @@ export class AIPlayer {
 
   getStrategy() {
     return this.strategy;
+  }
+
+  // Set minimax search depth
+  setSearchDepth(depth) {
+    if (this.minimaxAI) {
+      this.minimaxAI.maxDepth = depth;
+      this.logStrategy(`Minimax search depth set to: ${depth}`);
+    }
   }
 }
