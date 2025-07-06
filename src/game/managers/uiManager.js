@@ -51,7 +51,9 @@ export function createUIManager(gameState, guiElements) {
 
       nextPlayerText = new TextBlock("nextPlayerText");
       if (gameState.gameOver) {
-        nextPlayerText.text = gameState.moveHistory[gameState.moveHistory.length - 1]; // Display winning message
+        const winMessage = gameState.moveHistory[gameState.moveHistory.length - 1];
+        console.log('🏆 Game is over - displaying winning message:', winMessage);
+        nextPlayerText.text = winMessage; // Display winning message
       } else {
         const playerColor = gameState.currentPlayerTurn;
         nextPlayerText.text = gameState.isPlayAgainState
@@ -131,18 +133,23 @@ export function createUIManager(gameState, guiElements) {
 
     // GAME STATE UI HELPERS
     updateGameOverDisplay: function(winnerMessage) {
-      console.log('🏆 Game Over - updating UI with message:', winnerMessage);
+      console.log('🏆 updateGameOverDisplay called with message:', winnerMessage);
+      console.log('🏆 gameState.gameOver before:', gameState.gameOver);
       gameState.gameOver = true;
+      console.log('🏆 gameState.gameOver after:', gameState.gameOver);
       
       // Store the winning message in move history for display
       if (gameState.moveHistory && gameState.moveHistory.length > 0) {
+        console.log('🏆 Storing winning message in move history');
         gameState.moveHistory[gameState.moveHistory.length - 1] = winnerMessage;
       }
       
       // Show popup for prominent winning announcement
+      console.log('🏆 Showing popup message:', winnerMessage);
       this.showMessage(winnerMessage, 10000); // Show for 10 seconds
       
       // Update next player window to show winning message instead of "X to play"
+      console.log('🏆 Updating next player display for game over');
       this.updateNextPlayerDisplay();
     },
 

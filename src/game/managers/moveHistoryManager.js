@@ -75,6 +75,15 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
         gameState.moveHistory.push(winningMessage);
         gameState.gameOver = true;
         console.log("Game over:", winningMessage);
+        
+        // Finalize export manager
+        if (gameState.gameExportManager && typeof gameState.gameExportManager.finalizeGame === 'function') {
+          gameState.gameExportManager.finalizeGame();
+        }
+        
+        // IMPORTANT: Update the UI to show the win properly
+        gameState.updateGameOverDisplay(winningMessage);
+        return; // Don't proceed to next turn
       }
 
       // Check if this is a hybrid capture in progress FIRST
@@ -91,11 +100,11 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
         return; // Exit early, don't advance turn or call proceedToNextTurn()
       }
       
-      // Normal flow for non-hybrid moves
-      gameState.updateNextPlayer();
+      // Normal flow for non-hybrid moves - DON'T advance turn yet (wait for captures)
       this.updateMoveHistoryDisplay();
       gameState.updateOwlHallaDisplay(); // Update captured pieces display
-      gameState.updateNextPlayerDisplay();
+      // gameState.updateNextPlayer(); // MOVED: This will be called later in proceedToNextTurn
+      // gameState.updateNextPlayerDisplay(); // MOVED: This will be called later in proceedToNextTurn
 
       gameState.updatePlayerTypes(); // Read the radio buttons first
 
@@ -127,14 +136,23 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
             gameState.captureManager.isRavenCaptureInProgress = false;
             gameState.captureManager.capturingPlayer = null;
             gameState.stopCaptureTimerDisplay();
+            // Store move info for win checking
+            gameState.lastMovePiece = piece;
+            gameState.lastMoveDestination = destinationSquare;
             gameState.proceedToNextTurn();
           }, 7000);
         } else {
           // Fallback: proceed immediately if captureManager not available
+          // Store move info for win checking
+          gameState.lastMovePiece = piece;
+          gameState.lastMoveDestination = destinationSquare;
           gameState.proceedToNextTurn();
         }
       } else {
         // No capture timer needed - proceed immediately
+        // Store move info for win checking
+        gameState.lastMovePiece = piece;
+        gameState.lastMoveDestination = destinationSquare;
         gameState.proceedToNextTurn();
       }
     },

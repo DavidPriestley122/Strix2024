@@ -250,7 +250,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             gameFunctions.updatePiecesArrivingOnOwlHalla(capturedPiece);
             
             // Record the capture
-            this.gameState.recordCapture(capturedPiece, targetSquare.name);
+            this.gameState.recordCapture(capturedPiece);
           }
         }
       }
@@ -341,7 +341,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
                       // Register piece in owlHalla tracking system
                       gameFunctions.updatePiecesArrivingOnOwlHalla(capturedByKite);
                       
-                      gameStateManager.recordCapture(capturedByKite, adjSquare);
+                      gameStateManager.recordCapture(capturedByKite);
                     }
                     break; // Only capture one piece per move
                   }
@@ -400,7 +400,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
                     // Register piece in owlHalla tracking system
                     gameFunctions.updatePiecesArrivingOnOwlHalla(victim.name);
                     
-                    gameStateManager.recordCapture(victim.name, victim.position);
+                    gameStateManager.recordCapture(victim.name);
                   }
                 }
               }

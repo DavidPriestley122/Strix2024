@@ -134,8 +134,10 @@ export function createCaptureManager(gameState, uiElements) {
       // Check if the captured piece is an Owl
       if (capturedPiece.includes("Owl")) {
         const capturedTeam = gameState.getColorFromPieceName(capturedPiece);
+        console.log("🦉 OWL CAPTURE DEBUG: Setting knockedOutTeam from", gameState.knockedOutTeam, "to", capturedTeam);
         gameState.knockedOutTeam = capturedTeam;
-        console.log("Owl captured. Knocked out team:", capturedTeam);
+        console.log("🦉 OWL CAPTURE: Owl captured. Knocked out team:", capturedTeam);
+        console.log("🦉 CURRENT STATE: knockedOutTeam =", gameState.knockedOutTeam, "currentPlayerTurn =", gameState.currentPlayerTurn);
 
         const teams = ["brown", "yellow", "green"];
         const capturingTeam =

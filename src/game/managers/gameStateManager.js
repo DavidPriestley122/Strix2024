@@ -251,6 +251,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     captureHistory: [],
     retractionHistory: [],
     lastMove: null,
+    lastMovePiece: null,
+    lastMoveDestination: null,
     gameOver: false,
     playerTypes: {
       brown: "human",
@@ -267,21 +269,34 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         return;
       }
       
-      // Check for winning conditions after all moves/captures are complete
-      const winningMessage = this.checkWinningConditions(null, null);
+      console.log("🔄 PROCEED TO NEXT TURN: Before advancing - knockedOutTeam =", this.knockedOutTeam);
+      
+      // Check for winning conditions using the last move data FIRST
+      console.log("🏆 WIN CHECK: piece =", this.lastMovePiece, "destination =", this.lastMoveDestination);
+      const winningMessage = this.checkWinningConditions(this.lastMovePiece, this.lastMoveDestination);
+      console.log("🏆 WIN CHECK RESULT:", winningMessage);
+      
+      // Clear the stored move data after use
+      this.lastMovePiece = null;
+      this.lastMoveDestination = null;
+      
       if (winningMessage) {
         this.moveHistory.push(winningMessage);
         this.gameOver = true;
         console.log("Game over detected in proceedToNextTurn:", winningMessage);
         
         // Finalize export manager
-        if (this.gameExportManager) {
+        if (this.gameExportManager && typeof this.gameExportManager.finalizeGame === 'function') {
           this.gameExportManager.finalizeGame();
         }
         
         this.updateGameOverDisplay(winningMessage);
         return;
       }
+      
+      // Only advance turn and update UI if game is not over
+      this.updateNextPlayer();
+      this.updateNextPlayerDisplay();
       
       // Check if the new current player is AI and game is running (not paused)
       if (this.isAIPlayer(this.currentPlayerTurn) && this.aiGameRunning && !this.aiGamePaused) {
@@ -328,13 +343,19 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       const teams = ["brown", "yellow", "green"];
       let currentIndex = teams.indexOf(this.currentPlayerTurn);
       let nextIndex = (currentIndex + 1) % teams.length;
+      
+      console.log("🔄 TURN ADVANCE DEBUG: Current player:", this.currentPlayerTurn, "knockedOutTeam:", this.knockedOutTeam);
+      console.log("🔄 TURN ADVANCE: Next would be:", teams[nextIndex]);
 
       // Skip the knocked-out team if there is one
       if (teams[nextIndex] === this.knockedOutTeam) {
+        console.log("🚫 SKIPPING knocked out team:", this.knockedOutTeam);
         nextIndex = (nextIndex + 1) % teams.length;
+        console.log("🔄 AFTER SKIP: New next player:", teams[nextIndex]);
       }
 
       this.currentPlayerTurn = teams[nextIndex];
+      console.log("🔄 TURN ADVANCE FINAL: New current player:", this.currentPlayerTurn);
     },
 
     reinstateTeam: function (piece) {
@@ -437,6 +458,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       this.moveHistory = [];
       this.captureHistory = [];
       this.knockedOutTeam = null;
+      this.lastMovePiece = null;
+      this.lastMoveDestination = null;
       this.gameOver = false;
       
       // Reset piece positions to starting positions
@@ -505,19 +528,27 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     },
 
     checkWinningConditions: function (piece, destinationSquare) {
-      console.log("Checking win condition:", piece, destinationSquare);
+      console.log("🔍 checkWinningConditions called with:", piece, destinationSquare);
 
       // Check if an Owl has reached the center (only if piece is specified)
-      if (
-        piece &&
-        piece.endsWith("Owl") &&
-        ["b7-7", "y7-7", "g7-7"].includes(destinationSquare)
-      ) {
-        console.log("Win condition met: Owl reached center");
-        const team =
-          piece.split("Owl")[0].charAt(0).toUpperCase() +
-          piece.split("Owl")[0].slice(1);
-        return `${team} wins`;
+      if (piece && piece.endsWith("Owl")) {
+        console.log("🦉 Owl piece detected:", piece);
+        console.log("🎯 Checking if", destinationSquare, "is a nest square");
+        console.log("🎯 Nest squares are:", ["b7-7", "y7-7", "g7-7"]);
+        console.log("🎯 Is nest square?", ["b7-7", "y7-7", "g7-7"].includes(destinationSquare));
+        
+        if (["b7-7", "y7-7", "g7-7"].includes(destinationSquare)) {
+          console.log("🏆 WIN CONDITION MET: Owl reached center!");
+          const team =
+            piece.split("Owl")[0].charAt(0).toUpperCase() +
+            piece.split("Owl")[0].slice(1);
+          console.log("🏆 Winning team:", team);
+          return `${team} wins`;
+        } else {
+          console.log("❌ Owl move but not to nest square");
+        }
+      } else {
+        console.log("❌ Not an Owl piece or piece is null");
       }
 
       // Check for last Owl standing
