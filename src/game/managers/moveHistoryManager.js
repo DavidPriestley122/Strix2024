@@ -42,6 +42,9 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
         }
       }
       
+      // Extract the player color from the piece name (this is who made the move)
+      const movingPlayerColor = piece.split(/(?=[A-Z])/)[0];
+      
       // Create move record with game state snapshot for takeback
       const moveRecord = {
         notation: moveText,
@@ -54,13 +57,15 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
         // Store complete game state BEFORE this move for restoration
         gameState: gameStateBeforeMove || {
           piecePositions: JSON.parse(JSON.stringify(gameState.piecePositions)),
-          currentPlayer: gameState.currentPlayerTurn,
+          currentPlayer: movingPlayerColor, // Save who made this move (not who's next)
           captureHistory: JSON.parse(JSON.stringify(gameState.captureHistory)),
           knockedOutTeam: gameState.knockedOutTeam,
           isPlayAgainState: gameState.isPlayAgainState,
           gameOver: gameState.gameOver
         }
       };
+      
+      console.log(`💾 TAKEBACK DEBUG: Move ${moveRecord.moveNumber} by ${movingPlayerColor}, currentPlayerTurn was ${gameState.currentPlayerTurn}`);
 
       console.log(`💾 Saving move record for takeback:`, moveRecord);
       console.log(`💾 Game state snapshot:`, moveRecord.gameState);
@@ -109,7 +114,7 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
       gameState.updatePlayerTypes(); // Read the radio buttons first
 
       // Check if this was a human move with potential captures
-      const movingPlayerColor = piece.split(/(?=[A-Z])/)[0]; // Extract color from piece name
+      // movingPlayerColor already declared above
       const isHumanMove = !gameState.isAIPlayer(movingPlayerColor);
       const hasPotentialCapture = capturedPiece !== null && capturedPiece !== undefined;
       const isTextInputCapture = capturedPiece && capturedPiece.name === "text_input_capture";
@@ -283,8 +288,11 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
           
           // Only trigger AI move if current player is AI
           if (gameState.isAIPlayer(gameState.currentPlayerTurn)) {
-            console.log(`🤖 Current player ${gameState.currentPlayerTurn} is AI - triggering move`);
-            gameState.proceedToNextTurn();
+            console.log(`🤖 Current player ${gameState.currentPlayerTurn} is AI - triggering AI move`);
+            // Trigger AI move directly without advancing turn again
+            if (gameState.aiModule && gameState.aiModule.makeMove) {
+              gameState.aiModule.makeMove(gameState.currentPlayerTurn);
+            }
           } else {
             console.log(`👤 Current player ${gameState.currentPlayerTurn} is human - waiting for input`);
           }
