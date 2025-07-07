@@ -1,3 +1,16 @@
+// gameAI.js - Game Interface & Rule Authority
+// 
+// RESPONSIBILITIES:
+// ✅ Move execution and capture mechanics
+// ✅ 3D animation and visual updates  
+// ✅ Game rule validation and enforcement
+// ✅ AI player coordination and timing
+// 
+// NOT RESPONSIBLE FOR:
+// ❌ Tactical analysis (handled by aiStrategies.js)
+// ❌ Strategic decision making (handled by aiPlayer.js)
+// ❌ Pattern recognition (handled by strixPatterns.js)
+
 import { Vector3 } from "@babylonjs/core";
 import { AIPlayer } from "../ai/aiPlayer.js";
 import { validateOwlMove } from "../game/rules/owlRules.js";
@@ -39,17 +52,15 @@ export function createAI(scene, gameStateManager, gameFunctions) {
     return new Vector3(0, 0, 0);
   }
 
-  // Helper functions for Kite captures
-  function getAdjacentSquaresForCapture(square) {
+  // === EXECUTION HELPERS: Simple utilities for capture mechanics ===
+  function getAdjacentSquares(square) {
     const face = square[0];
     const coords = square.substring(1).split("-");
     const row = parseInt(coords[0]);
     const col = parseInt(coords[1]);
     
     const adjacent = [];
-    const directions = [
-      [0, 1], [0, -1], [1, 0], [-1, 0]  // right, left, down, up
-    ];
+    const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
     
     for (const [dr, dc] of directions) {
       const newRow = row + dr;
@@ -63,7 +74,7 @@ export function createAI(scene, gameStateManager, gameFunctions) {
     return adjacent;
   }
 
-  function findPieceAtSquareForCapture(square, piecePositions) {
+  function findPieceAtSquare(square, piecePositions) {
     for (const [pieceName, piecePos] of Object.entries(piecePositions)) {
       if (piecePos === square && piecePos !== "captured") {
         return pieceName;
@@ -72,7 +83,8 @@ export function createAI(scene, gameStateManager, gameFunctions) {
     return null;
   }
 
-  // Helper function for Raven mobbing opportunities
+  // === EXECUTION MECHANICS: Raven mobbing capture processing ===
+  // These functions execute actual captures, not AI analysis
   function findRavenMobbingOpportunities(ravenPosition, piecePositions, movingRavenName) {
     const opportunities = [];
     
@@ -298,10 +310,10 @@ export function createAI(scene, gameStateManager, gameFunctions) {
             if (startFace !== endFace) {
               // console.log(`🦅 Cross-face Kite move confirmed: ${oldPosition}(${startFace}) → ${targetSquare.name}(${endFace})`); // Mechanistic logging - disabled
               // Check if this Kite move can capture adjacent pieces
-              const adjacentSquares = getAdjacentSquaresForCapture(targetSquare.name);
+              const adjacentSquares = getAdjacentSquares(targetSquare.name);
               
               for (const adjSquare of adjacentSquares) {
-                const occupyingPiece = findPieceAtSquareForCapture(adjSquare, gameStateManager.piecePositions);
+                const occupyingPiece = findPieceAtSquare(adjSquare, gameStateManager.piecePositions);
                 
                 if (occupyingPiece) {
                   // Check if it's an opponent piece
