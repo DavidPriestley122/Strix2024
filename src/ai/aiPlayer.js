@@ -2,6 +2,7 @@ import { getAllOwlMoves } from "../game/rules/owlRules.js";
 import { getAllKiteMoves } from "../game/rules/kiteRules.js";
 import { getAllRavenMoves } from "../game/rules/ravenRules.js";
 import { MinimaxAI } from "./aiStrategies.js";
+import { OpeningBook } from "./openingBook.js";
 
 export class AIPlayer {
   constructor(playerColor, gameStateManager, moveExecutor) {
@@ -16,6 +17,10 @@ export class AIPlayer {
     
     // Initialize minimax AI
     this.minimaxAI = new MinimaxAI(playerColor, gameStateManager);
+    
+    // Initialize opening book (each player gets their own instance)
+    this.openingBook = new OpeningBook();
+    
     // moveExecutor will be set later in gameAI.js
   }
 
@@ -46,6 +51,22 @@ export class AIPlayer {
   // Main decision-making function
   selectMove() {
     this.logStrategy(`=== TURN START - Strategy: ${this.strategy} ===`);
+    
+    // Check opening book first (for both strategies)
+    const moveNumber = this.getCurrentMoveNumber();
+    if (moveNumber <= 6) { // Use opening book for first few moves
+      this.logStrategy(`📚 Checking opening book for move ${moveNumber}...`);
+      const openingMove = this.openingBook.getOpeningMove(this.playerColor, this.gameState, moveNumber);
+      
+      if (openingMove && this.isValidMove(openingMove.targetSquare, openingMove.piece.name)) {
+        this.logStrategy(`📚 OPENING BOOK MOVE: ${openingMove.piece.name} → ${openingMove.targetSquare}`);
+        return openingMove;
+      } else if (openingMove) {
+        this.logStrategy(`❌ Opening book move invalid: ${openingMove.piece.name} → ${openingMove.targetSquare}`);
+      } else {
+        this.logStrategy(`📚 No opening book move available for move ${moveNumber}`);
+      }
+    }
     
     // Use minimax AI for enhanced tactical play
     if (this.strategy === 'minimax') {
@@ -249,5 +270,14 @@ export class AIPlayer {
       this.minimaxAI.maxDepth = depth;
       this.logStrategy(`Minimax search depth set to: ${depth}`);
     }
+  }
+
+  // Get current move number for opening book
+  getCurrentMoveNumber() {
+    // Count total moves made so far
+    if (this.gameState.moveHistory) {
+      return this.gameState.moveHistory.length + 1;
+    }
+    return 1;
   }
 }

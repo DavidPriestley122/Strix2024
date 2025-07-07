@@ -61,6 +61,7 @@ export class MinimaxAI {
     // Debug: Show current board state
     this.logBoardState();
 
+
     const moves = this.generateAllMoves(this.playerColor);
     this.logStrategy(`Generated ${moves.length} moves for evaluation`);
 
@@ -100,17 +101,23 @@ export class MinimaxAI {
         this.playerColor
       );
       
-      // Combined scoring: offense - defense + patterns
-      totalScore = offensiveScore - defensiveScore + patternScore;
+      // Base score to encourage all piece types to move
+      const baseScore = this.getBasePieceScore(move.piece.type);
+      
+      // Positional advancement bonus
+      const advancementBonus = this.evaluateAdvancement(move);
+      
+      // Combined scoring: base + advancement + offense - defense + patterns
+      totalScore = baseScore + advancementBonus + offensiveScore - defensiveScore + patternScore;
 
       // Store the total evaluation
       move.evaluation = totalScore;
       evaluatedMoves.push(move);
 
       // Log all moves with non-zero scores OR first few moves for debugging
-      if (offensiveScore > 0 || defensiveScore > 0 || patternScore !== 0 || evaluatedMoves.length <= 5) {
+      if (offensiveScore > 0 || defensiveScore > 0 || patternScore !== 0 || advancementBonus > 0 || evaluatedMoves.length <= 10) {
         this.logStrategy(
-          `📊 ${move.piece.name}→${move.targetSquare}: offense=${offensiveScore}, defense=${defensiveScore}, pattern=${patternScore}, total=${totalScore}`
+          `📊 ${move.piece.name}→${move.targetSquare}: base=${baseScore}, adv=${advancementBonus}, off=${offensiveScore}, def=${defensiveScore}, pat=${patternScore}, total=${totalScore}`
         );
       }
     }
@@ -142,21 +149,55 @@ export class MinimaxAI {
     const moves = [];
 
     const pieces = this.getPlayerPieces(playerColor, state);
+    this.logStrategy(`🔍 Found ${pieces.length} pieces for ${playerColor}:`);
+    
+    for (const piece of pieces) {
+      this.logStrategy(`  - ${piece.name} (${piece.type}) at ${piece.position}`);
+    }
 
     for (const piece of pieces) {
       const possibleMoves = this.getPossibleMoves(piece, state);
+      this.logStrategy(`${piece.name} has ${possibleMoves.length} possible moves: ${possibleMoves.slice(0,5).join(', ')}${possibleMoves.length > 5 ? '...' : ''}`);
 
+      let validMovesForPiece = 0;
+      let crossFaceValidMoves = 0;
+      let sameFaceValidMoves = 0;
+      
       for (const targetSquare of possibleMoves) {
-        if (this.isValidMove(piece.name, targetSquare, state)) {
+        const isValid = this.isValidMove(piece.name, targetSquare, state);
+        
+        if (isValid) {
           moves.push({
             piece: piece,
             targetSquare: targetSquare,
             evaluation: 0,
           });
+          validMovesForPiece++;
+          
+          // Track cross-face vs same-face moves
+          const currentFace = piece.position[0];
+          const targetFace = targetSquare[0];
+          if (currentFace !== targetFace) {
+            crossFaceValidMoves++;
+          } else {
+            sameFaceValidMoves++;
+          }
+        } else {
+          // Log why invalid moves are being rejected (especially for Kites and cross-face moves)
+          const currentFace = piece.position[0];
+          const targetFace = targetSquare[0];
+          const isCrossFace = currentFace !== targetFace;
+          
+          if (piece.type === 'Kite' || isCrossFace) {
+            this.logStrategy(`❌ REJECTED: ${piece.name} → ${targetSquare} (${isCrossFace ? 'cross-face' : 'same-face'})`);
+          }
         }
       }
+      
+      this.logStrategy(`${piece.name}: ${validMovesForPiece} valid (${crossFaceValidMoves} cross-face, ${sameFaceValidMoves} same-face)`);
     }
 
+    this.logStrategy(`🎯 Total valid moves generated: ${moves.length}`);
     return moves;
   }
 
@@ -206,7 +247,20 @@ export class MinimaxAI {
   isValidMove(pieceName, targetSquare, gameState = null) {
     // Try using moveExecutor first
     if (this.moveExecutor) {
-      return this.moveExecutor.isValidMove(targetSquare, pieceName);
+      const result = this.moveExecutor.isValidMove(targetSquare, pieceName);
+      
+      // Debug rejected cross-face moves and Kite moves
+      const currentPos = this.gameState.piecePositions[pieceName];
+      const currentFace = currentPos ? currentPos[0] : '?';
+      const targetFace = targetSquare[0];
+      const isCrossFace = currentFace !== targetFace;
+      const isKite = pieceName.includes('Kite');
+      
+      if (!result && (isKite || isCrossFace)) {
+        this.logStrategy(`🔍 VALIDATION FAILED: ${pieceName} from ${currentPos} to ${targetSquare} (${isCrossFace ? 'cross-face' : 'same-face'})`);
+      }
+      
+      return result;
     }
 
     // Fallback: basic validation
@@ -390,6 +444,11 @@ export class MinimaxAI {
 
   // Find Raven mobbing capture opportunities
   findRavenMobbingCaptures(piece, targetSquare) {
+    // Disable overly aggressive mobbing detection for now
+    // The current implementation is too permissive and creates inflated scores
+    return [];
+    
+    /* ORIGINAL CODE - DISABLED
     const captures = [];
     
     // Get current piece positions
@@ -425,6 +484,7 @@ export class MinimaxAI {
     }
     
     return captures;
+    */
   }
 
   // Simplified mobbing check (you might want to use the real mobbing rules)
@@ -527,5 +587,55 @@ export class MinimaxAI {
     }
     
     return false;
+  }
+
+
+  // Base score for different piece types to encourage variety
+  getBasePieceScore(pieceType) {
+    switch(pieceType) {
+      case 'Owl': return 20;    // Reduced from 100 - still important but not overwhelming
+      case 'Kite': return 50;   // Medium base - good for captures
+      case 'Raven': return 10;  // Lower base - prevent Ravens-only play
+      default: return 1;
+    }
+  }
+
+  // Evaluate positional advancement
+  evaluateAdvancement(move) {
+    const piece = move.piece;
+    const targetSquare = move.targetSquare;
+    
+    // Parse target coordinates
+    const coords = targetSquare.substring(1).split("-");
+    const row = parseInt(coords[0]);
+    const col = parseInt(coords[1]);
+    const face = targetSquare[0];
+    
+    let bonus = 0;
+    
+    // Owls get bonus for moving toward center and nest
+    if (piece.type === 'Owl') {
+      // Bonus for approaching center (4,4)
+      const centerDistance = Math.abs(row - 4) + Math.abs(col - 4);
+      if (centerDistance <= 2) bonus += 20;
+      
+      // Bigger bonus for approaching nest (7,7)
+      if (row >= 6 && col >= 6) bonus += 30;
+    }
+    
+    // Kites get bonus for edge positions (better for swooping)
+    if (piece.type === 'Kite') {
+      if (row === 1 || row === 7 || col === 1 || col === 7) {
+        bonus += 15;
+      }
+    }
+    
+    // Ravens get small bonus for center positions (mobbing opportunities)
+    if (piece.type === 'Raven') {
+      const centerDistance = Math.abs(row - 4) + Math.abs(col - 4);
+      if (centerDistance <= 2) bonus += 5;
+    }
+    
+    return bonus;
   }
 }
