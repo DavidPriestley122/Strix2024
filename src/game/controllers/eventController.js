@@ -75,6 +75,9 @@ export function createEventController(dependencies) {
         
         // Add import button listeners
         this.setupImportButtonListeners();
+        
+        // Add collapsible section listeners
+        this.setupCollapsibleSections();
       }, GAME_CONFIG.TIMERS.BUTTON_LISTENER_DELAY);
     },
 
@@ -237,6 +240,42 @@ export function createEventController(dependencies) {
       }
 
       console.log("Import button listeners added");
+    },
+
+    // COLLAPSIBLE SECTIONS SETUP
+    setupCollapsibleSections() {
+      console.log("Setting up collapsible sections...");
+      
+      const sectionHeaders = document.querySelectorAll('.section-header');
+      
+      // Initially collapse all sections
+      sectionHeaders.forEach(header => {
+        const section = header.dataset.section;
+        const content = document.getElementById(`${section}-content`);
+        
+        if (content) {
+          header.classList.add('collapsed');
+          content.classList.add('collapsed');
+        }
+        
+        header.addEventListener('click', () => {
+          const isCollapsed = header.classList.contains('collapsed');
+          
+          if (isCollapsed) {
+            // Expand this section
+            header.classList.remove('collapsed');
+            content.classList.remove('collapsed');
+            console.log(`Expanded ${section} section`);
+          } else {
+            // Collapse this section
+            header.classList.add('collapsed');
+            content.classList.add('collapsed');
+            console.log(`Collapsed ${section} section`);
+          }
+        });
+      });
+      
+      console.log(`Set up ${sectionHeaders.length} collapsible sections`);
     },
 
     // CUBE CLICK HANDLERS
