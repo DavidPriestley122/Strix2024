@@ -67,12 +67,42 @@ export function createEventController(dependencies) {
           });
         }
 
+        // Add radio button listeners for player type changes
+        this.setupPlayerTypeListeners();
+
         // Add export button listeners
         this.setupExportButtonListeners();
         
         // Add import button listeners
         this.setupImportButtonListeners();
       }, GAME_CONFIG.TIMERS.BUTTON_LISTENER_DELAY);
+    },
+
+    // PLAYER TYPE RADIO BUTTON SETUP
+    setupPlayerTypeListeners() {
+      console.log("Setting up player type radio button listeners...");
+      
+      const radioButtons = document.querySelectorAll('input[name$="-player"]');
+      console.log(`Found ${radioButtons.length} player type radio buttons`);
+      
+      radioButtons.forEach(radio => {
+        radio.addEventListener('change', () => {
+          console.log(`Player type changed: ${radio.name} = ${radio.value}`);
+          
+          // Update player types immediately
+          gameStateManager.updatePlayerTypes();
+          
+          // If game is paused and current player was switched to AI, trigger AI move
+          if (gameStateManager.aiGameRunning && 
+              gameStateManager.aiGamePaused && 
+              gameStateManager.isAIPlayer(gameStateManager.currentPlayerTurn)) {
+            console.log(`🤖 Player switched to AI while paused - triggering AI move for ${gameStateManager.currentPlayerTurn}`);
+            gameStateManager.triggerAIMoveIfNeeded();
+          }
+        });
+      });
+      
+      console.log("Player type radio button listeners added");
     },
 
     // EXPORT BUTTON SETUP
