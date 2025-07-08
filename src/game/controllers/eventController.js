@@ -446,12 +446,22 @@ export function createEventController(dependencies) {
 
     performRetraction(piece) {
       const lastMove = gameStateManager.lastMove;
+      console.log(`🔧 RETRACTION DEBUG: lastMove =`, lastMove);
+      
       if (lastMove && lastMove.piece === piece.name && lastMove.sourceSquare) {
+        console.log(`🔧 RETRACTION: Moving ${piece.name} back to ${lastMove.sourceSquare}`);
+        
         let sourcePosition;
         if (lastMove.sourceSquare.endsWith("--1")) {
           sourcePosition = getPositionFromOwlHallaCubeName(lastMove.sourceSquare);
+          console.log(`🔧 RETRACTION: Owl Halla position =`, sourcePosition);
         } else {
           sourcePosition = gameController.getPositionFromCubeName(lastMove.sourceSquare);
+          console.log(`🔧 RETRACTION: Board position from getPositionFromCubeName =`, sourcePosition);
+          
+          // Also get raw cube position for comparison
+          const rawCubePosition = scene.getMeshByName(lastMove.sourceSquare)?.position;
+          console.log(`🔧 RETRACTION: Raw cube position =`, rawCubePosition);
         }
         const sourceRotation = gameController.getRotationFromCubeName(lastMove.sourceSquare);
 
@@ -595,7 +605,13 @@ export function createEventController(dependencies) {
     },
 
     toggleOwlHallaVisibility() {
+      // FIRST: Clean up the piecesOnOwlHalla array before toggling
+      this.cleanUpPiecesOnOwlHallaArray();
+      
       const owlHallaVisible = !owlHallaCubes[0].visibility;
+
+      console.log(`🔍 DEBUGGING: Toggling Owl Halla visibility to ${owlHallaVisible}`);
+      console.log(`🔍 piecesOnOwlHalla array contains:`, piecesOnOwlHalla);
 
       owlHallaCubes.forEach((cube) => {
         cube.visibility = owlHallaVisible;
@@ -604,8 +620,45 @@ export function createEventController(dependencies) {
       // Toggle visibility of pieces on owlHalla squares
       piecesOnOwlHalla.forEach((pieceName) => {
         const piece = scene.getMeshByName(pieceName);
+        const gameStatePosition = gameStateManager.piecePositions[pieceName];
+        
+        console.log(`🔍 ${pieceName}: gameState=${gameStatePosition}, 3D position=(${piece.position.x.toFixed(1)}, ${piece.position.y.toFixed(1)}, ${piece.position.z.toFixed(1)})`);
+        
+        if (gameStatePosition !== "captured") {
+          console.log(`⚠️ MISMATCH: ${pieceName} is in piecesOnOwlHalla array but gameState position is ${gameStatePosition}, not "captured"`);
+        }
+        
         piece.visibility = owlHallaVisible;
       });
+    },
+
+    // CLEANUP FUNCTION
+    cleanUpPiecesOnOwlHallaArray() {
+      console.log(`🧹 CLEANUP: piecesOnOwlHalla before cleanup:`, [...piecesOnOwlHalla]);
+      
+      // Remove duplicates and pieces that aren't actually captured
+      const cleanedArray = [];
+      const seenPieces = new Set();
+      
+      for (const pieceName of piecesOnOwlHalla) {
+        if (!seenPieces.has(pieceName)) {
+          const gameStatePosition = gameStateManager.piecePositions[pieceName];
+          if (gameStatePosition === "captured") {
+            cleanedArray.push(pieceName);
+            seenPieces.add(pieceName);
+          } else {
+            console.log(`🧹 REMOVED: ${pieceName} (gameState: ${gameStatePosition})`);
+          }
+        } else {
+          console.log(`🧹 REMOVED DUPLICATE: ${pieceName}`);
+        }
+      }
+      
+      // Clear and repopulate the original array
+      piecesOnOwlHalla.length = 0;
+      piecesOnOwlHalla.push(...cleanedArray);
+      
+      console.log(`🧹 CLEANUP: piecesOnOwlHalla after cleanup:`, [...piecesOnOwlHalla]);
     },
 
     // PUBLIC INTERFACE

@@ -137,7 +137,9 @@ export default function createStrixGame(engine, canvas) {
   const globalFunctions = {
     animateCapturedPieceToOwlHalla: utilityFunctions.handlePieceDoubleClickForCapture,
     validateMove: gameController.validateMove,
-    handlePieceDoubleClickForCapture: utilityFunctions.handlePieceDoubleClickForCapture
+    handlePieceDoubleClickForCapture: utilityFunctions.handlePieceDoubleClickForCapture,
+    updatePiecesArrivingOnOwlHalla: utilityFunctions.updatePiecesArrivingOnOwlHalla,
+    updatePiecesLeavingOwlHalla: utilityFunctions.updatePiecesLeavingOwlHalla
   };
 
   // Make functions available globally for compatibility

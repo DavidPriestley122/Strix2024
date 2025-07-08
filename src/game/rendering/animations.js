@@ -42,7 +42,7 @@ export function animatePieceMovement(
 
 export function calculateTargetPosition(cube, boardFace) {
   const offsetVector = getOffsetVectorForBoardFace(boardFace);
-  return cube.position.clone().add(offsetVector);
+  return cube.position.clone().addInPlace(offsetVector);
 }
 
 export function getOffsetVectorForBoardFace(boardFace) {

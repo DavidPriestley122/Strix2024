@@ -164,10 +164,17 @@ export function createGameController(dependencies) {
       const cube = scene.getMeshByName(cubeName);
       if (cube) {
         const position = cube.position.clone();
+        console.log(`🔧 getPositionFromCubeName(${cubeName}): cube position =`, position);
+        
         // Add the offset based on which board the cube is on
         const boardFace = cubeName[0];
+        console.log(`🔧 getPositionFromCubeName: boardFace = ${boardFace}`);
+        
         const offsetVector = getOffsetVectorForBoardFace(boardFace);
-        position.add(offsetVector);
+        
+        // Use addInPlace() to modify the vector in-place (Babylon.js 7.x behavior)
+        position.addInPlace(offsetVector);
+        
         return position;
       }
       return new Vector3(0, 0, 0);

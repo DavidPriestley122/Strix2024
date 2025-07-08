@@ -649,16 +649,24 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       if (this.lastMove) {
         // Find the last regular move (non-owlHalla move)
         let lastRegularMoveIndex = this.moveHistory.length - 1;
-        while (
-          lastRegularMoveIndex >= 0 &&
-          this.moveHistory[lastRegularMoveIndex].includes("owlHalla")
-        ) {
+        while (lastRegularMoveIndex >= 0) {
+          const moveEntry = this.moveHistory[lastRegularMoveIndex];
+          let isOwlHallaMove = false;
+          
+          if (typeof moveEntry === 'string') {
+            isOwlHallaMove = moveEntry.includes("owlHalla");
+          } else if (typeof moveEntry === 'object' && moveEntry.notation) {
+            isOwlHallaMove = moveEntry.notation.includes("owlHalla");
+          }
+          
+          if (!isOwlHallaMove) break;
           lastRegularMoveIndex--;
         }
 
         if (lastRegularMoveIndex >= 0) {
           const retractedMove = this.moveHistory[lastRegularMoveIndex];
-          const retractionText = `[${retractedMove} retracted]`;
+          const moveText = typeof retractedMove === 'string' ? retractedMove : retractedMove.notation;
+          const retractionText = `[${moveText} retracted]`;
 
           // Remove all moves after and including the retracted move
           this.moveHistory = this.moveHistory.slice(0, lastRegularMoveIndex);

@@ -326,6 +326,7 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
             // Piece should be in Owl Halla - animate to Owl Halla
             if (typeof window.animateCapturedPieceToOwlHalla === 'function') {
               window.animateCapturedPieceToOwlHalla(pieceName);
+              // Note: animateCapturedPieceToOwlHalla already manages piecesOnOwlHalla array
             } else {
               console.log(`❌ animateCapturedPieceToOwlHalla function not available for ${pieceName}`);
               piece3D.setEnabled(false);
@@ -336,6 +337,9 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
             piece3D.setEnabled(true);
             piece3D.visibility = true;
             this.animatePieceToBoard(pieceName, toPosition);
+            
+            // CRITICAL FIX: Remove piece from piecesOnOwlHalla array (not handled by animation)
+            this.updatePiecesOnOwlHallaArray(pieceName, false);
           } else {
             console.log(`🎯 ${pieceName} should move from ${fromPosition} to ${toPosition}`);
             // Regular board-to-board move
@@ -408,6 +412,23 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
         }
       }
       return captured;
+    },
+
+    // OWL HALLA ARRAY MANAGEMENT
+    updatePiecesOnOwlHallaArray: function(pieceName, isAddingToOwlHalla) {
+      // Find the piecesOnOwlHalla array through global function access
+      if (typeof window.updatePiecesArrivingOnOwlHalla === 'function' && 
+          typeof window.updatePiecesLeavingOwlHalla === 'function') {
+        if (isAddingToOwlHalla) {
+          window.updatePiecesArrivingOnOwlHalla(pieceName);
+          console.log(`📦 Added ${pieceName} to piecesOnOwlHalla during takeback`);
+        } else {
+          window.updatePiecesLeavingOwlHalla(pieceName);
+          console.log(`📦 Removed ${pieceName} from piecesOnOwlHalla during takeback`);
+        }
+      } else {
+        console.log(`⚠️ Could not find Owl Halla utility functions for ${pieceName} (${isAddingToOwlHalla ? 'adding' : 'removing'})`);
+      }
     },
   };
 }
