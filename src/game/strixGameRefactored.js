@@ -64,7 +64,7 @@ export default function createStrixGame(engine, canvas) {
     const cube = cubesOnTheThreeFaces.find((cube) => cube.name === name);
     piece.position = cube.position
       .clone()
-      .add(new Vector3(offsetX, offsetY, offsetZ));
+      .addInPlace(new Vector3(offsetX, offsetY, offsetZ));
     piece.rotation = cube.rotation.clone();
   }
 

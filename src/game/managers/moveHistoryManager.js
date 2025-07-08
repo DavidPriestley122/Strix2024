@@ -234,32 +234,41 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
         return;
       }
       
-      if (!targetMove.gameState) {
+      // Check if we have post-move state (preferred) or fall back to pre-move state
+      const stateToRestore = targetMove.postMoveState || targetMove.gameState;
+      if (!stateToRestore) {
         console.log(`❌ No game state in target move:`, targetMove);
         gameState.displayInfoMessage('No game state saved for this move');
         return;
       }
       
       console.log(`📍 Restoring game state to move ${moveIndex + 1}: ${targetMove.notation}`);
-      console.log(`📊 Target game state:`, targetMove.gameState);
+      console.log(`📊 Target game state:`, stateToRestore);
+      console.log(`📊 Using ${targetMove.postMoveState ? 'POST-MOVE' : 'PRE-MOVE'} state`);
       
       // Store current positions for animation
       const currentPositions = JSON.parse(JSON.stringify(gameState.piecePositions));
       console.log(`📊 Current positions before restore:`, currentPositions);
-      console.log(`📊 Target positions after restore:`, targetMove.gameState.piecePositions);
+      console.log(`📊 Target positions after restore:`, stateToRestore.piecePositions);
       
       // Restore the game state completely - this should be the EXACT state after the target move
-      gameState.piecePositions = JSON.parse(JSON.stringify(targetMove.gameState.piecePositions));
-      gameState.currentPlayerTurn = targetMove.gameState.currentPlayer;
-      gameState.captureHistory = JSON.parse(JSON.stringify(targetMove.gameState.captureHistory));
-      gameState.knockedOutTeam = targetMove.gameState.knockedOutTeam;
-      gameState.isPlayAgainState = targetMove.gameState.isPlayAgainState;
-      gameState.gameOver = targetMove.gameState.gameOver;
+      gameState.piecePositions = JSON.parse(JSON.stringify(stateToRestore.piecePositions));
+      gameState.captureHistory = JSON.parse(JSON.stringify(stateToRestore.captureHistory));
+      gameState.knockedOutTeam = stateToRestore.knockedOutTeam;
+      gameState.isPlayAgainState = stateToRestore.isPlayAgainState;
+      gameState.gameOver = stateToRestore.gameOver;
       
-      
-      // The saved game state should have currentPlayer as the NEXT player to move
-      // So we don't need to call updateNextPlayer() - it's already correct
-      console.log(`📍 Restored to state where next player to move is: ${gameState.currentPlayerTurn}`);
+      // Restore the current player turn
+      if (targetMove.postMoveState) {
+        // Post-move state already has the correct next player
+        gameState.currentPlayerTurn = stateToRestore.currentPlayer;
+        console.log(`📍 Restored to POST-MOVE state where next player is: ${gameState.currentPlayerTurn}`);
+      } else {
+        // Pre-move state needs to be advanced to next player
+        gameState.currentPlayerTurn = stateToRestore.currentPlayer;
+        gameState.updateNextPlayer(); // Advance to the next player after the restored move
+        console.log(`📍 Restored to PRE-MOVE state, advanced to next player: ${gameState.currentPlayerTurn}`);
+      }
       
       // Pause AI game temporarily to prevent immediate AI move after takeback
       const wasAIGameRunning = gameState.aiGameRunning;

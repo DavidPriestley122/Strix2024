@@ -116,7 +116,7 @@ export function animateCapturedPieceToOwlHalla(scene, pieceName, getOwlHallaCube
 
   // Apply the offset based on the color of the piece
   const offset = getOwlHallaOffsetForPiece(pieceName);
-  owlHallaPosition.add(offset);
+  owlHallaPosition.addInPlace(offset);
 
   const owlHallaCube = scene.getMeshByName(owlHallaCubeName);
   const targetRotation = owlHallaCube ? owlHallaCube.rotation.clone() : piece3D.rotation.clone();

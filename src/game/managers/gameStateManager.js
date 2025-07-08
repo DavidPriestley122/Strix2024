@@ -156,7 +156,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       offsetVector = new Vector3(0, 0, 3.75);
     }
     
-    return cube.position.clone().add(offsetVector);
+    return cube.position.clone().addInPlace(offsetVector);
   }
 
   function displayInfoMessage(message) {
@@ -298,8 +298,31 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       this.updateNextPlayer();
       this.updateNextPlayerDisplay();
       
+      // Save the complete post-move state for takeback (after all captures and turn advancement)
+      this.savePostMoveState();
+      
       // Trigger AI move with proper state validation
       this.triggerAIMoveIfNeeded();
+    },
+
+    // Save the complete post-move state for takeback functionality
+    savePostMoveState: function() {
+      // Update the last move in history with the complete post-move state
+      if (this.moveHistory.length > 0) {
+        const lastMove = this.moveHistory[this.moveHistory.length - 1];
+        if (lastMove && typeof lastMove === 'object') {
+          // Save the complete state AFTER the move is finished
+          lastMove.postMoveState = {
+            piecePositions: JSON.parse(JSON.stringify(this.piecePositions)),
+            currentPlayer: this.currentPlayerTurn, // This is now the NEXT player to move
+            captureHistory: JSON.parse(JSON.stringify(this.captureHistory)),
+            knockedOutTeam: this.knockedOutTeam,
+            isPlayAgainState: this.isPlayAgainState,
+            gameOver: this.gameOver
+          };
+          console.log(`💾 POST-MOVE STATE: Saved complete state for move ${lastMove.moveNumber}`, lastMove.postMoveState);
+        }
+      }
     },
 
     // Note: Capture timer functions moved to captureManager.js

@@ -22,7 +22,7 @@ export function createGameController(dependencies) {
       const cube = cubesOnTheThreeFaces.find((cube) => cube.name === name);
       piece.position = cube.position
         .clone()
-        .add(new Vector3(offsetX, offsetY, offsetZ));
+        .addInPlace(new Vector3(offsetX, offsetY, offsetZ));
       piece.rotation = cube.rotation.clone();
     },
 
@@ -164,12 +164,9 @@ export function createGameController(dependencies) {
       const cube = scene.getMeshByName(cubeName);
       if (cube) {
         const position = cube.position.clone();
-        console.log(`🔧 getPositionFromCubeName(${cubeName}): cube position =`, position);
         
         // Add the offset based on which board the cube is on
         const boardFace = cubeName[0];
-        console.log(`🔧 getPositionFromCubeName: boardFace = ${boardFace}`);
-        
         const offsetVector = getOffsetVectorForBoardFace(boardFace);
         
         // Use addInPlace() to modify the vector in-place (Babylon.js 7.x behavior)
@@ -210,7 +207,7 @@ export function createGameController(dependencies) {
       const offsetVector = getOffsetVectorForBoardFace(boardFace);
       
       // Calculate the target position and rotation for the selected piece
-      const targetPosition = targetCube.position.clone().add(offsetVector);
+      const targetPosition = targetCube.position.clone().addInPlace(offsetVector);
       const targetRotation = targetCube.rotation.clone();
 
       // Store the current position before the move

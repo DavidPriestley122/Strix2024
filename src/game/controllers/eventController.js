@@ -446,22 +446,13 @@ export function createEventController(dependencies) {
 
     performRetraction(piece) {
       const lastMove = gameStateManager.lastMove;
-      console.log(`🔧 RETRACTION DEBUG: lastMove =`, lastMove);
-      
       if (lastMove && lastMove.piece === piece.name && lastMove.sourceSquare) {
-        console.log(`🔧 RETRACTION: Moving ${piece.name} back to ${lastMove.sourceSquare}`);
         
         let sourcePosition;
         if (lastMove.sourceSquare.endsWith("--1")) {
           sourcePosition = getPositionFromOwlHallaCubeName(lastMove.sourceSquare);
-          console.log(`🔧 RETRACTION: Owl Halla position =`, sourcePosition);
         } else {
           sourcePosition = gameController.getPositionFromCubeName(lastMove.sourceSquare);
-          console.log(`🔧 RETRACTION: Board position from getPositionFromCubeName =`, sourcePosition);
-          
-          // Also get raw cube position for comparison
-          const rawCubePosition = scene.getMeshByName(lastMove.sourceSquare)?.position;
-          console.log(`🔧 RETRACTION: Raw cube position =`, rawCubePosition);
         }
         const sourceRotation = gameController.getRotationFromCubeName(lastMove.sourceSquare);
 
