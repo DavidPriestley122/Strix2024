@@ -353,14 +353,40 @@ export function calculateSimpleGhostingDestination(
     return null;
   }
 
-  // Edge case validation: Check if intersection is at face boundary
-  if (intersectionSquare.includes('7-7')) {
-    // At face boundary - "in" ghosting is geometrically impossible
-    if (crossAdjacency.ghostDirection === "in") {
-      if (isBrownOwl || isYellowOwl) {
-        console.log(`🚫 EDGE CASE: Cannot ghost "in" around piece at face boundary. Intersection: ${intersectionSquare}`);
+  // Edge case validation: Check if crosspiece is at position 8 of its flightway (face transition)
+  if (crossAdjacency.ghostDirection === "in") {
+    // Find which flightway the crosspiece and owl share
+    const crossMatch = crossFlightway.match(/([byg])(\d)([byg])(\d)/);
+    const owlMatch = owlFlightway.match(/([byg])(\d)([byg])(\d)/);
+    
+    if (crossMatch && owlMatch) {
+      const crossFlightways = [`${crossMatch[1]}${crossMatch[2]}`, `${crossMatch[3]}${crossMatch[4]}`];
+      const owlFlightways = [`${owlMatch[1]}${owlMatch[2]}`, `${owlMatch[3]}${owlMatch[4]}`];
+      
+      // Find the shared adjacent flightway
+      for (const crossFw of crossFlightways) {
+        for (const owlFw of owlFlightways) {
+          if (crossFw[0] === owlFw[0]) { // Same flightway type
+            const crossNum = parseInt(crossFw[1]);
+            const owlNum = parseInt(owlFw[1]);
+            if (Math.abs(crossNum - owlNum) === 1) {
+              // Found the adjacent flightway - check crosspiece position
+              const crossFlightwayFace = crossFw[0];
+              const crossFlightwayNum = crossNum;
+              const crossFlightwayRoute = generateFlightwayRoute(crossFlightwayFace, crossFlightwayNum);
+              const crossPositionIndex = crossFlightwayRoute.indexOf(crossPiecePosition);
+              
+              if (crossPositionIndex === 7) { // Position 8 (0-indexed = 7) - face transition point
+                if (isBrownOwl || isYellowOwl) {
+                  console.log(`🚫 EDGE CASE: Cannot ghost "in" - crosspiece at position 8 (face transition) of ${crossFw}. Cross position: ${crossPiecePosition}`);
+                }
+                return null;
+              }
+              break;
+            }
+          }
+        }
       }
-      return null;
     }
   }
 

@@ -74,6 +74,7 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
       gameState.moveHistory.push(moveRecord);
       gameState.lastMove = moveRecord;
 
+
       // Check win condition
       const winningMessage = gameState.checkWinningConditions(piece, destinationSquare);
       if (winningMessage) {
@@ -247,7 +248,7 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
       console.log(`📊 Current positions before restore:`, currentPositions);
       console.log(`📊 Target positions after restore:`, targetMove.gameState.piecePositions);
       
-      // Restore the game state
+      // Restore the game state completely - this should be the EXACT state after the target move
       gameState.piecePositions = JSON.parse(JSON.stringify(targetMove.gameState.piecePositions));
       gameState.currentPlayerTurn = targetMove.gameState.currentPlayer;
       gameState.captureHistory = JSON.parse(JSON.stringify(targetMove.gameState.captureHistory));
@@ -255,8 +256,10 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
       gameState.isPlayAgainState = targetMove.gameState.isPlayAgainState;
       gameState.gameOver = targetMove.gameState.gameOver;
       
-      // Advance to next player (since we restored to the state BEFORE the turn advanced)
-      gameState.updateNextPlayer();
+      
+      // The saved game state should have currentPlayer as the NEXT player to move
+      // So we don't need to call updateNextPlayer() - it's already correct
+      console.log(`📍 Restored to state where next player to move is: ${gameState.currentPlayerTurn}`);
       
       // Pause AI game temporarily to prevent immediate AI move after takeback
       const wasAIGameRunning = gameState.aiGameRunning;
@@ -286,15 +289,9 @@ export function createMoveHistoryManager(gameState, resetFunctions) {
           console.log('🔄 Resuming AI game after takeback animation');
           gameState.aiGamePaused = false;
           
-          // Only trigger AI move if current player is AI
-          if (gameState.isAIPlayer(gameState.currentPlayerTurn)) {
-            console.log(`🤖 Current player ${gameState.currentPlayerTurn} is AI - triggering AI move`);
-            // Trigger AI move directly without advancing turn again
-            if (gameState.aiModule && gameState.aiModule.makeMove) {
-              gameState.aiModule.makeMove(gameState.currentPlayerTurn);
-            }
-          } else {
-            console.log(`👤 Current player ${gameState.currentPlayerTurn} is human - waiting for input`);
+          // Use bullet-proof AI triggering after takeback
+          if (gameState.triggerAIMoveIfNeeded) {
+            gameState.triggerAIMoveIfNeeded();
           }
         }, 1000); // Wait 1 second for animation to complete
       }

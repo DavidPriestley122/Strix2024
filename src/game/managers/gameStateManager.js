@@ -298,16 +298,8 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       this.updateNextPlayer();
       this.updateNextPlayerDisplay();
       
-      // Check if the new current player is AI and game is running (not paused)
-      if (this.isAIPlayer(this.currentPlayerTurn) && this.aiGameRunning && !this.aiGamePaused) {
-        console.log(this.currentPlayerTurn + " is AI - will make move");
-        // Call the AI module
-        if (this.aiModule) {
-          this.aiModule.makeMove(this.currentPlayerTurn);
-        }
-      } else {
-        console.log(this.currentPlayerTurn + " is human or game is paused");
-      }
+      // Trigger AI move with proper state validation
+      this.triggerAIMoveIfNeeded();
     },
 
     // Note: Capture timer functions moved to captureManager.js
@@ -409,14 +401,7 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
       document.getElementById("resume-game").disabled = true;
 
       // Start with first move if current player is AI
-      if (this.isAIPlayer(this.currentPlayerTurn)) {
-        console.log("Triggering AI move for", this.currentPlayerTurn);
-        if (this.aiModule) {
-          this.aiModule.makeMove(this.currentPlayerTurn); // Remove setTimeout from here too
-        }
-      } else {
-        console.log("Current player is not AI, waiting for manual move");
-      }
+      this.triggerAIMoveIfNeeded();
     },
 
     pauseAIGame: function () {
@@ -800,6 +785,52 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
     // getRecentCaptures - Moved to moveHistoryManager.js
 
     displayInfoMessage: displayInfoMessage,
+
+    // BULLET-PROOF AI TRIGGERING SYSTEM
+    triggerAIMoveIfNeeded: function() {
+      // Comprehensive state validation
+      if (this.gameOver) {
+        console.log("⚠️ Game over - no AI trigger");
+        return;
+      }
+
+      if (!this.aiGameRunning) {
+        console.log("⚠️ AI game not running - no AI trigger");
+        return;
+      }
+
+      if (this.aiGamePaused) {
+        console.log("⚠️ AI game paused - no AI trigger");
+        return;
+      }
+
+      if (!this.currentPlayerTurn) {
+        console.log("⚠️ No current player set - no AI trigger");
+        return;
+      }
+
+      if (!this.isAIPlayer(this.currentPlayerTurn)) {
+        console.log(`👤 ${this.currentPlayerTurn} is human - waiting for input`);
+        return;
+      }
+
+      if (!this.aiModule) {
+        console.log("⚠️ AI module not available - no AI trigger");
+        return;
+      }
+
+      // All checks passed - trigger AI move
+      console.log(`🤖 Triggering AI move for ${this.currentPlayerTurn}`);
+      
+      // Add small delay to ensure UI state is stable
+      setTimeout(() => {
+        if (this.isAIPlayer(this.currentPlayerTurn) && this.aiGameRunning && !this.aiGamePaused) {
+          this.aiModule.makeMove(this.currentPlayerTurn);
+        } else {
+          console.log("⚠️ AI trigger cancelled - state changed during delay");
+        }
+      }, 100);
+    },
   };
 
   // Initialize captureManager with reference to gameStateManager
