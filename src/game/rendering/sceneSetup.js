@@ -10,12 +10,17 @@ import {
   Color3,
   MeshBuilder,
   StandardMaterial,
-  TransformNode
+  TransformNode,
+  ActionManager
 } from "@babylonjs/core";
 import { GAME_CONFIG } from "../../config/gameConfig.js";
 
 export function createScene(engine, canvas) {
   const scene = new Scene(engine);
+  
+  // Configure double-click delay for better trackpad compatibility
+  scene.actionManager = new ActionManager(scene);
+  scene.actionManager.doubleClickDelay = 600; // Increased from default 300ms for trackpad support
   
   function updateProgress(progress) {
     if (window.updateLoadingBar) {
