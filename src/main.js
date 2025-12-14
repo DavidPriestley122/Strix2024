@@ -9,7 +9,6 @@ import {
 } from "./loadingScreen.js";
 import { initResizeHandler } from "./resizeHandler.js";
 import { initLightbox } from "./utils/lightbox.js";
-//import "./css/styles.css";
 import "./css/main.css";
 import "./css/header.css";
 import "./css/sidebar.css";
@@ -40,7 +39,7 @@ function loadAssets() {
     updateLoadingBar(Math.round(progress));
   };
 
-  assetsManager.onFinish = (tasks) => {
+  assetsManager.onFinish = () => {
     updateLoadingBar(100);
     setTimeout(() => {
       hideLoadingScreen();
