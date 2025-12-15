@@ -159,10 +159,11 @@ export default function createStrixGame(engine, canvas) {
             material.alpha = 1.0;
             material.specularPower = 5; // Sand-blasted
           } else {
-            // Light squares: semi-transparent, less saturated
-            material.diffuseColor = new Color3(0.95, 0.93, 0.85); // Desaturated pale color
-            material.alpha = 0.4; // Semi-transparent
-            material.specularPower = 64;
+            // Light squares: nearly transparent
+            material.diffuseColor = new Color3(0.98, 0.97, 0.95); // Very pale, barely tinted
+            material.alpha = 0.08; // Nearly see-through
+            material.specularPower = 10; // Low specular to see through from front
+            material.specularColor = new Color3(0.3, 0.3, 0.3); // Reduced specular intensity
           }
           material.backFaceCulling = true;
         } else {
@@ -172,15 +173,16 @@ export default function createStrixGame(engine, canvas) {
             : Color3.FromInts(240, 230, 140);
           material.alpha = 1.0;
           material.specularPower = 64;
+          material.specularColor = new Color3(0.2, 0.2, 0.2);
           material.backFaceCulling = true;
         }
       } else if (material.name.includes("_glass")) {
         // Board cube other faces (0-3, 5): clear glass in glass mode
         if (isGlassMode) {
-          material.diffuseColor = new Color3(0.95, 0.97, 1.0); // Very slight blue tint
-          material.alpha = 0.05; // Nearly invisible to reduce cellular look
-          material.specularColor = new Color3(1, 1, 1); // White specular
-          material.specularPower = 128; // Very shiny
+          material.diffuseColor = new Color3(0.98, 0.99, 1.0); // Barely tinted
+          material.alpha = 0.01; // Almost invisible to minimize cellular look
+          material.specularColor = new Color3(0.5, 0.5, 0.5); // Reduced specular
+          material.specularPower = 64; // Lower shine
           material.backFaceCulling = false; // Show both sides
         } else {
           // In solid mode, match the checkerboard material color (already set during creation)
