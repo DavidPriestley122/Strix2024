@@ -152,19 +152,33 @@ export default function createStrixGame(engine, canvas) {
         // Board squares Face 4 (checkerboard pattern): visible in glass mode
         // Detect dark squares by checking color (brown vs light)
         const isDark = material.diffuseColor.r < 0.3; // Brown squares have low red value
-        material.alpha = 1.0; // Always opaque to show checkerboard pattern
-        material.backFaceCulling = true;
-        // Sand-blasted effect for dark squares in glass mode
-        if (isGlassMode && isDark) {
-          material.specularPower = 5;
+
+        if (isGlassMode) {
+          if (isDark) {
+            // Dark brown squares: opaque with sand-blasted effect
+            material.alpha = 1.0;
+            material.specularPower = 5; // Sand-blasted
+          } else {
+            // Light squares: semi-transparent, less saturated
+            material.diffuseColor = new Color3(0.95, 0.93, 0.85); // Desaturated pale color
+            material.alpha = 0.4; // Semi-transparent
+            material.specularPower = 64;
+          }
+          material.backFaceCulling = true;
         } else {
-          material.specularPower = 64; // Reset to default
+          // Solid mode: restore original colors
+          material.diffuseColor = isDark
+            ? Color3.FromInts(50, 25, 15)
+            : Color3.FromInts(240, 230, 140);
+          material.alpha = 1.0;
+          material.specularPower = 64;
+          material.backFaceCulling = true;
         }
       } else if (material.name.includes("_glass")) {
         // Board cube other faces (0-3, 5): clear glass in glass mode
         if (isGlassMode) {
-          material.diffuseColor = new Color3(0.9, 0.95, 1.0); // Slight blue tint
-          material.alpha = 0.15; // Very transparent
+          material.diffuseColor = new Color3(0.95, 0.97, 1.0); // Very slight blue tint
+          material.alpha = 0.05; // Nearly invisible to reduce cellular look
           material.specularColor = new Color3(1, 1, 1); // White specular
           material.specularPower = 128; // Very shiny
           material.backFaceCulling = false; // Show both sides
