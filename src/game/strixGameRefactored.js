@@ -144,6 +144,10 @@ export default function createStrixGame(engine, canvas) {
         // Base and fins: transparent
         material.alpha = isGlassMode ? 0.3 : 1.0;
         material.backFaceCulling = !isGlassMode;
+      } else if (material.name === "backPanelMaterial") {
+        // Backing panels: glassy brown veneer
+        material.alpha = isGlassMode ? 0.5 : 1.0;
+        material.backFaceCulling = !isGlassMode;
       } else if (material.name.startsWith("material_")) {
         // Board squares: glass effect
         // Detect dark squares by checking color (brown vs light)

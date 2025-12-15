@@ -139,6 +139,8 @@ const cubesOnTheThreeFaces = [];
   const backPanelThickness = 0.05;
   const backPanelMaterial = new StandardMaterial("backPanelMaterial", scene);
   backPanelMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
+  backPanelMaterial.alpha = 1.0; // Default solid, will be glassy in glass mode
+  backPanelMaterial.backFaceCulling = true;
 
   function createBackPanel(position, rotation) {
     const backPanel = MeshBuilder.CreateBox(
