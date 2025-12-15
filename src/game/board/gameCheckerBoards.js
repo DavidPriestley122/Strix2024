@@ -24,7 +24,7 @@ const cubesOnTheThreeFaces = [];
     // Glass material is always pure clear - stores whether it's from dark or light square
     glassMat.metadata = { isDark: isDark };
     // In solid mode, glass material matches checkerboard color
-    glassMat.albedoColor = checkerboardMat.diffuseColor.clone();
+    glassMat.albedoColor = checkerboardMat.albedoColor.clone();
     glassMat.metallic = 0.0; // Glass is not metallic
     glassMat.roughness = 0.0; // Glass is very smooth
     glassMat.alpha = 1.0;
