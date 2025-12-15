@@ -14,7 +14,7 @@ const cubesOnTheThreeFaces = [];
       ? Color3.FromInts(50, 25, 15)
       : Color3.FromInts(240, 230, 140);
     checkerboardMat.metallic = 0.0;
-    checkerboardMat.roughness = 1.0; // Start matte in solid mode
+    checkerboardMat.roughness = 0.8; // Less matte for richer color in solid mode
     checkerboardMat.alpha = 1.0;
     checkerboardMat.backFaceCulling = true;
     checkerboardMat.metadata = { isDark: isDark }; // Store for toggle function
@@ -26,7 +26,7 @@ const cubesOnTheThreeFaces = [];
     // In solid mode, glass material matches checkerboard color
     glassMat.albedoColor = checkerboardMat.albedoColor.clone();
     glassMat.metallic = 0.0; // Glass is not metallic
-    glassMat.roughness = 0.0; // Glass is very smooth
+    glassMat.roughness = 0.8; // Match checkerboard roughness in solid mode
     glassMat.alpha = 1.0;
     glassMat.backFaceCulling = true;
 

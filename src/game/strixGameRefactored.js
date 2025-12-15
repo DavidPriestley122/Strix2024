@@ -145,15 +145,16 @@ export default function createStrixGame(engine, canvas) {
         if (isGlassMode) {
           material.albedoColor = new Color3(1.0, 1.0, 1.0);
           material.metallic = 0.0;
-          material.roughness = 0.0; // Smooth glass
-          material.alpha = 0.3;
+          material.roughness = 0.05; // Very smooth glass
+          material.alpha = 0.15; // More transparent
           material.indexOfRefraction = 1.5;
           material.linkRefractionWithTransparency = true;
-          material.emissiveColor = new Color3(0.15, 0.15, 0.15);
+          material.emissiveColor = new Color3(0.25, 0.25, 0.25); // Brighter
           material.backFaceCulling = false;
         } else {
           material.albedoColor = Color3.FromInts(88, 54, 41);
-          material.roughness = 1.0; // Matte in solid mode
+          material.metallic = 0.0;
+          material.roughness = 0.8; // Less matte for richer color
           material.alpha = 1.0;
           material.emissiveColor = new Color3(0, 0, 0);
           material.backFaceCulling = true;
@@ -169,19 +170,19 @@ export default function createStrixGame(engine, canvas) {
 
         if (isGlassMode) {
           if (isDark) {
-            // Dark brown squares: frosted/sand-blasted glass effect
-            material.albedoColor = Color3.FromInts(50, 25, 15);
+            // Dark squares: grey/white sand-blasted glass (not brown!)
+            material.albedoColor = new Color3(0.85, 0.85, 0.85); // Light grey/white
             material.metallic = 0.0;
-            material.roughness = 0.9; // High roughness = frosted/sand-blasted appearance
-            material.alpha = 0.95; // Mostly opaque but slightly translucent
-            material.emissiveColor = new Color3(0.05, 0.03, 0.02); // Slight warm glow
+            material.roughness = 0.95; // Very high roughness = sand-blasted/frosted
+            material.alpha = 0.9; // Mostly opaque
+            material.emissiveColor = new Color3(0.1, 0.1, 0.1); // Slight glow
           } else {
             // Light squares: crystalline clear glass
             material.albedoColor = new Color3(1.0, 1.0, 1.0);
             material.metallic = 0.0;
-            material.roughness = 0.1; // Very smooth, slight texture
-            material.alpha = 0.15;
-            material.emissiveColor = new Color3(0.2, 0.2, 0.2); // Bright for clarity
+            material.roughness = 0.1; // Very smooth
+            material.alpha = 0.12;
+            material.emissiveColor = new Color3(0.25, 0.25, 0.25); // Bright for clarity
           }
           material.backFaceCulling = true;
         } else {
@@ -189,7 +190,8 @@ export default function createStrixGame(engine, canvas) {
           material.albedoColor = isDark
             ? Color3.FromInts(50, 25, 15)
             : Color3.FromInts(240, 230, 140);
-          material.roughness = 1.0; // Matte
+          material.metallic = 0.0;
+          material.roughness = 0.8; // Less matte for richer color
           material.alpha = 1.0;
           material.emissiveColor = new Color3(0, 0, 0);
           material.backFaceCulling = true;
@@ -200,14 +202,14 @@ export default function createStrixGame(engine, canvas) {
         const cubeIsDark = metadata.isDark || false;
 
         if (isGlassMode) {
-          // PBR glass properties for realistic crystalline appearance
+          // PBR glass properties - minimize shimmer
           material.albedoColor = new Color3(1.0, 1.0, 1.0); // Pure clear white
           material.metallic = 0.0; // Glass is not metallic
-          material.roughness = 0.0; // Perfectly smooth for clarity
-          material.alpha = 0.1; // Slightly visible
+          material.roughness = 0.3; // Some roughness to reduce shimmer
+          material.alpha = 0.02; // Nearly invisible to minimize shimmer
           material.indexOfRefraction = 1.5; // Standard glass IOR
-          material.linkRefractionWithTransparency = true; // Connect refraction to transparency
-          material.emissiveColor = new Color3(0.2, 0.2, 0.2); // Bright self-illumination
+          material.linkRefractionWithTransparency = true;
+          material.emissiveColor = new Color3(0.15, 0.15, 0.15); // Moderate glow
           material.backFaceCulling = false; // Show both sides
         } else {
           // Solid mode: restore color based on dark/light square
@@ -215,7 +217,7 @@ export default function createStrixGame(engine, canvas) {
             ? Color3.FromInts(50, 25, 15)
             : Color3.FromInts(240, 230, 140);
           material.metallic = 0.0;
-          material.roughness = 1.0; // Matte in solid mode
+          material.roughness = 0.8; // Less matte for richer color
           material.alpha = 1.0;
           material.emissiveColor = new Color3(0, 0, 0); // Reset emissive
           material.backFaceCulling = true;
