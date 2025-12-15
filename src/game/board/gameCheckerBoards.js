@@ -8,13 +8,16 @@ const cubesOnTheThreeFaces = [];
 
   // Helper function to setup multi-material for board cubes
   function setupCubeMultiMaterial(cube, scene, isDark) {
-    // Create the checkerboard material (Face 4 - the visible top/front)
-    const checkerboardMat = new StandardMaterial(`material_${cube.name}_checker`, scene);
-    checkerboardMat.diffuseColor = isDark
+    // Create the checkerboard material (Face 4 - the visible top/front) using PBR
+    const checkerboardMat = new PBRMaterial(`material_${cube.name}_checker`, scene);
+    checkerboardMat.albedoColor = isDark
       ? Color3.FromInts(50, 25, 15)
       : Color3.FromInts(240, 230, 140);
+    checkerboardMat.metallic = 0.0;
+    checkerboardMat.roughness = 1.0; // Start matte in solid mode
     checkerboardMat.alpha = 1.0;
     checkerboardMat.backFaceCulling = true;
+    checkerboardMat.metadata = { isDark: isDark }; // Store for toggle function
 
     // Create the glass material (Faces 0-3, 5 - the sides/back/bottom) using PBR for realism
     const glassMat = new PBRMaterial(`material_${cube.name}_glass`, scene);

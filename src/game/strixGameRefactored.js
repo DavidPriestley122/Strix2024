@@ -141,43 +141,57 @@ export default function createStrixGame(engine, canvas) {
     // Get all materials from the scene
     scene.materials.forEach(material => {
       if (material.name === "baseMaterial" || material.name === "finMaterial") {
-        // Base and fins: transparent
-        material.alpha = isGlassMode ? 0.3 : 1.0;
-        material.backFaceCulling = !isGlassMode;
+        // Base and fins: PBR glass
+        if (isGlassMode) {
+          material.albedoColor = new Color3(1.0, 1.0, 1.0);
+          material.metallic = 0.0;
+          material.roughness = 0.0; // Smooth glass
+          material.alpha = 0.3;
+          material.indexOfRefraction = 1.5;
+          material.linkRefractionWithTransparency = true;
+          material.emissiveColor = new Color3(0.15, 0.15, 0.15);
+          material.backFaceCulling = false;
+        } else {
+          material.albedoColor = Color3.FromInts(88, 54, 41);
+          material.roughness = 1.0; // Matte in solid mode
+          material.alpha = 1.0;
+          material.emissiveColor = new Color3(0, 0, 0);
+          material.backFaceCulling = true;
+        }
       } else if (material.name === "backPanelMaterial") {
         // Backing panels: glassy brown veneer
         material.alpha = isGlassMode ? 0.5 : 1.0;
         material.backFaceCulling = !isGlassMode;
       } else if (material.name.includes("_checker")) {
-        // Board squares Face 4 (checkerboard pattern): visible in glass mode
-        // Detect dark squares by checking color (brown vs light)
-        const isDark = material.diffuseColor.r < 0.3; // Brown squares have low red value
+        // Board squares Face 4 (checkerboard pattern) using PBR
+        const metadata = material.metadata || {};
+        const isDark = metadata.isDark || false;
 
         if (isGlassMode) {
           if (isDark) {
-            // Dark brown squares: opaque with sand-blasted effect
-            material.alpha = 1.0;
-            material.specularPower = 5; // Sand-blasted
-            material.specularColor = new Color3(0.1, 0.1, 0.1); // Minimal specular
-            material.emissiveColor = new Color3(0, 0, 0); // No glow
+            // Dark brown squares: frosted/sand-blasted glass effect
+            material.albedoColor = Color3.FromInts(50, 25, 15);
+            material.metallic = 0.0;
+            material.roughness = 0.9; // High roughness = frosted/sand-blasted appearance
+            material.alpha = 0.95; // Mostly opaque but slightly translucent
+            material.emissiveColor = new Color3(0.05, 0.03, 0.02); // Slight warm glow
           } else {
             // Light squares: crystalline clear glass
-            material.diffuseColor = new Color3(1.0, 1.0, 1.0); // Pure white/clear
-            material.alpha = 0.15; // Slightly visible for crystalline effect
-            material.specularPower = 32; // Some sparkle
-            material.specularColor = new Color3(0.5, 0.5, 0.5); // Subtle highlights
-            material.emissiveColor = new Color3(0.2, 0.2, 0.2); // Self-illumination for brightness
+            material.albedoColor = new Color3(1.0, 1.0, 1.0);
+            material.metallic = 0.0;
+            material.roughness = 0.1; // Very smooth, slight texture
+            material.alpha = 0.15;
+            material.emissiveColor = new Color3(0.2, 0.2, 0.2); // Bright for clarity
           }
           material.backFaceCulling = true;
         } else {
           // Solid mode: restore original colors
-          material.diffuseColor = isDark
+          material.albedoColor = isDark
             ? Color3.FromInts(50, 25, 15)
             : Color3.FromInts(240, 230, 140);
+          material.roughness = 1.0; // Matte
           material.alpha = 1.0;
-          material.specularPower = 64;
-          material.specularColor = new Color3(0.2, 0.2, 0.2);
-          material.emissiveColor = new Color3(0, 0, 0); // Reset emissive
+          material.emissiveColor = new Color3(0, 0, 0);
           material.backFaceCulling = true;
         }
       } else if (material.name.includes("_glass")) {
