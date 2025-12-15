@@ -18,6 +18,8 @@ const cubesOnTheThreeFaces = [];
 
     // Create the glass material (Faces 0-3, 5 - the sides/back/bottom)
     const glassMat = new StandardMaterial(`material_${cube.name}_glass`, scene);
+    // Glass material is always pure clear - stores whether it's from dark or light square
+    glassMat.metadata = { isDark: isDark };
     // In solid mode, glass material matches checkerboard color
     glassMat.diffuseColor = checkerboardMat.diffuseColor.clone();
     glassMat.alpha = 1.0;

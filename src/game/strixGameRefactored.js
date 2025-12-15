@@ -159,12 +159,14 @@ export default function createStrixGame(engine, canvas) {
             material.alpha = 1.0;
             material.specularPower = 5; // Sand-blasted
             material.specularColor = new Color3(0.1, 0.1, 0.1); // Minimal specular
+            material.emissiveColor = new Color3(0, 0, 0); // No glow
           } else {
-            // Light squares: nearly transparent with minimal reflection
+            // Light squares: crystalline clear glass
             material.diffuseColor = new Color3(1.0, 1.0, 1.0); // Pure white/clear
-            material.alpha = 0.08; // Nearly see-through
-            material.specularPower = 1; // Almost no specular reflection
-            material.specularColor = new Color3(0.05, 0.05, 0.05); // Almost no specular
+            material.alpha = 0.15; // Slightly visible for crystalline effect
+            material.specularPower = 32; // Some sparkle
+            material.specularColor = new Color3(0.5, 0.5, 0.5); // Subtle highlights
+            material.emissiveColor = new Color3(0.2, 0.2, 0.2); // Self-illumination for brightness
           }
           material.backFaceCulling = true;
         } else {
@@ -175,21 +177,31 @@ export default function createStrixGame(engine, canvas) {
           material.alpha = 1.0;
           material.specularPower = 64;
           material.specularColor = new Color3(0.2, 0.2, 0.2);
+          material.emissiveColor = new Color3(0, 0, 0); // Reset emissive
           material.backFaceCulling = true;
         }
       } else if (material.name.includes("_glass")) {
         // Board cube other faces (0-3, 5): clear glass in glass mode
+        const metadata = material.metadata || {};
+        const cubeIsDark = metadata.isDark || false;
+
         if (isGlassMode) {
-          material.diffuseColor = new Color3(1.0, 1.0, 1.0); // Pure clear
-          material.alpha = 0.01; // Almost invisible to minimize cellular look
-          material.specularColor = new Color3(0.1, 0.1, 0.1); // Minimal specular
-          material.specularPower = 10; // Very low shine
+          // Always pure clear/white - no brown or yellow color
+          material.diffuseColor = new Color3(1.0, 1.0, 1.0);
+          material.alpha = 0.02; // Nearly invisible to minimize cellular look
+          material.specularColor = new Color3(0.7, 0.7, 0.7); // Bright sparkle
+          material.specularPower = 64; // Glass-like shine
+          material.emissiveColor = new Color3(0.15, 0.15, 0.15); // Self-illumination for clarity
           material.backFaceCulling = false; // Show both sides
         } else {
-          // In solid mode, match the checkerboard material color (already set during creation)
+          // Solid mode: restore color based on dark/light square
+          material.diffuseColor = cubeIsDark
+            ? Color3.FromInts(50, 25, 15)
+            : Color3.FromInts(240, 230, 140);
           material.alpha = 1.0;
           material.specularColor = new Color3(0.2, 0.2, 0.2);
           material.specularPower = 64;
+          material.emissiveColor = new Color3(0, 0, 0); // Reset emissive
           material.backFaceCulling = true;
         }
       } else if (material.name === "edgeStripMaterial") {
