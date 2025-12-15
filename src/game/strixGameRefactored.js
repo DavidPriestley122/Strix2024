@@ -141,21 +141,20 @@ export default function createStrixGame(engine, canvas) {
     // Get all materials from the scene
     scene.materials.forEach(material => {
       if (material.name === "baseMaterial" || material.name === "finMaterial") {
-        // Base and fins: PBR glass
+        // Base and fins: StandardMaterial glass
         if (isGlassMode) {
-          material.albedoColor = new Color3(0.95, 0.97, 1.0); // Very slight blue tint, not pure white
-          material.metallic = 0.0;
-          material.roughness = 0.0; // Perfectly smooth glass
-          material.alpha = 0.08; // Very transparent
-          material.indexOfRefraction = 1.5;
-          material.linkRefractionWithTransparency = true;
-          material.emissiveColor = new Color3(0, 0, 0); // No glow - no white appearance
+          material.diffuseColor = new Color3(0.9, 0.95, 1.0); // Slight tint
+          material.alpha = 0.05; // Very transparent
+          material.specularColor = new Color3(0.3, 0.3, 0.3);
+          material.specularPower = 64;
+          material.emissiveColor = new Color3(0, 0, 0);
           material.backFaceCulling = false;
         } else {
-          material.albedoColor = Color3.FromInts(88, 54, 41);
-          material.metallic = 0.0;
-          material.roughness = 0.8;
+          // Restore original
+          material.diffuseColor = Color3.FromInts(88, 54, 41);
           material.alpha = 1.0;
+          material.specularColor = new Color3(0, 0, 0);
+          material.specularPower = 0;
           material.emissiveColor = new Color3(0, 0, 0);
           material.backFaceCulling = true;
         }
@@ -164,35 +163,35 @@ export default function createStrixGame(engine, canvas) {
         material.alpha = isGlassMode ? 0.5 : 1.0;
         material.backFaceCulling = !isGlassMode;
       } else if (material.name.includes("_checker")) {
-        // Board squares Face 4 (checkerboard pattern) using PBR
+        // Board squares Face 4 (checkerboard pattern) using StandardMaterial
         const metadata = material.metadata || {};
         const isDark = metadata.isDark || false;
 
         if (isGlassMode) {
           if (isDark) {
-            // Dark squares: grey/white sand-blasted glass (not brown!)
-            material.albedoColor = new Color3(0.88, 0.88, 0.88); // Light grey/white
-            material.metallic = 0.0;
-            material.roughness = 0.95; // Very high roughness = sand-blasted/frosted
-            material.alpha = 0.9; // Mostly opaque
-            material.emissiveColor = new Color3(0.05, 0.05, 0.05); // Very minimal glow
+            // Dark squares: grey/white sand-blasted glass
+            material.diffuseColor = new Color3(0.88, 0.88, 0.88);
+            material.alpha = 0.9;
+            material.specularColor = new Color3(0.1, 0.1, 0.1);
+            material.specularPower = 5; // Low for frosted appearance
+            material.emissiveColor = new Color3(0, 0, 0);
           } else {
-            // Light squares: crystalline clear glass
-            material.albedoColor = new Color3(0.98, 0.98, 0.98);
-            material.metallic = 0.0;
-            material.roughness = 0.05; // Very smooth
-            material.alpha = 0.08;
-            material.emissiveColor = new Color3(0, 0, 0); // No glow
+            // Light squares: clear glass
+            material.diffuseColor = new Color3(1.0, 1.0, 1.0);
+            material.alpha = 0.05;
+            material.specularColor = new Color3(0.3, 0.3, 0.3);
+            material.specularPower = 64;
+            material.emissiveColor = new Color3(0, 0, 0);
           }
           material.backFaceCulling = true;
         } else {
-          // Solid mode: restore original colors
-          material.albedoColor = isDark
+          // Restore original
+          material.diffuseColor = isDark
             ? Color3.FromInts(50, 25, 15)
             : Color3.FromInts(240, 230, 140);
-          material.metallic = 0.0;
-          material.roughness = 0.8; // Less matte for richer color
           material.alpha = 1.0;
+          material.specularColor = new Color3(0.2, 0.2, 0.2);
+          material.specularPower = 64;
           material.emissiveColor = new Color3(0, 0, 0);
           material.backFaceCulling = true;
         }

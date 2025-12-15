@@ -194,7 +194,6 @@ import {
   Vector3,
   Color3,
   StandardMaterial,
-  PBRMaterial,
   ActionManager,
   ExecuteCodeAction,
   MeshBuilder,
@@ -215,12 +214,12 @@ export function createBaseAndFins(scene) {
       scene
     );
 
-    const baseMaterial = new PBRMaterial("baseMaterial", scene);
-    baseMaterial.albedoColor = Color3.FromInts(88, 54, 41);
-    baseMaterial.metallic = 0.0;
-    baseMaterial.roughness = 1.0; // Matte in solid mode
-    baseMaterial.alpha = 1.0; // Default solid, will be changed in glass mode
-    baseMaterial.backFaceCulling = true; // Enable for glass mode
+    const baseMaterial = new StandardMaterial("baseMaterial", scene);
+    baseMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
+    baseMaterial.specularColor = new Color3(0, 0, 0);
+    baseMaterial.specularPower = 0;
+    baseMaterial.alpha = 1.0;
+    baseMaterial.backFaceCulling = true;
     baseMesh.material = baseMaterial;
 
     return baseMesh;
@@ -233,12 +232,12 @@ export function createBaseAndFins(scene) {
   const finHeight = 4.79;
   const finBaseLength = 3.386;
   const finThickness = 0.5;
-  const finMaterial = new PBRMaterial("finMaterial", scene);
-  finMaterial.albedoColor = Color3.FromInts(88, 54, 41);
-  finMaterial.metallic = 0.0;
-  finMaterial.roughness = 1.0; // Matte in solid mode
-  finMaterial.alpha = 1.0; // Default solid, will be changed in glass mode
-  finMaterial.backFaceCulling = true; // Enable for glass mode
+  const finMaterial = new StandardMaterial("finMaterial", scene);
+  finMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
+  finMaterial.specularColor = new Color3(0, 0, 0);
+  finMaterial.specularPower = 0;
+  finMaterial.alpha = 1.0;
+  finMaterial.backFaceCulling = true;
 
   function createFin(name, rotation, translation) {
     const finVertices = [
