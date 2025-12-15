@@ -143,18 +143,18 @@ export default function createStrixGame(engine, canvas) {
       if (material.name === "baseMaterial" || material.name === "finMaterial") {
         // Base and fins: PBR glass
         if (isGlassMode) {
-          material.albedoColor = new Color3(1.0, 1.0, 1.0);
+          material.albedoColor = new Color3(0.95, 0.97, 1.0); // Very slight blue tint, not pure white
           material.metallic = 0.0;
-          material.roughness = 0.05; // Very smooth glass
-          material.alpha = 0.1; // Very transparent
+          material.roughness = 0.0; // Perfectly smooth glass
+          material.alpha = 0.08; // Very transparent
           material.indexOfRefraction = 1.5;
           material.linkRefractionWithTransparency = true;
-          material.emissiveColor = new Color3(0.05, 0.05, 0.05); // Minimal glow
+          material.emissiveColor = new Color3(0, 0, 0); // No glow - no white appearance
           material.backFaceCulling = false;
         } else {
           material.albedoColor = Color3.FromInts(88, 54, 41);
           material.metallic = 0.0;
-          material.roughness = 0.8; // Less matte for richer color
+          material.roughness = 0.8;
           material.alpha = 1.0;
           material.emissiveColor = new Color3(0, 0, 0);
           material.backFaceCulling = true;
@@ -171,18 +171,18 @@ export default function createStrixGame(engine, canvas) {
         if (isGlassMode) {
           if (isDark) {
             // Dark squares: grey/white sand-blasted glass (not brown!)
-            material.albedoColor = new Color3(0.85, 0.85, 0.85); // Light grey/white
+            material.albedoColor = new Color3(0.88, 0.88, 0.88); // Light grey/white
             material.metallic = 0.0;
             material.roughness = 0.95; // Very high roughness = sand-blasted/frosted
             material.alpha = 0.9; // Mostly opaque
-            material.emissiveColor = new Color3(0.1, 0.1, 0.1); // Slight glow
+            material.emissiveColor = new Color3(0.05, 0.05, 0.05); // Very minimal glow
           } else {
             // Light squares: crystalline clear glass
-            material.albedoColor = new Color3(1.0, 1.0, 1.0);
+            material.albedoColor = new Color3(0.98, 0.98, 0.98);
             material.metallic = 0.0;
-            material.roughness = 0.1; // Very smooth
-            material.alpha = 0.1;
-            material.emissiveColor = new Color3(0.08, 0.08, 0.08); // Minimal glow
+            material.roughness = 0.05; // Very smooth
+            material.alpha = 0.08;
+            material.emissiveColor = new Color3(0, 0, 0); // No glow
           }
           material.backFaceCulling = true;
         } else {
