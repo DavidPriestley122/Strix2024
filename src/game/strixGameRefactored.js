@@ -158,12 +158,13 @@ export default function createStrixGame(engine, canvas) {
             // Dark brown squares: opaque with sand-blasted effect
             material.alpha = 1.0;
             material.specularPower = 5; // Sand-blasted
+            material.specularColor = new Color3(0.1, 0.1, 0.1); // Minimal specular
           } else {
-            // Light squares: nearly transparent
-            material.diffuseColor = new Color3(0.98, 0.97, 0.95); // Very pale, barely tinted
+            // Light squares: nearly transparent with minimal reflection
+            material.diffuseColor = new Color3(1.0, 1.0, 1.0); // Pure white/clear
             material.alpha = 0.08; // Nearly see-through
-            material.specularPower = 10; // Low specular to see through from front
-            material.specularColor = new Color3(0.3, 0.3, 0.3); // Reduced specular intensity
+            material.specularPower = 1; // Almost no specular reflection
+            material.specularColor = new Color3(0.05, 0.05, 0.05); // Almost no specular
           }
           material.backFaceCulling = true;
         } else {
@@ -179,10 +180,10 @@ export default function createStrixGame(engine, canvas) {
       } else if (material.name.includes("_glass")) {
         // Board cube other faces (0-3, 5): clear glass in glass mode
         if (isGlassMode) {
-          material.diffuseColor = new Color3(0.98, 0.99, 1.0); // Barely tinted
+          material.diffuseColor = new Color3(1.0, 1.0, 1.0); // Pure clear
           material.alpha = 0.01; // Almost invisible to minimize cellular look
-          material.specularColor = new Color3(0.5, 0.5, 0.5); // Reduced specular
-          material.specularPower = 64; // Lower shine
+          material.specularColor = new Color3(0.1, 0.1, 0.1); // Minimal specular
+          material.specularPower = 10; // Very low shine
           material.backFaceCulling = false; // Show both sides
         } else {
           // In solid mode, match the checkerboard material color (already set during creation)
