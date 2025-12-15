@@ -54,6 +54,33 @@
   padding: 6px 12px;
 }
 
+#glassToggleButton {
+  width: 150px;
+  margin-top: 5px;
+  box-sizing: border-box;
+  padding: 6px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#glassToggleButton .mode-label {
+  font-size: 0.85em;
+}
+
+#glassToggleButton .mode-status {
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+#glassToggleButton.active {
+  background-color: #7e0b28;
+}
+
+#glassToggleButton.active .mode-status {
+  color: #90EE90;
+}
+
 #loadingScreen {
   position: absolute;
   width: 100%;

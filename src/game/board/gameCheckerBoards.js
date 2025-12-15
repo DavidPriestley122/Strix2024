@@ -19,10 +19,16 @@ const cubesOnTheThreeFaces = [];
         `material_${i}-${j}`,
         scene
       );
-      cubeMaterialOnBrownFace.diffuseColor =
-        (i + j) % 2 === 0
+      const isDark = (i + j) % 2 === 0;
+      cubeMaterialOnBrownFace.diffuseColor = isDark
           ? Color3.FromInts(50, 25, 15)
           : Color3.FromInts(240, 230, 140);
+      // Glass mode properties
+      cubeMaterialOnBrownFace.alpha = 1.0; // Default solid
+      cubeMaterialOnBrownFace.backFaceCulling = true;
+      if (isDark) {
+        cubeMaterialOnBrownFace.specularPower = 5; // Sand-blasted effect for dark squares
+      }
       // Apply the single material to the cube
       cubeOnBrownFace.material = cubeMaterialOnBrownFace;
       // Position and scale the cube
@@ -54,10 +60,16 @@ const cubesOnTheThreeFaces = [];
         `material_${i}-${j}`,
         scene
       );
-      cubeMaterialOnYellowFace.diffuseColor =
-        (i + j) % 2 === 0
+      const isDarkYellow = (i + j) % 2 === 0;
+      cubeMaterialOnYellowFace.diffuseColor = isDarkYellow
           ? Color3.FromInts(50, 25, 15)
           : Color3.FromInts(240, 230, 140);
+      // Glass mode properties
+      cubeMaterialOnYellowFace.alpha = 1.0; // Default solid
+      cubeMaterialOnYellowFace.backFaceCulling = true;
+      if (isDarkYellow) {
+        cubeMaterialOnYellowFace.specularPower = 5; // Sand-blasted effect for dark squares
+      }
       // Apply the single material to the cube
       cubeOnYellowFace.material = cubeMaterialOnYellowFace;
       // Position and scale the cube
@@ -91,10 +103,16 @@ const cubesOnTheThreeFaces = [];
         `material_${i}-${j}`,
         scene
       );
-      cubeMaterialOnGreenFace.diffuseColor =
-        (i + j) % 2 === 0
+      const isDarkGreen = (i + j) % 2 === 0;
+      cubeMaterialOnGreenFace.diffuseColor = isDarkGreen
           ? Color3.FromInts(50, 25, 15)
           : Color3.FromInts(240, 230, 140);
+      // Glass mode properties
+      cubeMaterialOnGreenFace.alpha = 1.0; // Default solid
+      cubeMaterialOnGreenFace.backFaceCulling = true;
+      if (isDarkGreen) {
+        cubeMaterialOnGreenFace.specularPower = 5; // Sand-blasted effect for dark squares
+      }
       // Apply the single material to the cube
       cubeOnGreenFace.material = cubeMaterialOnGreenFace;
       // Position and scale the cube
@@ -165,7 +183,9 @@ const cubesOnTheThreeFaces = [];
   const edgeStripHeight = 7.6;
   const edgeStripThickness = 0.05;
   const edgeStripMaterial = new StandardMaterial("edgeStripMaterial", scene);
-  edgeStripMaterial.diffuseColor = Color3.FromInts(8, 64, 0); // Green Team Colour;
+  edgeStripMaterial.diffuseColor = Color3.FromInts(8, 64, 0); // Green Team Colour
+  edgeStripMaterial.alpha = 1.0; // Default solid, will be translucent in glass mode
+  edgeStripMaterial.backFaceCulling = true;
 
   function createEdgeStrip(position, rotation) {
     const edgeStrip = MeshBuilder.CreateBox(

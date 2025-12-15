@@ -133,13 +133,40 @@ export default function createStrixGame(engine, canvas) {
 
   gameStateManager.updateNextPlayerDisplay();
 
+  // Glass Mode Toggle Function
+  let isGlassMode = false;
+  function toggleGlassMode() {
+    isGlassMode = !isGlassMode;
+
+    // Get all materials from the scene
+    scene.materials.forEach(material => {
+      if (material.name === "baseMaterial" || material.name === "finMaterial") {
+        // Base and fins: transparent
+        material.alpha = isGlassMode ? 0.3 : 1.0;
+        material.backFaceCulling = !isGlassMode;
+      } else if (material.name.startsWith("material_")) {
+        // Board squares: glass with sand-blasted browns
+        const isDark = material.specularPower === 5; // We set this for dark squares
+        material.alpha = isGlassMode ? (isDark ? 0.8 : 0.7) : 1.0;
+        material.backFaceCulling = !isGlassMode;
+      } else if (material.name === "edgeStripMaterial") {
+        // Green edges: translucent
+        material.alpha = isGlassMode ? 0.6 : 1.0;
+        material.backFaceCulling = !isGlassMode;
+      }
+    });
+
+    return isGlassMode;
+  }
+
   // REGISTER GLOBAL FUNCTIONS (temporary compatibility layer)
   const globalFunctions = {
     animateCapturedPieceToOwlHalla: utilityFunctions.handlePieceDoubleClickForCapture,
     validateMove: gameController.validateMove,
     handlePieceDoubleClickForCapture: utilityFunctions.handlePieceDoubleClickForCapture,
     updatePiecesArrivingOnOwlHalla: utilityFunctions.updatePiecesArrivingOnOwlHalla,
-    updatePiecesLeavingOwlHalla: utilityFunctions.updatePiecesLeavingOwlHalla
+    updatePiecesLeavingOwlHalla: utilityFunctions.updatePiecesLeavingOwlHalla,
+    toggleGlassMode: toggleGlassMode
   };
 
   // Make functions available globally for compatibility

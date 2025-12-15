@@ -218,6 +218,8 @@ export function createBaseAndFins(scene) {
     baseMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
     baseMaterial.specularColor = new Color3(0, 0, 0); // Set specular color to black
     baseMaterial.specularPower = 0; // Reduce specular power to minimum
+    baseMaterial.alpha = 1.0; // Default solid, will be changed in glass mode
+    baseMaterial.backFaceCulling = true; // Enable for glass mode
     baseMesh.material = baseMaterial;
 
     return baseMesh;
@@ -234,6 +236,8 @@ export function createBaseAndFins(scene) {
   finMaterial.diffuseColor = Color3.FromInts(88, 54, 41);
   finMaterial.specularColor = new Color3(0, 0, 0); // Set specular color to black
   finMaterial.specularPower = 0; // Reduce specular power to minimum
+  finMaterial.alpha = 1.0; // Default solid, will be changed in glass mode
+  finMaterial.backFaceCulling = true; // Enable for glass mode
 
   function createFin(name, rotation, translation) {
     const finVertices = [
