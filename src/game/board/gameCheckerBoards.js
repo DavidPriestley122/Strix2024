@@ -35,32 +35,6 @@ const cubesOnTheThreeFaces = [];
       cubeOnBrownFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the y-direction
       cubesOnTheThreeFaces.push(cubeOnBrownFace);
       cubeOnBrownFace.parent = boardContainer;
-
-      // TEST: Set up multi-material for center cube b4-4
-      if (cubeNameOnBrownFace === "b4-4") {
-        const multiMat = new MultiMaterial("testMultiMat", scene);
-        const redMat = new StandardMaterial("redTest", scene);
-        redMat.diffuseColor = Color3.Red();
-        const normalMat = cubeMaterialOnBrownFace;
-
-        // Add 6 materials - one per face
-        multiMat.subMaterials.push(normalMat); // Face 0
-        multiMat.subMaterials.push(normalMat); // Face 1
-        multiMat.subMaterials.push(normalMat); // Face 2
-        multiMat.subMaterials.push(normalMat); // Face 3
-        multiMat.subMaterials.push(redMat);    // Face 4 - TEST RED
-        multiMat.subMaterials.push(normalMat); // Face 5
-
-        cubeOnBrownFace.material = multiMat;
-
-        // Define submeshes for the cube (6 faces, 4 vertices per face)
-        cubeOnBrownFace.subMeshes = [];
-        const verticesCount = cubeOnBrownFace.getTotalVertices();
-        for (let faceIndex = 0; faceIndex < 6; faceIndex++) {
-          new SubMesh(faceIndex, 0, verticesCount, faceIndex * 6, 6, cubeOnBrownFace);
-        }
-      }
-
       instanceNames += cubeNameOnBrownFace + " ";
       // Add a line break after every 3 instances
       if ((j + 1) % 3 === 0) {
