@@ -181,26 +181,28 @@ export default function createStrixGame(engine, canvas) {
           material.backFaceCulling = true;
         }
       } else if (material.name.includes("_glass")) {
-        // Board cube other faces (0-3, 5): clear glass in glass mode
+        // Board cube other faces (0-3, 5): clear glass in glass mode using PBR
         const metadata = material.metadata || {};
         const cubeIsDark = metadata.isDark || false;
 
         if (isGlassMode) {
-          // Always pure clear/white - no brown or yellow color
-          material.diffuseColor = new Color3(1.0, 1.0, 1.0);
-          material.alpha = 0.02; // Nearly invisible to minimize cellular look
-          material.specularColor = new Color3(0.7, 0.7, 0.7); // Bright sparkle
-          material.specularPower = 64; // Glass-like shine
-          material.emissiveColor = new Color3(0.15, 0.15, 0.15); // Self-illumination for clarity
+          // PBR glass properties for realistic crystalline appearance
+          material.albedoColor = new Color3(1.0, 1.0, 1.0); // Pure clear white
+          material.metallic = 0.0; // Glass is not metallic
+          material.roughness = 0.0; // Perfectly smooth for clarity
+          material.alpha = 0.1; // Slightly visible
+          material.indexOfRefraction = 1.5; // Standard glass IOR
+          material.linkRefractionWithTransparency = true; // Connect refraction to transparency
+          material.emissiveColor = new Color3(0.2, 0.2, 0.2); // Bright self-illumination
           material.backFaceCulling = false; // Show both sides
         } else {
           // Solid mode: restore color based on dark/light square
-          material.diffuseColor = cubeIsDark
+          material.albedoColor = cubeIsDark
             ? Color3.FromInts(50, 25, 15)
             : Color3.FromInts(240, 230, 140);
+          material.metallic = 0.0;
+          material.roughness = 1.0; // Matte in solid mode
           material.alpha = 1.0;
-          material.specularColor = new Color3(0.2, 0.2, 0.2);
-          material.specularPower = 64;
           material.emissiveColor = new Color3(0, 0, 0); // Reset emissive
           material.backFaceCulling = true;
         }

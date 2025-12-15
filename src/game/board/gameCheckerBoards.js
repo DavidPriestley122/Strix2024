@@ -1,4 +1,4 @@
-import { MeshBuilder, StandardMaterial, Color3, Vector3, MultiMaterial, SubMesh } from '@babylonjs/core';
+import { MeshBuilder, StandardMaterial, PBRMaterial, Color3, Vector3, MultiMaterial, SubMesh } from '@babylonjs/core';
 
 
 export function createCheckerBoards(scene, boardContainer) {
@@ -16,12 +16,14 @@ const cubesOnTheThreeFaces = [];
     checkerboardMat.alpha = 1.0;
     checkerboardMat.backFaceCulling = true;
 
-    // Create the glass material (Faces 0-3, 5 - the sides/back/bottom)
-    const glassMat = new StandardMaterial(`material_${cube.name}_glass`, scene);
+    // Create the glass material (Faces 0-3, 5 - the sides/back/bottom) using PBR for realism
+    const glassMat = new PBRMaterial(`material_${cube.name}_glass`, scene);
     // Glass material is always pure clear - stores whether it's from dark or light square
     glassMat.metadata = { isDark: isDark };
     // In solid mode, glass material matches checkerboard color
-    glassMat.diffuseColor = checkerboardMat.diffuseColor.clone();
+    glassMat.albedoColor = checkerboardMat.diffuseColor.clone();
+    glassMat.metallic = 0.0; // Glass is not metallic
+    glassMat.roughness = 0.0; // Glass is very smooth
     glassMat.alpha = 1.0;
     glassMat.backFaceCulling = true;
 
