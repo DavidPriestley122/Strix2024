@@ -145,10 +145,17 @@ export default function createStrixGame(engine, canvas) {
         material.alpha = isGlassMode ? 0.3 : 1.0;
         material.backFaceCulling = !isGlassMode;
       } else if (material.name.startsWith("material_")) {
-        // Board squares: glass with sand-blasted browns
-        const isDark = material.specularPower === 5; // We set this for dark squares
+        // Board squares: glass effect
+        // Detect dark squares by checking color (brown vs light)
+        const isDark = material.diffuseColor.r < 0.3; // Brown squares have low red value
         material.alpha = isGlassMode ? (isDark ? 0.8 : 0.7) : 1.0;
         material.backFaceCulling = !isGlassMode;
+        // Sand-blasted effect for dark squares in glass mode
+        if (isGlassMode && isDark) {
+          material.specularPower = 5;
+        } else {
+          material.specularPower = 64; // Reset to default
+        }
       } else if (material.name === "edgeStripMaterial") {
         // Green edges: translucent
         material.alpha = isGlassMode ? 0.6 : 1.0;

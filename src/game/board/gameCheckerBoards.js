@@ -26,9 +26,6 @@ const cubesOnTheThreeFaces = [];
       // Glass mode properties
       cubeMaterialOnBrownFace.alpha = 1.0; // Default solid
       cubeMaterialOnBrownFace.backFaceCulling = true;
-      if (isDark) {
-        cubeMaterialOnBrownFace.specularPower = 5; // Sand-blasted effect for dark squares
-      }
       // Apply the single material to the cube
       cubeOnBrownFace.material = cubeMaterialOnBrownFace;
       // Position and scale the cube
@@ -67,9 +64,6 @@ const cubesOnTheThreeFaces = [];
       // Glass mode properties
       cubeMaterialOnYellowFace.alpha = 1.0; // Default solid
       cubeMaterialOnYellowFace.backFaceCulling = true;
-      if (isDarkYellow) {
-        cubeMaterialOnYellowFace.specularPower = 5; // Sand-blasted effect for dark squares
-      }
       // Apply the single material to the cube
       cubeOnYellowFace.material = cubeMaterialOnYellowFace;
       // Position and scale the cube
@@ -110,9 +104,6 @@ const cubesOnTheThreeFaces = [];
       // Glass mode properties
       cubeMaterialOnGreenFace.alpha = 1.0; // Default solid
       cubeMaterialOnGreenFace.backFaceCulling = true;
-      if (isDarkGreen) {
-        cubeMaterialOnGreenFace.specularPower = 5; // Sand-blasted effect for dark squares
-      }
       // Apply the single material to the cube
       cubeOnGreenFace.material = cubeMaterialOnGreenFace;
       // Position and scale the cube
