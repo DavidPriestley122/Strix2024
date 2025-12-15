@@ -6,6 +6,48 @@ export function createCheckerBoards(scene, boardContainer) {
 const cubesOnTheThreeFaces = [];
   let instanceNames = "";
 
+  // Helper function to setup multi-material for board cubes
+  function setupCubeMultiMaterial(cube, scene, isDark) {
+    // Create the checkerboard material (Face 4 - the visible top/front)
+    const checkerboardMat = new StandardMaterial(`material_${cube.name}_checker`, scene);
+    checkerboardMat.diffuseColor = isDark
+      ? Color3.FromInts(50, 25, 15)
+      : Color3.FromInts(240, 230, 140);
+    checkerboardMat.alpha = 1.0;
+    checkerboardMat.backFaceCulling = true;
+
+    // Create the glass material (Faces 0-3, 5 - the sides/back/bottom)
+    const glassMat = new StandardMaterial(`material_${cube.name}_glass`, scene);
+    // In solid mode, glass material matches checkerboard color
+    glassMat.diffuseColor = checkerboardMat.diffuseColor.clone();
+    glassMat.alpha = 1.0;
+    glassMat.backFaceCulling = true;
+
+    // Create MultiMaterial
+    const multiMat = new MultiMaterial(`multiMat_${cube.name}`, scene);
+    multiMat.subMaterials.push(checkerboardMat); // Index 0
+    multiMat.subMaterials.push(glassMat);        // Index 1
+
+    // Apply MultiMaterial to cube
+    cube.material = multiMat;
+
+    // Create SubMeshes (6 faces, each face uses 6 indices)
+    cube.subMeshes = [];
+    const verticesCount = 24; // Standard box has 24 vertices
+
+    // Faces 0-3 and 5 use glass material (materialIndex 1)
+    new SubMesh(1, 0, verticesCount, 0, 6, cube);   // Face 0: indices 0-5
+    new SubMesh(1, 0, verticesCount, 6, 6, cube);   // Face 1: indices 6-11
+    new SubMesh(1, 0, verticesCount, 12, 6, cube);  // Face 2: indices 12-17
+    new SubMesh(1, 0, verticesCount, 18, 6, cube);  // Face 3: indices 18-23
+
+    // Face 4 uses checkerboard material (materialIndex 0)
+    new SubMesh(0, 0, verticesCount, 24, 6, cube);  // Face 4: indices 24-29
+
+    // Face 5 uses glass material (materialIndex 1)
+    new SubMesh(1, 0, verticesCount, 30, 6, cube);  // Face 5: indices 30-35
+  }
+
   for (let i = 1; i < 8; i++) {
     for (let j = 1; j < 8; j++) {
       let cubeNameOnBrownFace = `b${i}-${j}`;
@@ -14,20 +56,10 @@ const cubesOnTheThreeFaces = [];
         { size: 1 },
         scene
       );
-      // Create a single material for the cube
-      const cubeMaterialOnBrownFace = new StandardMaterial(
-        `material_${i}-${j}`,
-        scene
-      );
+
       const isDark = (i + j) % 2 === 0;
-      cubeMaterialOnBrownFace.diffuseColor = isDark
-          ? Color3.FromInts(50, 25, 15)
-          : Color3.FromInts(240, 230, 140);
-      // Glass mode properties
-      cubeMaterialOnBrownFace.alpha = 1.0; // Default solid
-      cubeMaterialOnBrownFace.backFaceCulling = true;
-      // Apply the single material to the cube
-      cubeOnBrownFace.material = cubeMaterialOnBrownFace;
+      setupCubeMultiMaterial(cubeOnBrownFace, scene, isDark);
+
       // Position and scale the cube
       cubeOnBrownFace.position.x = 6 - (i - 1) + 0.5; // Adjust the x position
       cubeOnBrownFace.position.z = 6 - (j - 1) + 0.5; // Adjust the z position
@@ -52,20 +84,10 @@ const cubesOnTheThreeFaces = [];
         { size: 1 },
         scene
       );
-      // Create a single material for the cube
-      const cubeMaterialOnYellowFace = new StandardMaterial(
-        `material_${i}-${j}`,
-        scene
-      );
+
       const isDarkYellow = (i + j) % 2 === 0;
-      cubeMaterialOnYellowFace.diffuseColor = isDarkYellow
-          ? Color3.FromInts(50, 25, 15)
-          : Color3.FromInts(240, 230, 140);
-      // Glass mode properties
-      cubeMaterialOnYellowFace.alpha = 1.0; // Default solid
-      cubeMaterialOnYellowFace.backFaceCulling = true;
-      // Apply the single material to the cube
-      cubeOnYellowFace.material = cubeMaterialOnYellowFace;
+      setupCubeMultiMaterial(cubeOnYellowFace, scene, isDarkYellow);
+
       // Position and scale the cube
       cubeOnYellowFace.position.x = -0.25; // Set the x position to align with the back row of the first checkerboard
       cubeOnYellowFace.position.z = 6 - (i - 1) + 0.5; // Adjust the z position
@@ -92,20 +114,10 @@ const cubesOnTheThreeFaces = [];
         { size: 1 },
         scene
       );
-      // Create a single material for the cube
-      const cubeMaterialOnGreenFace = new StandardMaterial(
-        `material_${i}-${j}`,
-        scene
-      );
+
       const isDarkGreen = (i + j) % 2 === 0;
-      cubeMaterialOnGreenFace.diffuseColor = isDarkGreen
-          ? Color3.FromInts(50, 25, 15)
-          : Color3.FromInts(240, 230, 140);
-      // Glass mode properties
-      cubeMaterialOnGreenFace.alpha = 1.0; // Default solid
-      cubeMaterialOnGreenFace.backFaceCulling = true;
-      // Apply the single material to the cube
-      cubeOnGreenFace.material = cubeMaterialOnGreenFace;
+      setupCubeMultiMaterial(cubeOnGreenFace, scene, isDarkGreen);
+
       // Position and scale the cube
       cubeOnGreenFace.position.x = j; // Adjust the x position
       cubeOnGreenFace.position.z = -0.25; // Set the z position to align with the left side of the "b" board

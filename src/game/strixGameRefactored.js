@@ -148,17 +148,32 @@ export default function createStrixGame(engine, canvas) {
         // Backing panels: glassy brown veneer
         material.alpha = isGlassMode ? 0.5 : 1.0;
         material.backFaceCulling = !isGlassMode;
-      } else if (material.name.startsWith("material_")) {
-        // Board squares: glass effect
+      } else if (material.name.includes("_checker")) {
+        // Board squares Face 4 (checkerboard pattern): visible in glass mode
         // Detect dark squares by checking color (brown vs light)
         const isDark = material.diffuseColor.r < 0.3; // Brown squares have low red value
-        material.alpha = isGlassMode ? (isDark ? 0.8 : 0.7) : 1.0;
-        material.backFaceCulling = !isGlassMode;
+        material.alpha = 1.0; // Always opaque to show checkerboard pattern
+        material.backFaceCulling = true;
         // Sand-blasted effect for dark squares in glass mode
         if (isGlassMode && isDark) {
           material.specularPower = 5;
         } else {
           material.specularPower = 64; // Reset to default
+        }
+      } else if (material.name.includes("_glass")) {
+        // Board cube other faces (0-3, 5): clear glass in glass mode
+        if (isGlassMode) {
+          material.diffuseColor = new Color3(0.9, 0.95, 1.0); // Slight blue tint
+          material.alpha = 0.15; // Very transparent
+          material.specularColor = new Color3(1, 1, 1); // White specular
+          material.specularPower = 128; // Very shiny
+          material.backFaceCulling = false; // Show both sides
+        } else {
+          // In solid mode, match the checkerboard material color (already set during creation)
+          material.alpha = 1.0;
+          material.specularColor = new Color3(0.2, 0.2, 0.2);
+          material.specularPower = 64;
+          material.backFaceCulling = true;
         }
       } else if (material.name === "edgeStripMaterial") {
         // Green edges: translucent
