@@ -35,6 +35,23 @@ const cubesOnTheThreeFaces = [];
       cubeOnBrownFace.scaling.y = 0.5; // Scale the cubes by 0.5 in the y-direction
       cubesOnTheThreeFaces.push(cubeOnBrownFace);
       cubeOnBrownFace.parent = boardContainer;
+
+      // TEST: b4-4 on brown face
+      if (cubeNameOnBrownFace === "b4-4") {
+        const multiMat = new MultiMaterial("testMultiMat_brown", scene);
+        const redMat = new StandardMaterial("redTest", scene);
+        redMat.diffuseColor = Color3.Red();
+        for (let f = 0; f < 6; f++) {
+          multiMat.subMaterials.push(f === 4 ? redMat : cubeMaterialOnBrownFace);
+        }
+        cubeOnBrownFace.material = multiMat;
+        cubeOnBrownFace.subMeshes = [];
+        const verticesCount = cubeOnBrownFace.getTotalVertices();
+        for (let f = 0; f < 6; f++) {
+          new SubMesh(f, 0, verticesCount, f * 6, 6, cubeOnBrownFace);
+        }
+      }
+
       instanceNames += cubeNameOnBrownFace + " ";
       // Add a line break after every 3 instances
       if ((j + 1) % 3 === 0) {
@@ -74,6 +91,23 @@ const cubesOnTheThreeFaces = [];
       cubeOnYellowFace.rotation.z = -Math.PI / 2; // Rotate the cubes by 90 degrees around the z-axis
       cubesOnTheThreeFaces.push(cubeOnYellowFace);
       cubeOnYellowFace.parent = boardContainer;
+
+      // TEST: y4-4 on yellow face
+      if (cubeNameOnYellowFace === "y4-4") {
+        const multiMat = new MultiMaterial("testMultiMat_yellow", scene);
+        const redMat = new StandardMaterial("redTest_yellow", scene);
+        redMat.diffuseColor = Color3.Red();
+        for (let f = 0; f < 6; f++) {
+          multiMat.subMaterials.push(f === 4 ? redMat : cubeMaterialOnYellowFace);
+        }
+        cubeOnYellowFace.material = multiMat;
+        cubeOnYellowFace.subMeshes = [];
+        const verticesCount = cubeOnYellowFace.getTotalVertices();
+        for (let f = 0; f < 6; f++) {
+          new SubMesh(f, 0, verticesCount, f * 6, 6, cubeOnYellowFace);
+        }
+      }
+
       instanceNames += cubeNameOnYellowFace + " ";
 
       // Add a line break after every 3 instances
@@ -117,6 +151,23 @@ const cubesOnTheThreeFaces = [];
 
       cubesOnTheThreeFaces.push(cubeOnGreenFace);
       cubeOnGreenFace.parent = boardContainer;
+
+      // TEST: g4-4 on green face
+      if (cubeNameOnGreenFace === "g4-4") {
+        const multiMat = new MultiMaterial("testMultiMat_green", scene);
+        const redMat = new StandardMaterial("redTest_green", scene);
+        redMat.diffuseColor = Color3.Red();
+        for (let f = 0; f < 6; f++) {
+          multiMat.subMaterials.push(f === 4 ? redMat : cubeMaterialOnGreenFace);
+        }
+        cubeOnGreenFace.material = multiMat;
+        cubeOnGreenFace.subMeshes = [];
+        const verticesCount = cubeOnGreenFace.getTotalVertices();
+        for (let f = 0; f < 6; f++) {
+          new SubMesh(f, 0, verticesCount, f * 6, 6, cubeOnGreenFace);
+        }
+      }
+
       instanceNames += cubeNameOnGreenFace + " ";
 
       // Add a line break after every 3 instances
