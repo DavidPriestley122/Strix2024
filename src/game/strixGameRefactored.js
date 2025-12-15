@@ -146,10 +146,10 @@ export default function createStrixGame(engine, canvas) {
           material.albedoColor = new Color3(1.0, 1.0, 1.0);
           material.metallic = 0.0;
           material.roughness = 0.05; // Very smooth glass
-          material.alpha = 0.15; // More transparent
+          material.alpha = 0.1; // Very transparent
           material.indexOfRefraction = 1.5;
           material.linkRefractionWithTransparency = true;
-          material.emissiveColor = new Color3(0.25, 0.25, 0.25); // Brighter
+          material.emissiveColor = new Color3(0.05, 0.05, 0.05); // Minimal glow
           material.backFaceCulling = false;
         } else {
           material.albedoColor = Color3.FromInts(88, 54, 41);
@@ -181,8 +181,8 @@ export default function createStrixGame(engine, canvas) {
             material.albedoColor = new Color3(1.0, 1.0, 1.0);
             material.metallic = 0.0;
             material.roughness = 0.1; // Very smooth
-            material.alpha = 0.12;
-            material.emissiveColor = new Color3(0.25, 0.25, 0.25); // Bright for clarity
+            material.alpha = 0.1;
+            material.emissiveColor = new Color3(0.08, 0.08, 0.08); // Minimal glow
           }
           material.backFaceCulling = true;
         } else {
@@ -202,14 +202,12 @@ export default function createStrixGame(engine, canvas) {
         const cubeIsDark = metadata.isDark || false;
 
         if (isGlassMode) {
-          // PBR glass properties - minimize shimmer
+          // PBR glass properties - completely invisible to eliminate flicker
           material.albedoColor = new Color3(1.0, 1.0, 1.0); // Pure clear white
           material.metallic = 0.0; // Glass is not metallic
-          material.roughness = 0.3; // Some roughness to reduce shimmer
-          material.alpha = 0.02; // Nearly invisible to minimize shimmer
-          material.indexOfRefraction = 1.5; // Standard glass IOR
-          material.linkRefractionWithTransparency = true;
-          material.emissiveColor = new Color3(0.15, 0.15, 0.15); // Moderate glow
+          material.roughness = 0.0; // Smooth
+          material.alpha = 0.0; // Completely invisible - no cellular flicker
+          material.emissiveColor = new Color3(0, 0, 0); // No glow
           material.backFaceCulling = false; // Show both sides
         } else {
           // Solid mode: restore color based on dark/light square
