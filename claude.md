@@ -101,18 +101,36 @@ Add a toggle button to switch between solid and glass/transparent appearance for
 - Added glass mode toggle button
 - Event listener calls `window.toggleGlassMode()`
 
-## Current Status
+## Current Status (After Opus 4 Implementation)
 
-**Working:**
-- Toggle button functional
-- Non-glass mode preserves original appearance
-- Cellular flicker eliminated (alpha 0 on internal walls)
-- Sand-blasted squares show grey instead of brown
+**New Approach - Material Swapping:**
+- Consulted with Claude Opus 4 for architectural guidance
+- Completely replaced property-modification approach with material swapping
+- Original materials stored in Map and NEVER modified
+- Glass materials created separately with PBR refraction
+- Toggle switches entire material objects, not individual properties
 
-**Issues Remaining:**
-- Base may still appear white/not fully transparent in glass mode
-- Overall glass appearance "not quite right" per user feedback
-- Balance between transparency and visibility challenging
+**Implementation:**
+- Environment texture added (required for glass reflections)
+- PBR materials with subSurface.isRefractionEnabled = true
+- Index of refraction: 1.5
+- Refraction intensity: 0.8 (0.3 for frosted)
+- Five glass material types: clear, frosted, tinted, tinted_green, invisible
+
+**Material Mapping:**
+- Base/fins: clear glass (IOR 1.5, roughness 0, alpha 0.15)
+- Back panels: tinted glass (brown tint, roughness 0.1, alpha 0.25)
+- Edge strips: tinted green glass (green tint, roughness 0.1, alpha 0.3)
+- Dark board squares: frosted glass (grey, roughness 0.4, alpha 0.4)
+- Light board squares: clear glass (roughness 0, alpha 0.15)
+- Internal cube walls: invisible (alpha 0, no refraction)
+
+**Advantages:**
+- Non-glass mode guaranteed unchanged (original materials preserved)
+- Realistic glass physics with proper refraction
+- Environment reflections for depth
+- No more property conflicts or "washed out" appearance
+- Clean architecture - initialization separate from toggle
 
 ## Commits
 - Initial multi-material implementation
