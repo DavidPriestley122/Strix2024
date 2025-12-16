@@ -159,8 +159,10 @@ export default function createStrixGame(engine, canvas) {
     // IMPORTANT: Set to false when using manual alpha
     glassMat.subSurface.linkRefractionWithTransparency = false;
 
-    // Reduce reflection intensity for glass look
-    glassMat.environmentIntensity = 0.3;
+    // Lighting properties for glass (per Opus 4.1 recommendations)
+    glassMat.environmentIntensity = 0.5; // Environment reflections
+    glassMat.directIntensity = 0.3; // Lower = more glass-like (less plastic)
+    glassMat.specularIntensity = 1.0; // Specular highlights from direct lights
 
     switch (type) {
       case "clear":
@@ -287,11 +289,11 @@ export default function createStrixGame(engine, canvas) {
 
     isGlassMode = !isGlassMode;
 
-    // Toggle environment texture intensity (only needed for glass reflections)
-    // Setting to 0 in non-glass mode preserves original wooden lighting
-    scene.environmentIntensity = isGlassMode ? 0.4 : 0;
+    // Toggle environment texture intensity - this does 80% of the work for glass
+    // Higher intensity for glass mode as per Opus recommendation
+    scene.environmentIntensity = isGlassMode ? 0.9 : 0;
 
-    // Adjust lighting for glass mode - brighter to show transparency
+    // Adjust lighting for glass mode - REDUCE direct lights (too bright makes glass look plastic)
     const lights = scene.lights;
     lights.forEach(light => {
       if (!originalLightIntensities.has(light.name)) {
@@ -300,10 +302,10 @@ export default function createStrixGame(engine, canvas) {
       }
 
       if (isGlassMode) {
-        // Increase lighting for glass mode (1.8x brighter)
-        light.intensity = originalLightIntensities.get(light.name) * 1.8;
+        // REDUCE lighting for glass mode (0.4x = subtle) - environment does the work
+        light.intensity = originalLightIntensities.get(light.name) * 0.4;
       } else {
-        // Restore original lighting
+        // Restore original lighting - non-glass mode UNCHANGED
         light.intensity = originalLightIntensities.get(light.name);
       }
     });
