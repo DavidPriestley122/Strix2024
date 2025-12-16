@@ -161,7 +161,7 @@ export default function createStrixGame(engine, canvas) {
 
     switch (type) {
       case "clear":
-        glassMat.albedoColor = Color3.FromInts(100, 54, 35); // Brown - more saturated
+        glassMat.albedoColor = Color3.FromInts(120, 60, 30); // Brown - more saturated and vibrant
         glassMat.roughness = 0.05;
         glassMat.alpha = 0.3; // Glass-like transparency
         break;
@@ -180,7 +180,7 @@ export default function createStrixGame(engine, canvas) {
         break;
 
       case "tinted_green":
-        glassMat.albedoColor = Color3.FromInts(8, 90, 0); // Green - more saturated
+        glassMat.albedoColor = Color3.FromInts(5, 130, 0); // Green - much more saturated and vibrant
         glassMat.roughness = 0.05;
         glassMat.alpha = 0.4; // Glass-like transparency
         break;
