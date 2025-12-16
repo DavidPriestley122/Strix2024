@@ -23,7 +23,7 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3 } from "@babylonjs/core";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial } from "@babylonjs/core";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -133,96 +133,126 @@ export default function createStrixGame(engine, canvas) {
 
   gameStateManager.updateNextPlayerDisplay();
 
-  // Glass Mode Toggle Function
+  // Glass Mode Toggle Function - Material Swapping Approach
   let isGlassMode = false;
+  let materialsInitialized = false;
+  const originalMaterials = new Map();  // mesh.uniqueId -> original material
+  const glassMaterials = new Map();     // mesh.uniqueId -> glass material
+
+  function createGlassMaterial(scene, name, type) {
+    const glassMat = new PBRMaterial(name, scene);
+
+    // Common glass properties
+    glassMat.metallic = 0.0;
+    glassMat.backFaceCulling = false;
+
+    // Enable refraction - this is essential for realistic glass
+    glassMat.subSurface.isRefractionEnabled = true;
+    glassMat.subSurface.indexOfRefraction = 1.5;
+    glassMat.subSurface.refractionIntensity = 0.8;
+    glassMat.subSurface.linkRefractionWithTransparency = true;
+
+    switch (type) {
+      case "clear":
+        glassMat.albedoColor = new Color3(0.95, 0.97, 1.0);
+        glassMat.roughness = 0.0;
+        glassMat.alpha = 0.15;
+        break;
+
+      case "frosted":
+        glassMat.albedoColor = new Color3(0.9, 0.9, 0.92);
+        glassMat.roughness = 0.4;
+        glassMat.alpha = 0.4;
+        glassMat.subSurface.refractionIntensity = 0.3;
+        break;
+
+      case "tinted":
+        glassMat.albedoColor = new Color3(0.85, 0.8, 0.75);
+        glassMat.roughness = 0.1;
+        glassMat.alpha = 0.25;
+        break;
+
+      case "tinted_green":
+        glassMat.albedoColor = new Color3(0.7, 0.85, 0.7);
+        glassMat.roughness = 0.1;
+        glassMat.alpha = 0.3;
+        break;
+
+      case "invisible":
+        glassMat.alpha = 0;
+        glassMat.subSurface.isRefractionEnabled = false;
+        break;
+    }
+
+    return glassMat;
+  }
+
+  function initializeGlassMaterials(scene) {
+    if (materialsInitialized) return;
+
+    scene.meshes.forEach(mesh => {
+      if (!mesh.material) return;
+
+      const mat = mesh.material;
+      const matName = mat.name;
+
+      // Store original material - NEVER modify these
+      originalMaterials.set(mesh.uniqueId, mat);
+
+      // Create glass alternatives based on mesh/material type
+      if (matName === "baseMaterial" || matName === "finMaterial") {
+        glassMaterials.set(mesh.uniqueId, createGlassMaterial(scene, matName + "_glassVer", "clear"));
+      }
+      else if (matName === "backPanelMaterial") {
+        glassMaterials.set(mesh.uniqueId, createGlassMaterial(scene, matName + "_glassVer", "tinted"));
+      }
+      else if (matName === "edgeStripMaterial") {
+        glassMaterials.set(mesh.uniqueId, createGlassMaterial(scene, matName + "_glassVer", "tinted_green"));
+      }
+      else if (mat instanceof MultiMaterial || mat.subMaterials) {
+        // Board cubes use MultiMaterial
+        const glassMultiMat = new MultiMaterial(mat.name + "_glassVer", scene);
+
+        mat.subMaterials.forEach((subMat, index) => {
+          if (subMat.name.includes("_checker")) {
+            const isDark = subMat.metadata?.isDark || false;
+            const glassType = isDark ? "frosted" : "clear";
+            glassMultiMat.subMaterials.push(
+              createGlassMaterial(scene, subMat.name + "_glassVer", glassType)
+            );
+          } else if (subMat.name.includes("_glass")) {
+            // Internal cube faces - invisible to prevent flicker
+            glassMultiMat.subMaterials.push(
+              createGlassMaterial(scene, subMat.name + "_invisible", "invisible")
+            );
+          } else {
+            // Unknown sub-material, clone as-is
+            glassMultiMat.subMaterials.push(subMat);
+          }
+        });
+
+        glassMaterials.set(mesh.uniqueId, glassMultiMat);
+      }
+    });
+
+    materialsInitialized = true;
+  }
+
   function toggleGlassMode() {
+    // Initialize glass materials on first call
+    initializeGlassMaterials(scene);
+
     isGlassMode = !isGlassMode;
 
-    // Get all materials from the scene
-    scene.materials.forEach(material => {
-      if (material.name === "baseMaterial" || material.name === "finMaterial") {
-        // Base and fins: StandardMaterial glass
-        if (isGlassMode) {
-          material.diffuseColor = new Color3(0.9, 0.95, 1.0); // Slight tint
-          material.alpha = 0.05; // Very transparent
-          material.specularColor = new Color3(0.3, 0.3, 0.3);
-          material.specularPower = 64;
-          material.emissiveColor = new Color3(0, 0, 0);
-          material.backFaceCulling = false;
-        } else {
-          // Restore original
-          material.diffuseColor = Color3.FromInts(88, 54, 41);
-          material.alpha = 1.0;
-          material.specularColor = new Color3(0, 0, 0);
-          material.specularPower = 0;
-          material.emissiveColor = new Color3(0, 0, 0);
-          material.backFaceCulling = true;
-        }
-      } else if (material.name === "backPanelMaterial") {
-        // Backing panels: glassy brown veneer
-        material.alpha = isGlassMode ? 0.5 : 1.0;
-        material.backFaceCulling = !isGlassMode;
-      } else if (material.name.includes("_checker")) {
-        // Board squares Face 4 (checkerboard pattern) using StandardMaterial
-        const metadata = material.metadata || {};
-        const isDark = metadata.isDark || false;
+    scene.meshes.forEach(mesh => {
+      if (!mesh.material) return;
 
-        if (isGlassMode) {
-          if (isDark) {
-            // Dark squares: grey/white sand-blasted glass
-            material.diffuseColor = new Color3(0.88, 0.88, 0.88);
-            material.alpha = 0.9;
-            material.specularColor = new Color3(0.1, 0.1, 0.1);
-            material.specularPower = 5; // Low for frosted appearance
-            material.emissiveColor = new Color3(0, 0, 0);
-          } else {
-            // Light squares: clear glass
-            material.diffuseColor = new Color3(1.0, 1.0, 1.0);
-            material.alpha = 0.05;
-            material.specularColor = new Color3(0.3, 0.3, 0.3);
-            material.specularPower = 64;
-            material.emissiveColor = new Color3(0, 0, 0);
-          }
-          material.backFaceCulling = true;
-        } else {
-          // Restore original
-          material.diffuseColor = isDark
-            ? Color3.FromInts(50, 25, 15)
-            : Color3.FromInts(240, 230, 140);
-          material.alpha = 1.0;
-          material.specularColor = new Color3(0.2, 0.2, 0.2);
-          material.specularPower = 64;
-          material.emissiveColor = new Color3(0, 0, 0);
-          material.backFaceCulling = true;
-        }
-      } else if (material.name.includes("_glass")) {
-        // Board cube other faces (0-3, 5): clear glass in glass mode using PBR
-        const metadata = material.metadata || {};
-        const cubeIsDark = metadata.isDark || false;
+      const meshId = mesh.uniqueId;
 
-        if (isGlassMode) {
-          // PBR glass properties - completely invisible to eliminate flicker
-          material.albedoColor = new Color3(1.0, 1.0, 1.0); // Pure clear white
-          material.metallic = 0.0; // Glass is not metallic
-          material.roughness = 0.0; // Smooth
-          material.alpha = 0.0; // Completely invisible - no cellular flicker
-          material.emissiveColor = new Color3(0, 0, 0); // No glow
-          material.backFaceCulling = false; // Show both sides
-        } else {
-          // Solid mode: restore color based on dark/light square
-          material.albedoColor = cubeIsDark
-            ? Color3.FromInts(50, 25, 15)
-            : Color3.FromInts(240, 230, 140);
-          material.metallic = 0.0;
-          material.roughness = 0.8; // Less matte for richer color
-          material.alpha = 1.0;
-          material.emissiveColor = new Color3(0, 0, 0); // Reset emissive
-          material.backFaceCulling = true;
-        }
-      } else if (material.name === "edgeStripMaterial") {
-        // Green edges: translucent
-        material.alpha = isGlassMode ? 0.6 : 1.0;
-        material.backFaceCulling = !isGlassMode;
+      if (isGlassMode && glassMaterials.has(meshId)) {
+        mesh.material = glassMaterials.get(meshId);
+      } else if (!isGlassMode && originalMaterials.has(meshId)) {
+        mesh.material = originalMaterials.get(meshId);
       }
     });
 
