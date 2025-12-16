@@ -188,7 +188,10 @@ export default function createStrixGame(engine, canvas) {
       case "tinted_brown_center":
         glassMat.albedoColor = Color3.FromInts(50, 25, 15); // Dark brown like original brown squares
         glassMat.roughness = 0.05;
-        glassMat.alpha = 0.95; // Very opaque, almost solid
+        glassMat.alpha = 0.98; // Nearly solid
+        // DISABLE glass properties - should be opaque, not glass-like
+        glassMat.subSurface.isRefractionEnabled = false;
+        glassMat.environmentIntensity = 0; // No reflections
         break;
 
       case "invisible":
