@@ -142,40 +142,47 @@ export default function createStrixGame(engine, canvas) {
   function createGlassMaterial(scene, name, type) {
     const glassMat = new PBRMaterial(name, scene);
 
+    // THE KEY FIX: Enable alpha transparency mode
+    glassMat.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
+
     // Common glass properties
     glassMat.metallic = 0.0;
     glassMat.backFaceCulling = false;
 
-    // Enable refraction - this is essential for realistic glass
+    // Enable refraction for realistic glass
     glassMat.subSurface.isRefractionEnabled = true;
     glassMat.subSurface.indexOfRefraction = 1.5;
     glassMat.subSurface.refractionIntensity = 0.8;
-    glassMat.subSurface.linkRefractionWithTransparency = true;
+    // IMPORTANT: Set to false when using manual alpha
+    glassMat.subSurface.linkRefractionWithTransparency = false;
+
+    // Reduce reflection intensity for glass look
+    glassMat.environmentIntensity = 0.3;
 
     switch (type) {
       case "clear":
-        glassMat.albedoColor = new Color3(1.0, 1.0, 1.0);
-        glassMat.roughness = 0.0;
-        glassMat.alpha = 0.01; // Maximum transparency - essentially invisible
+        glassMat.albedoColor = new Color3(0.98, 0.99, 1.0);
+        glassMat.roughness = 0.05;
+        glassMat.alpha = 0.3; // Glass-like transparency
         break;
 
       case "frosted":
-        glassMat.albedoColor = new Color3(0.95, 0.95, 0.95);
-        glassMat.roughness = 0.1;
-        glassMat.alpha = 0.01; // Maximum transparency
-        glassMat.subSurface.refractionIntensity = 0.8;
+        glassMat.albedoColor = new Color3(0.92, 0.92, 0.94);
+        glassMat.roughness = 0.3;
+        glassMat.alpha = 0.5; // Slightly more opaque for frosted effect
+        glassMat.subSurface.refractionIntensity = 0.6;
         break;
 
       case "tinted":
-        glassMat.albedoColor = new Color3(1.0, 1.0, 1.0);
-        glassMat.roughness = 0.0;
-        glassMat.alpha = 0.01; // Maximum transparency
+        glassMat.albedoColor = new Color3(0.9, 0.85, 0.8);
+        glassMat.roughness = 0.05;
+        glassMat.alpha = 0.35; // Glass-like transparency
         break;
 
       case "tinted_green":
-        glassMat.albedoColor = new Color3(1.0, 1.0, 1.0);
-        glassMat.roughness = 0.0;
-        glassMat.alpha = 0.01; // Maximum transparency
+        glassMat.albedoColor = new Color3(0.75, 0.88, 0.75);
+        glassMat.roughness = 0.05;
+        glassMat.alpha = 0.4; // Glass-like transparency
         break;
 
       case "invisible":
