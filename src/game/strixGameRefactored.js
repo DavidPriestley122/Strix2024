@@ -159,9 +159,9 @@ export default function createStrixGame(engine, canvas) {
     // IMPORTANT: Set to false when using manual alpha
     glassMat.subSurface.linkRefractionWithTransparency = false;
 
-    // Lighting properties for glass (per Opus 4.1 recommendations)
+    // Lighting properties for glass (balanced for color visibility)
     glassMat.environmentIntensity = 0.5; // Environment reflections
-    glassMat.directIntensity = 0.3; // Lower = more glass-like (less plastic)
+    glassMat.directIntensity = 0.6; // Higher to show colors (was 0.3, too dark)
     glassMat.specularIntensity = 1.0; // Specular highlights from direct lights
 
     switch (type) {
@@ -302,8 +302,8 @@ export default function createStrixGame(engine, canvas) {
       }
 
       if (isGlassMode) {
-        // REDUCE lighting for glass mode (0.4x = subtle) - environment does the work
-        light.intensity = originalLightIntensities.get(light.name) * 0.4;
+        // Moderate lighting for glass mode (0.7x) - balanced for transparency and color
+        light.intensity = originalLightIntensities.get(light.name) * 0.7;
       } else {
         // Restore original lighting - non-glass mode UNCHANGED
         light.intensity = originalLightIntensities.get(light.name);
