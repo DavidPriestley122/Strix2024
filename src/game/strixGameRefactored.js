@@ -186,9 +186,9 @@ export default function createStrixGame(engine, canvas) {
         break;
 
       case "tinted_brown_center":
-        glassMat.albedoColor = Color3.FromInts(110, 54, 30); // Brown - stronger than base/fins
+        glassMat.albedoColor = Color3.FromInts(255, 0, 0); // TESTING: Bright red to verify it's working
         glassMat.roughness = 0.05;
-        glassMat.alpha = 0.35; // More visible tint
+        glassMat.alpha = 0.7; // Very visible for testing
         break;
 
       case "invisible":
