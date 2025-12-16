@@ -154,28 +154,28 @@ export default function createStrixGame(engine, canvas) {
 
     switch (type) {
       case "clear":
-        glassMat.albedoColor = new Color3(0.98, 0.99, 1.0);
+        glassMat.albedoColor = new Color3(1.0, 1.0, 1.0);
         glassMat.roughness = 0.0;
-        glassMat.alpha = 0.02; // Very transparent - almost invisible
+        glassMat.alpha = 0.01; // Maximum transparency - essentially invisible
         break;
 
       case "frosted":
-        glassMat.albedoColor = new Color3(0.92, 0.92, 0.94);
-        glassMat.roughness = 0.2; // Reduced roughness for better transparency
-        glassMat.alpha = 0.1; // Much more transparent
-        glassMat.subSurface.refractionIntensity = 0.6; // Increased refraction
+        glassMat.albedoColor = new Color3(0.95, 0.95, 0.95);
+        glassMat.roughness = 0.1;
+        glassMat.alpha = 0.01; // Maximum transparency
+        glassMat.subSurface.refractionIntensity = 0.8;
         break;
 
       case "tinted":
-        glassMat.albedoColor = new Color3(0.9, 0.85, 0.8);
-        glassMat.roughness = 0.05;
-        glassMat.alpha = 0.05; // Much more transparent
+        glassMat.albedoColor = new Color3(1.0, 1.0, 1.0);
+        glassMat.roughness = 0.0;
+        glassMat.alpha = 0.01; // Maximum transparency
         break;
 
       case "tinted_green":
-        glassMat.albedoColor = new Color3(0.75, 0.88, 0.75);
-        glassMat.roughness = 0.05;
-        glassMat.alpha = 0.08; // Much more transparent
+        glassMat.albedoColor = new Color3(1.0, 1.0, 1.0);
+        glassMat.roughness = 0.0;
+        glassMat.alpha = 0.01; // Maximum transparency
         break;
 
       case "invisible":
