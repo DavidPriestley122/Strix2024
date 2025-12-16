@@ -205,9 +205,10 @@ export default function createStrixGame(engine, canvas) {
 
     // Create environment texture for glass reflections (only when glass mode is first used)
     if (!scene.environmentTexture) {
-      // Using forest.env for natural outdoor reflections with forests and mountains
+      // TODO: Find a working natural environment texture (forest.env returns 404)
+      // Using default environment for now
       scene.environmentTexture = CubeTexture.CreateFromPrefilteredData(
-        "https://assets.babylonjs.com/environments/forest.env",
+        "https://playground.babylonjs.com/textures/environment.env",
         scene
       );
       scene.environmentIntensity = 0; // Start at 0, will be set to 0.4 when glass mode is enabled
@@ -236,14 +237,14 @@ export default function createStrixGame(engine, canvas) {
         // Board cubes use MultiMaterial
         const glassMultiMat = new MultiMaterial(mat.name + "_glassVer", scene);
 
-        // Check if this is one of the three owl squares (center squares)
-        const isOwlSquare = mesh.name === "b7-1" || mesh.name === "y7-1" || mesh.name === "g7-1";
+        // Check if this is one of the three nest squares (center of the board)
+        const isNestSquare = mesh.name === "b7-7" || mesh.name === "y7-7" || mesh.name === "g7-7";
 
         mat.subMaterials.forEach((subMat, index) => {
           if (subMat.name.includes("_checker")) {
             let glassType;
-            if (isOwlSquare) {
-              // Owl squares get brown tint
+            if (isNestSquare) {
+              // Nest squares get brown tint
               glassType = "tinted_brown_center";
             } else {
               // REVERSED: Light squares (isDark=false) are now frosted, dark squares are clear
