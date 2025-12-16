@@ -139,6 +139,9 @@ export default function createStrixGame(engine, canvas) {
   const originalMaterials = new Map();  // mesh.uniqueId -> original material
   const glassMaterials = new Map();     // mesh.uniqueId -> glass material
 
+  // Store original light intensities for toggling
+  const originalLightIntensities = new Map();
+
   function createGlassMaterial(scene, name, type) {
     const glassMat = new PBRMaterial(name, scene);
 
@@ -287,6 +290,23 @@ export default function createStrixGame(engine, canvas) {
     // Toggle environment texture intensity (only needed for glass reflections)
     // Setting to 0 in non-glass mode preserves original wooden lighting
     scene.environmentIntensity = isGlassMode ? 0.4 : 0;
+
+    // Adjust lighting for glass mode - brighter to show transparency
+    const lights = scene.lights;
+    lights.forEach(light => {
+      if (!originalLightIntensities.has(light.name)) {
+        // Store original intensity on first toggle
+        originalLightIntensities.set(light.name, light.intensity);
+      }
+
+      if (isGlassMode) {
+        // Increase lighting for glass mode (1.8x brighter)
+        light.intensity = originalLightIntensities.get(light.name) * 1.8;
+      } else {
+        // Restore original lighting
+        light.intensity = originalLightIntensities.get(light.name);
+      }
+    });
 
     scene.meshes.forEach(mesh => {
       if (!mesh.material) return;
