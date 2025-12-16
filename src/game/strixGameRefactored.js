@@ -23,7 +23,7 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture } from "@babylonjs/core";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight } from "@babylonjs/core";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -141,6 +141,9 @@ export default function createStrixGame(engine, canvas) {
 
   // Store original light intensities for toggling
   const originalLightIntensities = new Map();
+
+  // Spotlight for glass mode color enhancement
+  let glassSpotlight = null;
 
   function createGlassMaterial(scene, name, type) {
     const glassMat = new PBRMaterial(name, scene);
@@ -292,6 +295,28 @@ export default function createStrixGame(engine, canvas) {
     // Toggle environment texture intensity - this does 80% of the work for glass
     // Higher intensity for glass mode as per Opus recommendation
     scene.environmentIntensity = isGlassMode ? 0.9 : 0;
+
+    // Create or toggle spotlight for glass mode to highlight colored elements
+    if (isGlassMode) {
+      // Create spotlight if it doesn't exist
+      if (!glassSpotlight) {
+        glassSpotlight = new SpotLight(
+          "glassSpotlight",
+          new Vector3(5, 8, 5), // Position above and to side of board
+          new Vector3(-1, -1, -1), // Direction toward base
+          Math.PI / 3, // Angle
+          2, // Exponent
+          scene
+        );
+        glassSpotlight.intensity = 1.5;
+      }
+      glassSpotlight.setEnabled(true);
+    } else {
+      // Disable spotlight in non-glass mode
+      if (glassSpotlight) {
+        glassSpotlight.setEnabled(false);
+      }
+    }
 
     // Adjust lighting for glass mode - REDUCE direct lights (too bright makes glass look plastic)
     const lights = scene.lights;
