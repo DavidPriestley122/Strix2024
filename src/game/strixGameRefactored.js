@@ -161,7 +161,7 @@ export default function createStrixGame(engine, canvas) {
 
     switch (type) {
       case "clear":
-        glassMat.albedoColor = Color3.FromInts(88, 54, 41); // Original brown - translucent version
+        glassMat.albedoColor = Color3.FromInts(100, 54, 35); // Brown - more saturated
         glassMat.roughness = 0.05;
         glassMat.alpha = 0.3; // Glass-like transparency
         break;
@@ -180,9 +180,15 @@ export default function createStrixGame(engine, canvas) {
         break;
 
       case "tinted_green":
-        glassMat.albedoColor = Color3.FromInts(8, 70, 0); // Green Team Colour - 10% more saturated
+        glassMat.albedoColor = Color3.FromInts(8, 90, 0); // Green - more saturated
         glassMat.roughness = 0.05;
         glassMat.alpha = 0.4; // Glass-like transparency
+        break;
+
+      case "tinted_brown_center":
+        glassMat.albedoColor = Color3.FromInts(110, 54, 30); // Brown - stronger than base/fins
+        glassMat.roughness = 0.05;
+        glassMat.alpha = 0.35; // More visible tint
         break;
 
       case "invisible":
@@ -199,8 +205,9 @@ export default function createStrixGame(engine, canvas) {
 
     // Create environment texture for glass reflections (only when glass mode is first used)
     if (!scene.environmentTexture) {
+      // Using forest.env for natural outdoor reflections with forests and mountains
       scene.environmentTexture = CubeTexture.CreateFromPrefilteredData(
-        "https://playground.babylonjs.com/textures/environment.env",
+        "https://assets.babylonjs.com/environments/forest.env",
         scene
       );
       scene.environmentIntensity = 0; // Start at 0, will be set to 0.4 when glass mode is enabled
@@ -229,10 +236,20 @@ export default function createStrixGame(engine, canvas) {
         // Board cubes use MultiMaterial
         const glassMultiMat = new MultiMaterial(mat.name + "_glassVer", scene);
 
+        // Check if this is one of the three owl squares (center squares)
+        const isOwlSquare = mesh.name === "b7-1" || mesh.name === "y7-1" || mesh.name === "g7-1";
+
         mat.subMaterials.forEach((subMat, index) => {
           if (subMat.name.includes("_checker")) {
-            const isDark = subMat.metadata?.isDark || false;
-            const glassType = isDark ? "frosted" : "clear";
+            let glassType;
+            if (isOwlSquare) {
+              // Owl squares get brown tint
+              glassType = "tinted_brown_center";
+            } else {
+              // REVERSED: Light squares (isDark=false) are now frosted, dark squares are clear
+              const isDark = subMat.metadata?.isDark || false;
+              glassType = isDark ? "clear" : "frosted";
+            }
             glassMultiMat.subMaterials.push(
               createGlassMaterial(scene, subMat.name + "_glassVer", glassType)
             );
