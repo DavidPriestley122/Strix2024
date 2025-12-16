@@ -180,7 +180,7 @@ export default function createStrixGame(engine, canvas) {
         break;
 
       case "tinted_green":
-        glassMat.albedoColor = new Color3(0.75, 0.88, 0.75);
+        glassMat.albedoColor = Color3.FromInts(8, 64, 0); // Green Team Colour - translucent version
         glassMat.roughness = 0.05;
         glassMat.alpha = 0.4; // Glass-like transparency
         break;
