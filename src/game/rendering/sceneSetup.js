@@ -11,8 +11,7 @@ import {
   MeshBuilder,
   StandardMaterial,
   TransformNode,
-  ActionManager,
-  CubeTexture
+  ActionManager
 } from "@babylonjs/core";
 import { GAME_CONFIG } from "../../config/gameConfig.js";
 
@@ -83,13 +82,6 @@ export function setupLighting(scene) {
   light2.intensity = GAME_CONFIG.LIGHTING.DIRECTIONAL_INTENSITY_1;
   light3.intensity = GAME_CONFIG.LIGHTING.DIRECTIONAL_INTENSITY_2;
   light4.intensity = GAME_CONFIG.LIGHTING.DIRECTIONAL_INTENSITY_3;
-
-  // Environment texture for glass reflections
-  scene.environmentTexture = CubeTexture.CreateFromPrefilteredData(
-    "https://playground.babylonjs.com/textures/environment.env",
-    scene
-  );
-  scene.environmentIntensity = 0.4;
 
   return { light1, light2, light3, light4 };
 }

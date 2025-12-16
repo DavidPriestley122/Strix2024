@@ -23,7 +23,7 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial } from "@babylonjs/core";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture } from "@babylonjs/core";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -156,26 +156,26 @@ export default function createStrixGame(engine, canvas) {
       case "clear":
         glassMat.albedoColor = new Color3(0.98, 0.99, 1.0);
         glassMat.roughness = 0.0;
-        glassMat.alpha = 0.08; // More transparent
+        glassMat.alpha = 0.02; // Very transparent - almost invisible
         break;
 
       case "frosted":
         glassMat.albedoColor = new Color3(0.92, 0.92, 0.94);
-        glassMat.roughness = 0.3; // Less rough for more transparency
-        glassMat.alpha = 0.2; // More transparent
-        glassMat.subSurface.refractionIntensity = 0.5; // More refraction
+        glassMat.roughness = 0.2; // Reduced roughness for better transparency
+        glassMat.alpha = 0.1; // Much more transparent
+        glassMat.subSurface.refractionIntensity = 0.6; // Increased refraction
         break;
 
       case "tinted":
         glassMat.albedoColor = new Color3(0.9, 0.85, 0.8);
         glassMat.roughness = 0.05;
-        glassMat.alpha = 0.12; // More transparent
+        glassMat.alpha = 0.05; // Much more transparent
         break;
 
       case "tinted_green":
         glassMat.albedoColor = new Color3(0.75, 0.88, 0.75);
         glassMat.roughness = 0.05;
-        glassMat.alpha = 0.15; // More transparent
+        glassMat.alpha = 0.08; // Much more transparent
         break;
 
       case "invisible":
@@ -189,6 +189,15 @@ export default function createStrixGame(engine, canvas) {
 
   function initializeGlassMaterials(scene) {
     if (materialsInitialized) return;
+
+    // Create environment texture for glass reflections (only when glass mode is first used)
+    if (!scene.environmentTexture) {
+      scene.environmentTexture = CubeTexture.CreateFromPrefilteredData(
+        "https://playground.babylonjs.com/textures/environment.env",
+        scene
+      );
+      scene.environmentIntensity = 0; // Start at 0, will be set to 0.4 when glass mode is enabled
+    }
 
     scene.meshes.forEach(mesh => {
       if (!mesh.material) return;
