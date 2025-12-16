@@ -154,28 +154,28 @@ export default function createStrixGame(engine, canvas) {
 
     switch (type) {
       case "clear":
-        glassMat.albedoColor = new Color3(0.95, 0.97, 1.0);
+        glassMat.albedoColor = new Color3(0.98, 0.99, 1.0);
         glassMat.roughness = 0.0;
-        glassMat.alpha = 0.15;
+        glassMat.alpha = 0.08; // More transparent
         break;
 
       case "frosted":
-        glassMat.albedoColor = new Color3(0.9, 0.9, 0.92);
-        glassMat.roughness = 0.4;
-        glassMat.alpha = 0.4;
-        glassMat.subSurface.refractionIntensity = 0.3;
+        glassMat.albedoColor = new Color3(0.92, 0.92, 0.94);
+        glassMat.roughness = 0.3; // Less rough for more transparency
+        glassMat.alpha = 0.2; // More transparent
+        glassMat.subSurface.refractionIntensity = 0.5; // More refraction
         break;
 
       case "tinted":
-        glassMat.albedoColor = new Color3(0.85, 0.8, 0.75);
-        glassMat.roughness = 0.1;
-        glassMat.alpha = 0.25;
+        glassMat.albedoColor = new Color3(0.9, 0.85, 0.8);
+        glassMat.roughness = 0.05;
+        glassMat.alpha = 0.12; // More transparent
         break;
 
       case "tinted_green":
-        glassMat.albedoColor = new Color3(0.7, 0.85, 0.7);
-        glassMat.roughness = 0.1;
-        glassMat.alpha = 0.3;
+        glassMat.albedoColor = new Color3(0.75, 0.88, 0.75);
+        glassMat.roughness = 0.05;
+        glassMat.alpha = 0.15; // More transparent
         break;
 
       case "invisible":
@@ -243,6 +243,10 @@ export default function createStrixGame(engine, canvas) {
     initializeGlassMaterials(scene);
 
     isGlassMode = !isGlassMode;
+
+    // Toggle environment texture intensity (only needed for glass reflections)
+    // Setting to 0 in non-glass mode preserves original wooden lighting
+    scene.environmentIntensity = isGlassMode ? 0.4 : 0;
 
     scene.meshes.forEach(mesh => {
       if (!mesh.material) return;
