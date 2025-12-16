@@ -186,12 +186,15 @@ export default function createStrixGame(engine, canvas) {
         break;
 
       case "tinted_brown_center":
+        // Override transparency mode to OPAQUE for solid rendering
+        glassMat.transparencyMode = PBRMaterial.PBRMATERIAL_OPAQUE;
         glassMat.albedoColor = Color3.FromInts(50, 25, 15); // Dark brown like original brown squares
-        glassMat.roughness = 0.05;
-        glassMat.alpha = 0.98; // Nearly solid
-        // DISABLE glass properties - should be opaque, not glass-like
+        glassMat.roughness = 0.2;
+        glassMat.alpha = 1.0; // Fully solid
+        glassMat.backFaceCulling = true; // Standard for opaque materials
+        // DISABLE glass properties
         glassMat.subSurface.isRefractionEnabled = false;
-        glassMat.environmentIntensity = 0; // No reflections
+        glassMat.environmentIntensity = 0.5; // Some reflection for depth
         break;
 
       case "invisible":
