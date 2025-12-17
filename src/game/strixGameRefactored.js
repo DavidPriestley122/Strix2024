@@ -219,13 +219,12 @@ export default function createStrixGame(engine, canvas) {
 
     // Create environment texture for glass reflections (only when glass mode is first used)
     if (!scene.environmentTexture) {
-      // TODO: Find a working natural environment texture (forest.env returns 404)
-      // Using default environment for now
+      // Use forest environment texture for natural reflections in glass
       scene.environmentTexture = CubeTexture.CreateFromPrefilteredData(
-        "https://playground.babylonjs.com/textures/environment.env",
+        "https://playground.babylonjs.com/textures/forest.env",
         scene
       );
-      scene.environmentIntensity = 0; // Start at 0, will be set to 0.4 when glass mode is enabled
+      scene.environmentIntensity = 0; // Start at 0, will be set to 0.9 when glass mode is enabled
     }
 
     scene.meshes.forEach(mesh => {
