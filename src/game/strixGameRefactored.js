@@ -171,7 +171,7 @@ export default function createStrixGame(engine, canvas) {
       case "clear":
         glassMat.albedoColor = Color3.FromInts(120, 60, 30); // Brown - more saturated and vibrant
         glassMat.roughness = 0.05;
-        glassMat.alpha = 0.3; // Glass-like transparency
+        glassMat.alpha = 1.0; // Fully opaque to show brown color
         break;
 
       case "frosted":
