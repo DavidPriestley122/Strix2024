@@ -7,7 +7,7 @@ export class MinimaxAI {
   constructor(playerColor, gameStateManager) {
     this.playerColor = playerColor;
     this.gameState = gameStateManager;
-    this.maxDepth = 1;
+    this.maxDepth = 3; // Increased from 1 to see 3-move winning sequences
     this.strategicLogging = true;
     this.tacticalLogging = true;
 
@@ -604,23 +604,45 @@ export class MinimaxAI {
   evaluateAdvancement(move) {
     const piece = move.piece;
     const targetSquare = move.targetSquare;
-    
+
     // Parse target coordinates
     const coords = targetSquare.substring(1).split("-");
     const row = parseInt(coords[0]);
     const col = parseInt(coords[1]);
     const face = targetSquare[0];
-    
+
     let bonus = 0;
-    
+
     // Owls get bonus for moving toward center and nest
     if (piece.type === 'Owl') {
-      // Bonus for approaching center (4,4)
-      const centerDistance = Math.abs(row - 4) + Math.abs(col - 4);
-      if (centerDistance <= 2) bonus += 20;
-      
-      // Bigger bonus for approaching nest (7,7)
-      if (row >= 6 && col >= 6) bonus += 30;
+      // Determine the nest square for this player's color
+      const nestFace = this.playerColor[0]; // 'b', 'y', or 'g'
+      const nestSquare = `${nestFace}7-7`;
+
+      // MASSIVE bonus for landing on THE WINNING SQUARE
+      if (targetSquare === nestSquare) {
+        bonus += 10000; // This is the win! Highest priority!
+        this.logStrategy(`🏆 WINNING SQUARE DETECTED: ${targetSquare} = ${nestSquare} (+10000)`);
+      }
+      // Progressive bonuses for approaching the nest
+      else if (row === 7 && col === 7) {
+        // Wrong face but right coordinates
+        bonus += 100;
+      }
+      else {
+        // Calculate distance to nest and award bonus
+        const nestDistance = Math.abs(row - 7) + Math.abs(col - 7);
+
+        // Distance-based bonuses (closer = better)
+        if (nestDistance === 1) bonus += 150;      // 1 square away
+        else if (nestDistance === 2) bonus += 80;  // 2 squares away
+        else if (nestDistance === 3) bonus += 40;  // 3 squares away
+        else if (nestDistance === 4) bonus += 20;  // 4 squares away
+
+        // Small bonus for approaching center (4,4) - helps early game
+        const centerDistance = Math.abs(row - 4) + Math.abs(col - 4);
+        if (centerDistance <= 2) bonus += 10;
+      }
     }
     
     // Kites get bonus for edge positions (better for swooping)
