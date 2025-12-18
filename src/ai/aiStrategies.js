@@ -615,19 +615,13 @@ export class MinimaxAI {
 
     // Owls get bonus for moving toward center and nest
     if (piece.type === 'Owl') {
-      // Determine the nest square for this player's color
-      const nestFace = this.playerColor[0]; // 'b', 'y', or 'g'
-      const nestSquare = `${nestFace}7-7`;
+      // ANY of the three nest squares wins!
+      const nestSquares = ['b7-7', 'y7-7', 'g7-7'];
 
-      // MASSIVE bonus for landing on THE WINNING SQUARE
-      if (targetSquare === nestSquare) {
+      // MASSIVE bonus for landing on ANY WINNING SQUARE
+      if (nestSquares.includes(targetSquare)) {
         bonus += 10000; // This is the win! Highest priority!
-        this.logStrategy(`🏆 WINNING SQUARE DETECTED: ${targetSquare} = ${nestSquare} (+10000)`);
-      }
-      // Progressive bonuses for approaching the nest
-      else if (row === 7 && col === 7) {
-        // Wrong face but right coordinates
-        bonus += 100;
+        this.logStrategy(`🏆 WINNING SQUARE DETECTED: ${targetSquare} (+10000)`);
       }
       else {
         // Calculate distance to nest and award bonus
