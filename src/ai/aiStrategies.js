@@ -2,6 +2,7 @@ import { getAllOwlMoves } from "../game/rules/owlRules.js";
 import { getAllKiteMoves } from "../game/rules/kiteRules.js";
 import { getAllRavenMoves } from "../game/rules/ravenRules.js";
 import { StrixPatterns } from "./strixPatterns.js";
+import { convertToFlightway, generateFlightwayRoute } from "../game/rules/flightwayUtils.js";
 
 export class MinimaxAI {
   constructor(playerColor, gameStateManager) {
@@ -600,6 +601,68 @@ export class MinimaxAI {
     }
   }
 
+  // Calculate flightway distance between two squares
+  calculateFlightwayDistance(fromSquare, toSquare) {
+    // Convert both squares to flightway coordinates
+    const fromFw = convertToFlightway(fromSquare);
+    const toFw = convertToFlightway(toSquare);
+
+    if (!fromFw || !toFw) return null;
+
+    // Parse flightway coordinates
+    const fromMatch = fromFw.match(/([byg])(\d)([byg])(\d)/);
+    const toMatch = toFw.match(/([byg])(\d)([byg])(\d)/);
+
+    if (!fromMatch || !toMatch) return null;
+
+    const fromFlightways = [`${fromMatch[1]}${fromMatch[2]}`, `${fromMatch[3]}${fromMatch[4]}`];
+    const toFlightways = [`${toMatch[1]}${toMatch[2]}`, `${toMatch[3]}${toMatch[4]}`];
+
+    // Check if they share a flightway
+    for (const fromFlight of fromFlightways) {
+      for (const toFlight of toFlightways) {
+        if (fromFlight === toFlight) {
+          // Same flightway - calculate distance along route
+          const face = fromFlight[0];
+          const number = parseInt(fromFlight[1]);
+          const route = generateFlightwayRoute(face, number);
+
+          const fromIndex = route.indexOf(fromSquare);
+          const toIndex = route.indexOf(toSquare);
+
+          if (fromIndex !== -1 && toIndex !== -1) {
+            return Math.abs(toIndex - fromIndex);
+          }
+        }
+      }
+    }
+
+    // Not on same flightway - use Manhattan distance as fallback
+    const parseSquare = (square) => {
+      const coords = square.substring(1).split("-");
+      return { row: parseInt(coords[0]), col: parseInt(coords[1]) };
+    };
+
+    const from = parseSquare(fromSquare);
+    const to = parseSquare(toSquare);
+    return Math.abs(from.row - to.row) + Math.abs(from.col - to.col);
+  }
+
+  // Calculate minimum flightway distance to any nest square
+  calculateDistanceToNearestNest(owlPosition) {
+    const nestSquares = ['b7-7', 'y7-7', 'g7-7'];
+    let minDistance = Infinity;
+
+    for (const nestSquare of nestSquares) {
+      const distance = this.calculateFlightwayDistance(owlPosition, nestSquare);
+      if (distance !== null && distance < minDistance) {
+        minDistance = distance;
+      }
+    }
+
+    return minDistance === Infinity ? 12 : minDistance; // Default to max if no route found
+  }
+
   // Evaluate positional advancement
   evaluateAdvancement(move) {
     const piece = move.piece;
@@ -624,18 +687,17 @@ export class MinimaxAI {
         this.logStrategy(`🏆 WINNING SQUARE DETECTED: ${targetSquare} (+10000)`);
       }
       else {
-        // Calculate distance to nest and award bonus
-        const nestDistance = Math.abs(row - 7) + Math.abs(col - 7);
+        // Calculate FLIGHTWAY distance to nearest nest (actual move count!)
+        const nestDistance = this.calculateDistanceToNearestNest(targetSquare);
 
-        // Distance-based bonuses (closer = better)
-        if (nestDistance === 1) bonus += 150;      // 1 square away
-        else if (nestDistance === 2) bonus += 80;  // 2 squares away
-        else if (nestDistance === 3) bonus += 40;  // 3 squares away
-        else if (nestDistance === 4) bonus += 20;  // 4 squares away
+        // Progressive bonus based on actual move count (closer = better)
+        // Max distance is ~12 moves, so we create a strong gradient
+        const distanceBonus = Math.max(0, 120 - (nestDistance * 10));
+        bonus += distanceBonus;
 
-        // Small bonus for approaching center (4,4) - helps early game
-        const centerDistance = Math.abs(row - 4) + Math.abs(col - 4);
-        if (centerDistance <= 2) bonus += 10;
+        if (distanceBonus > 0) {
+          this.logStrategy(`📏 Distance to nest: ${nestDistance} moves → +${distanceBonus} points`);
+        }
       }
     }
     
