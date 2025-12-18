@@ -156,9 +156,16 @@ export class MinimaxAI {
       }
     }
 
+    // DISABLE LOGGING during recursive calls to avoid exponential log spam
+    const savedLogging = this.strategicLogging;
+    this.strategicLogging = false;
+
     // Generate moves for current player
     const gameState = { piecePositions: piecePositions };
     const moves = this.generateAllMoves(currentPlayer, gameState);
+
+    // Restore logging
+    this.strategicLogging = savedLogging;
 
     if (moves.length === 0) {
       // No moves available - neutral
