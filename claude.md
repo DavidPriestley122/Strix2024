@@ -155,3 +155,76 @@ Add a toggle button to switch between solid and glass/transparent appearance for
    - May need artist/designer input on exact glass appearance desired
    - Could benefit from reference images of desired glass effect
    - User testing with different alpha/color values
+
+---
+
+# Click Detection Bug Fix (Owlhalla Pieces)
+
+## Problem Discovered
+**Date:** December 2025 (during AI development)
+
+**Symptom:** Green Owl at g4-1 could move to g3-1 via clicking, but g4-1 → g5-1 didn't respond to clicks. Manual text entry worked fine for both moves.
+
+**Initial hypothesis:** Glass mode changes (MultiMaterial, backFaceCulling) affected click detection on specific squares.
+
+**User's insight:** "Sometimes there is an invisible Owlhalla piece in the way" - captured pieces in Owlhalla might be blocking clicks.
+
+## Root Cause
+
+When pieces are captured and moved to Owlhalla:
+1. **visibility** is set to `false` (piece becomes invisible) ✓
+2. **isPickable** remained `true` (piece still intercepts raycasts) ✗
+
+In BabylonJS:
+- `visibility = false` - mesh not rendered, but still pickable by default
+- `isPickable = false` - mesh ignored by raycasting (clicks pass through)
+
+**Result:** Invisible captured pieces were blocking clicks on board squares positioned behind them in 3D space.
+
+## Why Only Certain Squares Affected
+
+Owlhalla cube positions:
+- Green face: g7--1 at (8.5, 0.5, -0.25), g6--1 at (8.5, 1.5, -0.25), g5--1 at (8.5, 2.5, -0.25)
+- Board cubes: g5-1 at (6.5, 2.5, -0.25)
+
+Same Y and Z coordinates! Depending on camera angle and captured piece positions, raycasts could hit invisible Owlhalla pieces before reaching board squares.
+
+## Solution
+
+**Files Changed:**
+1. `src/game/rendering/animations.js` line 144
+2. `src/game/controllers/eventController.js` line 662
+
+**Changes:**
+```javascript
+// When capturing pieces
+piece3D.visibility = owlHallaVisible;
+piece3D.isPickable = owlHallaVisible;  // NEW: Match pickability to visibility
+
+// When toggling Owlhalla visibility
+piece.visibility = owlHallaVisible;
+piece.isPickable = owlHallaVisible;  // NEW: Match pickability to visibility
+```
+
+**Behavior:**
+- **Owlhalla invisible:** Captured pieces are invisible AND unpickable (clicks pass through to board)
+- **Owlhalla visible:** Captured pieces are visible AND pickable (can double-click to restore)
+
+## Double-Click Dependency
+
+**Important:** BabylonJS `ActionManager.OnDoublePickTrigger` requires `isPickable = true`.
+
+If pieces remained unpickable when Owlhalla is shown, you couldn't double-click them to restore. This is why both files needed updating:
+- animations.js: Makes pieces unpickable when captured
+- eventController.js: Makes pieces pickable again when Owlhalla is shown
+
+## Revert Instructions (If Needed)
+
+**To revert this fix:**
+1. Remove `piece3D.isPickable = owlHallaVisible;` from animations.js line 144
+2. Remove `piece.isPickable = owlHallaVisible;` from eventController.js line 662
+
+**Note:** Reverting will restore the bug where invisible pieces block clicks on certain board squares.
+
+## Commit
+- Commit: ad991ad "Fix click detection bug caused by invisible Owlhalla pieces"
