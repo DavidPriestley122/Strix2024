@@ -55,10 +55,10 @@ export class MinimaxAI {
     }
   }
 
-  // Main decision function - now with pattern integration
+  // Main decision function - now with recursive minimax lookahead
   selectBestMove() {
-    this.logStrategy(`=== AI SEARCH (${this.playerColor}) ===`);
-    
+    this.logStrategy(`=== AI SEARCH (${this.playerColor}) WITH DEPTH-${this.maxDepth} MINIMAX ===`);
+
     // Debug: Show current board state
     this.logBoardState();
 
@@ -81,68 +81,185 @@ export class MinimaxAI {
       }
     }
 
-    // STEP 2: Evaluate moves with unified offensive/defensive analysis
-    const evaluatedMoves = [];
-    this.logStrategy(`🔍 Evaluating ${moves.length} moves for captures and threats...`);
-    
-    let captureMovesFound = 0;
-    for (const move of moves) {
-      let totalScore = 0;
-      
-      // Unified offensive analysis (what can I capture?)
-      const offensiveScore = this.evaluateMyCaptures(move);
-      if (offensiveScore > 0) captureMovesFound++;
-      
-      // Unified defensive analysis (what threatens me?)
-      const defensiveScore = this.evaluateThreatsToMe(move);
-      
-      // Pattern scoring (strategic positioning)
-      const patternScore = this.patterns.evaluateMovePatterns(
-        move,
-        this.playerColor
-      );
-      
-      // Base score to encourage all piece types to move
-      const baseScore = this.getBasePieceScore(move.piece.type);
-      
-      // Positional advancement bonus
-      const advancementBonus = this.evaluateAdvancement(move);
-      
-      // Combined scoring: base + advancement + offense - defense + patterns
-      totalScore = baseScore + advancementBonus + offensiveScore - defensiveScore + patternScore;
+    // STEP 2: Use recursive minimax to evaluate each root move
+    this.logStrategy(`🔍 Evaluating ${moves.length} moves with depth-${this.maxDepth} minimax + patterns...`);
 
-      // Store the total evaluation
-      move.evaluation = totalScore;
+    const evaluatedMoves = [];
+    const nextPlayer = this.getNextPlayer(this.playerColor);
+
+    for (const move of moves) {
+      // Simulate this move
+      const newPositions = this.simulateMove(
+        this.gameState.piecePositions,
+        move.piece.name,
+        move.targetSquare
+      );
+
+      // Recursively evaluate with minimax (opponent responds, then we respond, etc.)
+      const score = this.minimax(newPositions, this.maxDepth - 1, nextPlayer);
+
+      move.evaluation = score;
       evaluatedMoves.push(move);
 
-      // Log all moves with non-zero scores OR first few moves for debugging
-      if (offensiveScore > 0 || defensiveScore > 0 || patternScore !== 0 || advancementBonus > 0 || evaluatedMoves.length <= 10) {
-        this.logStrategy(
-          `📊 ${move.piece.name}→${move.targetSquare}: base=${baseScore}, adv=${advancementBonus}, off=${offensiveScore}, def=${defensiveScore}, pat=${patternScore}, total=${totalScore}`
-        );
-      }
-    }
-    
-    this.logStrategy(`🎯 Found ${captureMovesFound} capture opportunities out of ${moves.length} moves`);
-    
-    // Show the top 3 moves for debugging
-    const sortedMoves = [...evaluatedMoves].sort((a, b) => b.evaluation - a.evaluation);
-    this.logStrategy(`🏆 Top 3 moves:`);
-    for (let i = 0; i < Math.min(3, sortedMoves.length); i++) {
-      const move = sortedMoves[i];
-      this.logStrategy(`  ${i + 1}. ${move.piece.name}→${move.targetSquare} (score: ${move.evaluation})`);
+      this.logStrategy(`📊 ${move.piece.name}→${move.targetSquare}: minimax score = ${score.toFixed(0)}`);
     }
 
-    // STEP 3: Select best move based on pattern scores
+    // Show the top 5 moves for debugging
+    const sortedMoves = [...evaluatedMoves].sort((a, b) => b.evaluation - a.evaluation);
+    this.logStrategy(`🏆 Top 5 moves after minimax:`);
+    for (let i = 0; i < Math.min(5, sortedMoves.length); i++) {
+      const move = sortedMoves[i];
+      this.logStrategy(`  ${i + 1}. ${move.piece.name}→${move.targetSquare} (score: ${move.evaluation.toFixed(0)})`);
+    }
+
+    // STEP 3: Select best move based on minimax scores
     const bestMove = evaluatedMoves.reduce((best, current) =>
       current.evaluation > best.evaluation ? current : best
     );
 
     this.logStrategy(
-      `🎯 SELECTED: ${bestMove.piece.name} to ${bestMove.targetSquare} (score: ${bestMove.evaluation})`
+      `🎯 SELECTED: ${bestMove.piece.name} to ${bestMove.targetSquare} (minimax score: ${bestMove.evaluation.toFixed(0)})`
     );
     return bestMove;
   }
+
+  // ========== RECURSIVE MINIMAX IMPLEMENTATION ==========
+
+  // Simulate a move on a cloned game state
+  simulateMove(piecePositions, pieceName, targetSquare) {
+    const newState = JSON.parse(JSON.stringify(piecePositions));
+    newState[pieceName] = targetSquare;
+    return newState;
+  }
+
+  // Get next player in turn order
+  getNextPlayer(currentPlayer) {
+    const currentIndex = this.playerOrder.indexOf(currentPlayer);
+    const nextIndex = (currentIndex + 1) % this.playerOrder.length;
+    return this.playerOrder[nextIndex];
+  }
+
+  // Recursive minimax with alpha-beta pruning
+  minimax(piecePositions, depth, currentPlayer, alpha = -Infinity, beta = Infinity) {
+    // Terminal conditions
+    if (depth === 0) {
+      return this.evaluatePosition(piecePositions);
+    }
+
+    // Check for wins (terminal state)
+    const winner = this.checkWinner(piecePositions);
+    if (winner) {
+      if (winner === this.playerColor) {
+        return 1000000; // We won!
+      } else {
+        return -1000000; // Opponent won
+      }
+    }
+
+    // Generate moves for current player
+    const gameState = { piecePositions: piecePositions };
+    const moves = this.generateAllMoves(currentPlayer, gameState);
+
+    if (moves.length === 0) {
+      // No moves available - neutral
+      return 0;
+    }
+
+    const isMaximizing = (currentPlayer === this.playerColor);
+    const nextPlayer = this.getNextPlayer(currentPlayer);
+
+    if (isMaximizing) {
+      // Maximizing player (us)
+      let maxScore = -Infinity;
+      for (const move of moves) {
+        const newPositions = this.simulateMove(piecePositions, move.piece.name, move.targetSquare);
+        const score = this.minimax(newPositions, depth - 1, nextPlayer, alpha, beta);
+        maxScore = Math.max(maxScore, score);
+        alpha = Math.max(alpha, score);
+        if (beta <= alpha) break; // Beta cutoff
+      }
+      return maxScore;
+    } else {
+      // Minimizing player (opponents)
+      let minScore = Infinity;
+      for (const move of moves) {
+        const newPositions = this.simulateMove(piecePositions, move.piece.name, move.targetSquare);
+        const score = this.minimax(newPositions, depth - 1, nextPlayer, alpha, beta);
+        minScore = Math.min(minScore, score);
+        beta = Math.min(beta, score);
+        if (beta <= alpha) break; // Alpha cutoff
+      }
+      return minScore;
+    }
+  }
+
+  // Check if any player has won
+  checkWinner(piecePositions) {
+    const nestSquares = ["b7-7", "y7-7", "g7-7"];
+    for (const [pieceName, position] of Object.entries(piecePositions)) {
+      if (pieceName.includes("Owl") && nestSquares.includes(position)) {
+        // Extract player color from piece name
+        if (pieceName.startsWith("brown")) return "brown";
+        if (pieceName.startsWith("yellow")) return "yellow";
+        if (pieceName.startsWith("green")) return "green";
+      }
+    }
+    return null;
+  }
+
+  // Evaluate a position using flightway-based distances + strategic patterns
+  evaluatePosition(piecePositions) {
+    let score = 0;
+    const nestSquares = ["b7-7", "y7-7", "g7-7"];
+
+    // PART 1: Positional evaluation (flightway distances)
+    for (const color of this.playerOrder) {
+      const owlPiece = `${color}Owl`;
+      const owlPosition = piecePositions[owlPiece];
+
+      if (!owlPosition || owlPosition === "captured") continue;
+
+      // Calculate flightway distance to nearest nest
+      const distanceToNest = this.calculateDistanceToNearestNest(owlPosition);
+
+      // Closer to nest = better (inverted distance)
+      const positionalValue = Math.max(0, 120 - (distanceToNest * 10));
+
+      if (color === this.playerColor) {
+        // Our owl - higher score is better
+        score += positionalValue;
+      } else {
+        // Opponent owls - penalize if they're close to winning
+        score -= positionalValue * 0.5; // Opponents getting close hurts us
+      }
+    }
+
+    // PART 2: Strategic pattern evaluation (ghosting threats, formations)
+    // Create a temporary game state for pattern evaluation
+    const tempGameState = { piecePositions: piecePositions };
+
+    // Detect opponent ghosting threats in this position
+    for (const color of this.playerOrder) {
+      if (color === this.playerColor) continue; // Skip our own color
+
+      const threats = this.patterns.detectCompleteGhostThreats(color, tempGameState);
+      if (threats.length > 0) {
+        // Opponent has a ghosting threat - very bad!
+        score -= 5000 * threats.length; // Heavy penalty for allowing ghost threats
+      }
+    }
+
+    // Detect our own ghosting opportunities
+    const ourThreats = this.patterns.detectCompleteGhostThreats(this.playerColor, tempGameState);
+    if (ourThreats.length > 0) {
+      // We have a ghosting threat - very good!
+      score += 3000 * ourThreats.length;
+    }
+
+    return score;
+  }
+
+  // ========== END MINIMAX IMPLEMENTATION ==========
 
   // Generate all valid moves for a player
   generateAllMoves(playerColor, gameState = null) {
