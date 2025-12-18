@@ -141,8 +141,9 @@ export function animateCapturedPieceToOwlHalla(scene, pieceName, getOwlHallaCube
       // Set visibility based on current Owl Halla visibility state
       const owlHallaVisible = owlHallaCubes[0].visibility;
       piece3D.visibility = owlHallaVisible;
-      
-      console.log(`🎭 Set ${pieceName} visibility to ${owlHallaVisible} (matching Owl Halla state)`);
+      piece3D.isPickable = owlHallaVisible;  // Invisible pieces should be unpickable to prevent blocking clicks
+
+      console.log(`🎭 Set ${pieceName} visibility and pickability to ${owlHallaVisible} (matching Owl Halla state)`);
     }
   );
 }

@@ -651,14 +651,15 @@ export function createEventController(dependencies) {
       piecesOnOwlHalla.forEach((pieceName) => {
         const piece = scene.getMeshByName(pieceName);
         const gameStatePosition = gameStateManager.piecePositions[pieceName];
-        
+
         console.log(`🔍 ${pieceName}: gameState=${gameStatePosition}, 3D position=(${piece.position.x.toFixed(1)}, ${piece.position.y.toFixed(1)}, ${piece.position.z.toFixed(1)})`);
-        
+
         if (gameStatePosition !== "captured") {
           console.log(`⚠️ MISMATCH: ${pieceName} is in piecesOnOwlHalla array but gameState position is ${gameStatePosition}, not "captured"`);
         }
-        
+
         piece.visibility = owlHallaVisible;
+        piece.isPickable = owlHallaVisible;  // Match pickability to visibility for double-click restore
       });
     },
 
