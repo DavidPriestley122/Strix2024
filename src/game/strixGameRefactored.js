@@ -295,6 +295,22 @@ export default function createStrixGame(engine, canvas) {
     // Higher intensity for glass mode as per Opus recommendation
     scene.environmentIntensity = isGlassMode ? 0.9 : 0;
 
+    // Change background color for better glass contrast
+    const backgroundPlane = scene.getMeshByName("backgroundPlane");
+    if (backgroundPlane && backgroundPlane.material) {
+      if (isGlassMode) {
+        // Pale warm grey for glass mode - provides better contrast for transparency
+        backgroundPlane.material.diffuseColor = new Color3(0.92, 0.92, 0.88);
+      } else {
+        // Restore original dark blue-grey
+        backgroundPlane.material.diffuseColor = new Color3(
+          GAME_CONFIG.BACKGROUND.COLOR_RGB.R,
+          GAME_CONFIG.BACKGROUND.COLOR_RGB.G,
+          GAME_CONFIG.BACKGROUND.COLOR_RGB.B
+        );
+      }
+    }
+
     // Create or toggle spotlight for glass mode to highlight colored elements
     if (isGlassMode) {
       // Create spotlight if it doesn't exist
