@@ -139,9 +139,6 @@ export default function createStrixGame(engine, canvas) {
   const originalMaterials = new Map();  // mesh.uniqueId -> original material
   const glassMaterials = new Map();     // mesh.uniqueId -> glass material
 
-  // Store original light intensities for toggling
-  const originalLightIntensities = new Map();
-
   // Spotlight for glass mode color enhancement
   let glassSpotlight = null;
 
@@ -333,22 +330,8 @@ export default function createStrixGame(engine, canvas) {
       }
     }
 
-    // Adjust lighting for glass mode - REDUCE direct lights (too bright makes glass look plastic)
-    const lights = scene.lights;
-    lights.forEach(light => {
-      if (!originalLightIntensities.has(light.name)) {
-        // Store original intensity on first toggle
-        originalLightIntensities.set(light.name, light.intensity);
-      }
-
-      if (isGlassMode) {
-        // Moderate lighting for glass mode (0.7x) - balanced for transparency and color
-        light.intensity = originalLightIntensities.get(light.name) * 0.7;
-      } else {
-        // Restore original lighting - non-glass mode UNCHANGED
-        light.intensity = originalLightIntensities.get(light.name);
-      }
-    });
+    // Note: Lighting dimming removed - pieces need to stay bright in glass mode
+    // Original code reduced lights to 0.7x which made pieces too dark
 
     scene.meshes.forEach(mesh => {
       if (!mesh.material) return;
