@@ -1,11 +1,11 @@
 #game-wrapper {
   position: relative;
   width: 1600px;
-  height: 1200px;
+  height: 1300px;
   box-sizing: content-box;
   margin: 0 auto;
   left: var(--sidebar-width);
-  transition: left 0.3s ease; 
+  transition: left 0.3s ease;
   top: var(--header-height);
 }
 
@@ -38,13 +38,15 @@
   background-color: var(--kite-color-light);
   color: white;
   border: 1px solid white;
-  border-radius: 0px;
+  border-radius: var(--button-border-radius);
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all var(--transition-speed) ease;
 }
 
 #button-container button:hover {
   background-color: #9400d3;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 #restartButton {
