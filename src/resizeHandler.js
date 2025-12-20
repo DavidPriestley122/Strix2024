@@ -48,7 +48,7 @@ const sidebar = document.getElementById("game-sidebar");
 
 export function initResizeHandler(engine) {
   function resizeGame() {
-    const aspectRatio = 1600 / 1200; // Original width / height
+    const aspectRatio = 1700 / 1275; // Original width / height (4:3 ratio)
     const sidebarWidth = sidebar.offsetWidth; 
     const headerHeight = document.querySelector('header').offsetHeight;
     const maxWidth = window.innerWidth - sidebarWidth;
