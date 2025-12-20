@@ -22,6 +22,50 @@ export function createEventController(dependencies) {
 
   let selectedPiece = null;
 
+  // Custom double-click detection with position tolerance for trackpad support
+  const lastClicks = new Map(); // pieceName -> { time, screenX, screenY }
+  const DOUBLE_CLICK_TIME_MS = 900; // Time window for double-click
+  const DOUBLE_CLICK_DISTANCE_PX = 50; // Position tolerance in pixels
+
+  function isDoubleClick(pieceName, event) {
+    const now = Date.now();
+    const lastClick = lastClicks.get(pieceName);
+
+    if (!lastClick) {
+      // First click on this piece
+      lastClicks.set(pieceName, {
+        time: now,
+        screenX: event.screenX || scene.pointerX,
+        screenY: event.screenY || scene.pointerY
+      });
+      return false;
+    }
+
+    const timeDiff = now - lastClick.time;
+    const currentX = event.screenX || scene.pointerX;
+    const currentY = event.screenY || scene.pointerY;
+    const distanceX = Math.abs(currentX - lastClick.screenX);
+    const distanceY = Math.abs(currentY - lastClick.screenY);
+    const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+
+    // Update last click
+    lastClicks.set(pieceName, {
+      time: now,
+      screenX: currentX,
+      screenY: currentY
+    });
+
+    // Check if within time and distance tolerance
+    if (timeDiff < DOUBLE_CLICK_TIME_MS && distance < DOUBLE_CLICK_DISTANCE_PX) {
+      console.log(`✅ Double-click detected on ${pieceName} (${timeDiff}ms, ${distance.toFixed(0)}px)`);
+      lastClicks.delete(pieceName); // Clear to prevent triple-click
+      return true;
+    }
+
+    console.log(`❌ Not a double-click: ${timeDiff}ms (max ${DOUBLE_CLICK_TIME_MS}), ${distance.toFixed(0)}px (max ${DOUBLE_CLICK_DISTANCE_PX})`);
+    return false;
+  }
+
   return {
     // BUTTON EVENT SETUP
     setupButtonListeners() {
@@ -441,18 +485,17 @@ export function createEventController(dependencies) {
     createPieceActionManager(piece) {
       const actionManager = new ActionManager(scene);
 
+      // Use custom double-click detection for better trackpad support
       actionManager.registerAction(
-        new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
-          this.handlePieceSingleClick(piece);
+        new ExecuteCodeAction(ActionManager.OnPickTrigger, (evt) => {
+          if (isDoubleClick(piece.name, evt.sourceEvent || {})) {
+            this.handlePieceDoubleClick(piece);
+          } else {
+            this.handlePieceSingleClick(piece);
+          }
         })
       );
 
-      actionManager.registerAction(
-        new ExecuteCodeAction(ActionManager.OnDoublePickTrigger, () => {
-          this.handlePieceDoubleClick(piece);
-        })
-      );
-      
       return actionManager;
     },
 
