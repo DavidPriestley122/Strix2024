@@ -5,9 +5,9 @@
   top: var(--header-height);
   width: var(--sidebar-width);
   height: calc(100vh - var(--header-height));
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.6);
   color: white;
-  padding: 20px;
+  padding: var(--sidebar-padding);
   box-sizing: border-box;
   overflow-y: auto;
   z-index: 1000;
@@ -18,11 +18,12 @@
 #ai-sidebar h2 {
   color: var(--owl-beak);
   font-family: "IM Fell English", serif;
-  font-size: 1.3em;
-  margin-bottom: 15px;
+  font-size: 1.4em;
+  margin: 0 0 var(--button-group-spacing) 0;
   text-align: center;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--owl-light);
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--owl-light);
+  font-weight: bold;
 }
 
 /* AI Controls Section */
@@ -31,18 +32,42 @@
 }
 
 .player-config {
-  margin-bottom: 12px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
-  border-left: 3px solid var(--owl-light);
+  margin-bottom: 15px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--button-border-radius);
+  border: 2px solid;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-speed) ease;
+}
+
+.player-config:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* Team-specific colors */
+.player-config:nth-child(1) {
+  border-color: #8B4513;
+  background: linear-gradient(135deg, rgba(139, 69, 19, 0.15), rgba(88, 54, 41, 0.1));
+}
+
+.player-config:nth-child(2) {
+  border-color: var(--owl-beak);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(204, 172, 0, 0.1));
+}
+
+.player-config:nth-child(3) {
+  border-color: var(--owl-eye);
+  background: linear-gradient(135deg, rgba(34, 139, 34, 0.15), rgba(8, 64, 0, 0.1));
 }
 
 .player-config h3 {
-  font-size: 1em;
-  margin: 0 0 6px 0;
+  font-size: 1.1em;
+  margin: 0 0 10px 0;
   color: var(--owl-light);
   font-family: "IM Fell English", serif;
+  font-weight: bold;
 }
 
 .player-config label {
@@ -69,45 +94,55 @@ input[name="green-player"] {
   accent-color: #084000; /* Green color */
 }
 
-/* Make radio buttons compact */
+/* Make radio buttons larger and more prominent */
 input[type="radio"] {
-  width: 14px;
-  height: 14px;
-  margin-right: 6px;
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+  cursor: pointer;
+  transition: transform var(--transition-speed) ease;
+}
+
+input[type="radio"]:hover {
+  transform: scale(1.1);
 }
 
 .game-controls {
-  margin-top: 15px;
-  padding: 12px;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 5px;
-  border-top: 2px solid var(--owl-beak);
+  margin-top: var(--button-group-spacing);
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.08));
+  border-radius: var(--button-border-radius);
+  border: 2px solid var(--owl-beak);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .game-controls h3 {
   color: var(--owl-beak);
-  margin-bottom: 10px;
-  font-size: 1.1em;
+  margin: 0 0 15px 0;
+  font-size: 1.2em;
   text-align: center;
+  font-weight: bold;
 }
 
 .control-button {
   width: 100%;
-  padding: 8px;
-  margin-bottom: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
   background-color: var(--dark-chocolate);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
   font-family: "IM Fell English", serif;
   font-size: 0.95em;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all var(--transition-speed) ease;
 }
 
 .control-button:hover:not(:disabled) {
   background-color: var(--owl-eye);
   color: var(--dark-chocolate);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 .control-button:disabled {
@@ -121,23 +156,22 @@ input[type="radio"] {
 /* ========================= */
 
 .move-panel {
-  margin-top: 15px;
-  padding: 15px;
-  background: linear-gradient(145deg, rgba(24, 58, 24, 0.9), rgba(16, 42, 16, 0.9));
-  border-radius: 8px;
-  border: 2px solid var(--owl-beak);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(5px);
+  margin-top: var(--button-group-spacing);
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(34, 139, 34, 0.15), rgba(26, 58, 26, 0.12));
+  border-radius: var(--button-border-radius);
+  border: 2px solid var(--owl-eye);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .move-panel h3 {
-  color: var(--owl-beak);
+  color: var(--owl-eye);
   margin: 0 0 15px 0;
   font-size: 1.2em;
   text-align: center;
   font-family: "IM Fell English", serif;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid rgba(255, 215, 0, 0.3);
+  font-weight: bold;
+  border-bottom: 1px solid rgba(34, 139, 34, 0.3);
   padding-bottom: 8px;
 }
 

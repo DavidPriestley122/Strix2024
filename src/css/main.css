@@ -1,5 +1,5 @@
 :root {
-  --header-height: 200px;
+  --header-height: 120px;
   --footer-height: 60px;
   --dark-chocolate: #3c280d;
   --dark-green: #1a3a1a;
@@ -12,6 +12,12 @@
   --owl-beak: #ffd700;
   --kite-color: #4B0000; /* Kite color in hexadecimal format */
   --kite-color-light: #8B0000;
+
+  /* Modern design variables */
+  --button-border-radius: 8px;
+  --transition-speed: 0.2s;
+  --sidebar-padding: 24px;
+  --button-group-spacing: 20px;
 }
 
 body {

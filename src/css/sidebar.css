@@ -8,7 +8,7 @@
   top: var(--header-height);
   overflow-y: auto;
   z-index: 1000;
-  padding: 20px;
+  padding: var(--sidebar-padding);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -44,7 +44,7 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: var(--button-group-spacing);
 }
 
 .sidebar .category-button {
@@ -54,24 +54,26 @@
   padding: 12px 15px;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  transition: all var(--transition-speed) ease;
   margin-bottom: 5px;
   font-family: "IM Fell English", serif;
   font-size: 1.1em;
-  border-radius: 5px;
+  border-radius: var(--button-border-radius);
 }
 
 .sidebar .category-button:hover,
 .sidebar .category-button.active {
   background-color: var(--owl-eye);
   color: var(--dark-chocolate);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 .sidebar .sub-categories {
   display: flex;
   flex-direction: column;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: var(--button-group-spacing);
   padding-left: 15px;
 }
 
@@ -82,17 +84,19 @@
   padding: 10px 15px;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.3s, color 0.3s;
+  transition: all var(--transition-speed) ease;
   margin-bottom: 3px;
   font-family: "IM Fell English", serif;
   font-size: 1em;
-  border-radius: 3px;
+  border-radius: var(--button-border-radius);
 }
 
 .sidebar .sub-category-button:hover,
 .sidebar .sub-category-button.active {
   background-color: var(--owl-light);
   color: var(--dark-chocolate);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
 }
 
 .sidebar .content-area {
@@ -108,7 +112,8 @@
   margin-top: 0;
   color: var(--owl-light);
   font-size: 1.5em;
-  margin-bottom: 15px;
+  margin-bottom: var(--button-group-spacing);
+  font-weight: bold;
 }
 .sidebar .content-area img {
   max-width: 100%;
@@ -159,8 +164,9 @@
 .sidebar .content-area .sample-game h3 {
   font-size: 1.2em;
   color: var(--owl-light);
-  margin-top: 15px;
-  margin-bottom: 5px;
+  margin-top: var(--button-group-spacing);
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
 .sidebar .content-area .sample-game ul {
