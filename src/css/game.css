@@ -1,7 +1,7 @@
 #game-wrapper {
   position: relative;
-  width: 1700px;
-  height: 1275px;
+  width: 1840px;
+  height: 1380px;
   box-sizing: content-box;
   margin: 0 auto;
   left: var(--sidebar-width);
