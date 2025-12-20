@@ -20,7 +20,7 @@ export function createScene(engine, canvas) {
   
   // Configure double-click delay for better trackpad compatibility
   scene.actionManager = new ActionManager(scene);
-  scene.actionManager.doubleClickDelay = 600; // Increased from default 300ms for trackpad support
+  scene.actionManager.doubleClickDelay = 900; // Increased from 600ms for more forgiving trackpad support
   
   function updateProgress(progress) {
     if (window.updateLoadingBar) {
