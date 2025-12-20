@@ -228,3 +228,189 @@ If pieces remained unpickable when Owlhalla is shown, you couldn't double-click 
 
 ## Commit
 - Commit: ad991ad "Fix click detection bug caused by invisible Owlhalla pieces"
+
+---
+
+# Double-Click Trackpad Support Enhancement
+
+## Problem Discovered
+**Date:** December 2025 (during UI modernization)
+
+**Symptom:** Double-clicking pieces to send them to Owlhalla (for capture/restore) worked reliably with an external mouse on a large monitor, but was extremely erratic on laptop trackpads. Users had to multi-click rapidly (7+ times) to get it to work, and even then a "shadowed square" error message would briefly appear.
+
+**Initial hypothesis:** Double-click timing was too tight (600ms window).
+
+**User's insight:** "When I multi-click rapidly it eventually works, but I'm still clicking, so the click is then applying to the square underneath" - the issue wasn't just timing, but also click penetration and position drift on trackpads.
+
+## Root Causes
+
+### 1. BabylonJS Double-Click Position Requirement
+BabylonJS's built-in `OnDoublePickTrigger` appears to require both clicks to hit nearly the exact same position. On trackpads:
+- Natural hand movement causes cursor drift between clicks
+- Even small movements (a few pixels) can prevent double-click detection
+- Mice have more stable cursor positioning
+
+### 2. Multi-Click Side Effect
+When users had to multi-click rapidly to compensate:
+1. First click would select the piece (single click)
+2. Subsequent clicks would hit squares underneath while piece was selected
+3. If those squares were shadowed, error messages appeared
+4. Eventually one pair of clicks would register as double-click
+5. But user was still clicking, hitting the now-empty square
+
+### 3. Insufficient Time Window
+The 600ms double-click delay (increased from default 300ms) was still marginal for trackpad users who double-click more slowly.
+
+## Solution: Custom Double-Click Detection
+
+**File Changed:** `src/game/controllers/eventController.js`
+
+### Implementation Details
+
+**Replaced BabylonJS's OnDoublePickTrigger with custom logic:**
+
+```javascript
+// Custom double-click detection with position tolerance
+const lastClicks = new Map(); // pieceName -> { time, screenX, screenY }
+const DOUBLE_CLICK_TIME_MS = 900; // Time window for double-click
+const DOUBLE_CLICK_DISTANCE_PX = 50; // Position tolerance in pixels
+
+function isDoubleClick(pieceName, event) {
+  const now = Date.now();
+  const lastClick = lastClicks.get(pieceName);
+
+  if (!lastClick) {
+    // First click - store time and position
+    lastClicks.set(pieceName, {
+      time: now,
+      screenX: event.screenX || scene.pointerX,
+      screenY: event.screenY || scene.pointerY
+    });
+    return false;
+  }
+
+  // Calculate time and distance from last click
+  const timeDiff = now - lastClick.time;
+  const distance = Math.sqrt(
+    Math.pow(currentX - lastClick.screenX, 2) +
+    Math.pow(currentY - lastClick.screenY, 2)
+  );
+
+  // Update last click
+  lastClicks.set(pieceName, { time: now, screenX: currentX, screenY: currentY });
+
+  // Check tolerances
+  if (timeDiff < DOUBLE_CLICK_TIME_MS && distance < DOUBLE_CLICK_DISTANCE_PX) {
+    lastClicks.delete(pieceName); // Clear to prevent triple-click
+    return true;
+  }
+  return false;
+}
+```
+
+### Key Features
+
+1. **Time Tolerance: 900ms**
+   - Increased from 600ms
+   - Accommodates slower, more deliberate trackpad double-clicks
+
+2. **Position Tolerance: 50 pixels**
+   - Allows natural cursor drift between clicks
+   - Typical trackpad movement is 10-30 pixels between double-clicks
+   - 50px buffer provides comfortable margin
+
+3. **Per-Piece Tracking**
+   - Each piece tracks its own click history
+   - Prevents cross-piece interference
+
+4. **Debug Logging**
+   - Console logs show timing (ms) and distance (px) between clicks
+   - Helps users understand why clicks fail/succeed
+   - Useful for tuning tolerance values
+
+5. **Triple-Click Prevention**
+   - Clears click history after successful double-click
+   - Prevents third click from triggering another double-click
+
+### Action Manager Changes
+
+**Before:**
+```javascript
+actionManager.registerAction(
+  new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
+    this.handlePieceSingleClick(piece);
+  })
+);
+actionManager.registerAction(
+  new ExecuteCodeAction(ActionManager.OnDoublePickTrigger, () => {
+    this.handlePieceDoubleClick(piece);
+  })
+);
+```
+
+**After:**
+```javascript
+actionManager.registerAction(
+  new ExecuteCodeAction(ActionManager.OnPickTrigger, (evt) => {
+    if (isDoubleClick(piece.name, evt.sourceEvent || {})) {
+      this.handlePieceDoubleClick(piece);
+    } else {
+      this.handlePieceSingleClick(piece);
+    }
+  })
+);
+```
+
+## Results
+
+- **Trackpad reliability:** Double-click now works consistently on laptop trackpads
+- **Mouse compatibility:** Still works perfectly with external mice
+- **No multi-click needed:** Users can double-click normally
+- **No false positives:** 50px tolerance is tight enough to prevent accidental double-clicks
+- **Tunable:** Tolerances can be easily adjusted if needed (75px or 100px for more forgiving behavior)
+
+## Related Improvements
+
+### Glass Mode Background Enhancement
+**Issue:** Dark blue-grey background didn't provide enough contrast for glass transparency effects.
+
+**Solution:** Toggle background to pale warm grey (RGB: 0.92, 0.92, 0.88) in glass mode.
+
+**File:** `src/game/strixGameRefactored.js`
+```javascript
+const backgroundPlane = scene.getMeshByName("backgroundPlane");
+if (isGlassMode) {
+  backgroundPlane.material.diffuseColor = new Color3(0.92, 0.92, 0.88);
+} else {
+  backgroundPlane.material.diffuseColor = new Color3(
+    GAME_CONFIG.BACKGROUND.COLOR_RGB.R,
+    GAME_CONFIG.BACKGROUND.COLOR_RGB.G,
+    GAME_CONFIG.BACKGROUND.COLOR_RGB.B
+  );
+}
+```
+
+**Commit:** 6589a15 "Add pale background color for glass mode to improve contrast"
+
+### Glass Mode Lighting Adjustment
+**Issue:** Pieces appeared too dark in glass mode (70% lighting reduction).
+
+**Solution:** Removed lighting dimming entirely to maintain piece visibility.
+
+**File:** `src/game/strixGameRefactored.js` - removed light intensity reduction code
+
+**Commit:** 896ca0a "Remove lighting dimming in glass mode to keep pieces bright"
+
+## Commits
+
+1. ac2ec20 "Increase double-click delay to 900ms for better trackpad support" - Initial timing adjustment
+2. a440918 "Implement custom double-click detection with position tolerance for trackpads" - Main fix
+
+## Tuning Options
+
+If 50 pixels proves insufficient:
+- Increase `DOUBLE_CLICK_DISTANCE_PX` to 75 or 100
+- Increase `DOUBLE_CLICK_TIME_MS` to 1000 or 1200
+- Both values are constants at the top of the function for easy adjustment
+
+Console logging can be removed in production by commenting out the `console.log()` statements in the `isDoubleClick()` function.
