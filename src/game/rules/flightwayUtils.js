@@ -382,6 +382,20 @@ export function calculateSimpleGhostingDestination(
                 }
                 return null;
               }
+
+              // Symmetric check: also check if OWL is at transition point
+              const owlFlightwayFace = owlFw[0];
+              const owlFlightwayNum = owlNum;
+              const owlFlightwayRoute = generateFlightwayRoute(owlFlightwayFace, owlFlightwayNum);
+              const owlPositionIndex = owlFlightwayRoute.indexOf(owlPosition);
+
+              if (owlPositionIndex === 7) { // Owl at position 8 (0-indexed = 7) - face transition point
+                if (isBrownOwl || isYellowOwl) {
+                  console.log(`🚫 EDGE CASE: Cannot ghost "in" - owl at position 8 (face transition) of ${owlFw}. Owl position: ${owlPosition}`);
+                }
+                return null;
+              }
+
               break;
             }
           }
