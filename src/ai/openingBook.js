@@ -101,19 +101,17 @@ export class OpeningBook {
       const row = parseInt(coords[0]);
       const col = parseInt(coords[1]);
       
-      // Move Owl toward center (simple advancement)
+      // Move Owl toward nearest nest entry (7,7 on respective face)
       let targetSquare;
-      if (row > 4) {
-        targetSquare = `${face}${row-1}-${col}`;
-      } else if (row < 4) {
+      if (row < 7) {
+        // Increase row toward 7
         targetSquare = `${face}${row+1}-${col}`;
-      } else if (col > 4) {
-        targetSquare = `${face}${row}-${col-1}`;
-      } else if (col < 4) {
+      } else if (col < 7) {
+        // Row is already 7, increase column toward 7
         targetSquare = `${face}${row}-${col+1}`;
       } else {
-        // Already at center, move toward nest
-        targetSquare = `${face}${row+1}-${col}`;
+        // Already at nest (7,7) - this shouldn't happen in opening
+        return null;
       }
       
       return {

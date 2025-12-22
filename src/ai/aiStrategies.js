@@ -263,6 +263,31 @@ export class MinimaxAI {
       score += 3000 * ourThreats.length;
     }
 
+    // PART 3: Capture threat evaluation
+    // Check if any of our pieces are under threat from opponent pieces
+    const myPieces = this.getPlayerPieces(this.playerColor, tempGameState);
+
+    for (const myPiece of myPieces) {
+      if (myPiece.position === 'captured') continue;
+
+      // Check if any opponent piece can capture this piece
+      for (const opponentColor of this.playerOrder) {
+        if (opponentColor === this.playerColor) continue; // Skip our own color
+
+        const opponentPieces = this.getPlayerPieces(opponentColor, tempGameState);
+        for (const oppPiece of opponentPieces) {
+          if (oppPiece.position === 'captured') continue;
+
+          // Check if this opponent piece can capture our piece
+          if (this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, myPiece.position)) {
+            // Our piece is under threat - apply penalty based on piece value
+            const threatPenalty = this.getCaptureValue(myPiece.name) * 0.8;
+            score -= threatPenalty;
+          }
+        }
+      }
+    }
+
     return score;
   }
 
