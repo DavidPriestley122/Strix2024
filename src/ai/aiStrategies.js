@@ -288,6 +288,36 @@ export class MinimaxAI {
       }
     }
 
+    // PART 4: Immediate win threat detection
+    // Check if any opponent Owl can reach the nest on their next move
+    for (const opponentColor of this.playerOrder) {
+      if (opponentColor === this.playerColor) continue;
+
+      const opponentOwl = this.getPlayerPieces(opponentColor, tempGameState).find(p => p.type === 'Owl');
+      if (!opponentOwl || opponentOwl.position === 'captured') continue;
+
+      // Get all possible moves for the opponent Owl
+      const owlMoves = this.getPossibleMoves(opponentOwl, tempGameState);
+
+      // Check if any move reaches a nest square
+      for (const move of owlMoves) {
+        if (nestSquares.includes(move)) {
+          // Opponent can win on next move - CRITICAL THREAT!
+          score -= 100000; // Massive penalty to ensure we block/prevent this
+          break;
+        }
+      }
+    }
+
+    // PART 5: Nest blocking bonus
+    // If we occupy a nest square (blocking opponents), give a bonus
+    const ourPieces = this.getPlayerPieces(this.playerColor, tempGameState);
+    for (const piece of ourPieces) {
+      if (nestSquares.includes(piece.position)) {
+        score += 1000; // Bonus for blocking the nest
+      }
+    }
+
     return score;
   }
 
