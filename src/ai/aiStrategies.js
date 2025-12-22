@@ -299,10 +299,15 @@ export class MinimaxAI {
       // Get all possible moves for the opponent Owl
       const owlMoves = this.getPossibleMoves(opponentOwl, tempGameState);
 
+      console.log(`🔍 WIN THREAT CHECK: ${opponentColor} Owl at ${opponentOwl.position}`);
+      console.log(`   Possible moves (${owlMoves.length}):`, owlMoves.slice(0, 10));
+
       // Check if any move reaches a nest square
       for (const move of owlMoves) {
         if (nestSquares.includes(move)) {
           // Opponent can win on next move - CRITICAL THREAT!
+          console.log(`⚠️⚠️⚠️ CRITICAL WIN THREAT DETECTED: ${opponentColor} Owl can reach NEST at ${move}!`);
+          console.log(`   Applying -100000 penalty to this position`);
           score -= 100000; // Massive penalty to ensure we block/prevent this
           break;
         }
