@@ -500,6 +500,73 @@ export function isSquareOccupied(square, piecePositions) {
   return Object.values(piecePositions || {}).includes(square);
 }
 
+/**
+ * Calculate which squares are shadowed based on current piece positions
+ * @param {Object} piecePositions - Current positions of all pieces
+ * @param {string} excludedPiece - Piece name to exclude from shadow calculation
+ * @returns {Object} - Object with shadowed squares for each face {b: [], y: [], g: []}
+ */
+export function calculateShadows(piecePositions, excludedPiece = null) {
+  const shadowedSquares = {
+    b: [],
+    y: [],
+    g: []
+  };
+
+  for (let pieceName in piecePositions) {
+    let piecePosition = piecePositions[pieceName];
+
+    // Skip excluded piece, owlHalla squares, and captured pieces
+    if (pieceName === excludedPiece || !piecePosition || piecePosition.includes("--") || piecePosition === "captured") {
+      continue;
+    }
+
+    const boardColor = piecePosition.charAt(0);
+    const coords = piecePosition.substring(1).split("-");
+    const row = parseInt(coords[0]);
+    const col = parseInt(coords[1]);
+
+    if (isNaN(row) || isNaN(col)) continue;
+
+    // Update shadowed squares based on piece position
+    // (Same logic as gameStateManager.updateShadowedRows)
+    if (boardColor === "b") {
+      // Brown piece shadows Yellow board (column) and Green board (row)
+      for (let i = 1; i <= 7; i++) {
+        shadowedSquares.y.push(`y${col}-${i}`);
+        shadowedSquares.g.push(`g${i}-${row}`);
+      }
+    } else if (boardColor === "y") {
+      // Yellow piece shadows Brown board (row) and Green board (column)
+      for (let i = 1; i <= 7; i++) {
+        shadowedSquares.b.push(`b${i}-${row}`);
+        shadowedSquares.g.push(`g${col}-${i}`);
+      }
+    } else if (boardColor === "g") {
+      // Green piece shadows Brown board (column) and Yellow board (row)
+      for (let i = 1; i <= 7; i++) {
+        shadowedSquares.b.push(`b${col}-${i}`);
+        shadowedSquares.y.push(`y${i}-${row}`);
+      }
+    }
+  }
+
+  return shadowedSquares;
+}
+
+/**
+ * Check if a specific square is shadowed
+ * @param {string} square - Square to check (e.g., "b7-7")
+ * @param {Object} piecePositions - Current piece positions
+ * @param {string} excludedPiece - Piece to exclude from shadow calculation
+ * @returns {boolean} - True if square is shadowed
+ */
+export function isSquareShadowed(square, piecePositions, excludedPiece = null) {
+  const shadows = calculateShadows(piecePositions, excludedPiece);
+  const face = square.charAt(0);
+  return shadows[face] && shadows[face].includes(square);
+}
+
 export function isPathClear(fromSquare, toSquare, piecePositions) {
   // For now, let's implement basic same-face path checking
   // This can be enhanced later for cross-face moves

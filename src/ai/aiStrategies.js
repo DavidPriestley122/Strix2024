@@ -511,7 +511,27 @@ export class MinimaxAI {
         return [];
     }
 
-    return moves;
+    // AI-ONLY: Filter out shadowed squares
+    // This doesn't affect the game rules, only how the AI evaluates moves
+    const shadows = this.calculateShadowedSquares(state.piecePositions, piece.name);
+    const unshadowedMoves = moves.filter(move => {
+      const moveFace = move.charAt(0);
+      const isShadowed = shadows[moveFace] && shadows[moveFace].includes(move);
+
+      // Debug shadow filtering for critical moves
+      if (isShadowed && (move === 'g7-7' || move === 'b7-7' || move === 'y7-7')) {
+        console.log(`🛡️ AI SHADOW FILTER: ${piece.name} cannot move to ${move} (shadowed)`);
+      }
+
+      return !isShadowed;
+    });
+
+    // Debug if we filtered out any moves
+    if (moves.length !== unshadowedMoves.length) {
+      console.log(`🛡️ Shadow filtering: ${piece.name} - ${moves.length} total moves, ${unshadowedMoves.length} unshadowed`);
+    }
+
+    return unshadowedMoves;
   }
 
   // Utility functions
