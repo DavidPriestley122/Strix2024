@@ -112,6 +112,16 @@ export class MinimaxAI {
       this.logStrategy(`  ${i + 1}. ${move.piece.name}→${move.targetSquare} (score: ${move.evaluation.toFixed(0)})`);
     }
 
+    // Check if any moves occupy nest squares (defensive)
+    const nestSquares = ["b7-7", "y7-7", "g7-7"];
+    const nestMoves = evaluatedMoves.filter(m => nestSquares.includes(m.targetSquare));
+    if (nestMoves.length > 0) {
+      console.log(`🛡️ DEFENSIVE NEST MOVES AVAILABLE (${nestMoves.length}):`);
+      for (const move of nestMoves) {
+        console.log(`  ${move.piece.name}→${move.targetSquare} (score: ${move.evaluation.toFixed(0)})`);
+      }
+    }
+
     // STEP 3: Select best move based on minimax scores
     const bestMove = evaluatedMoves.reduce((best, current) =>
       current.evaluation > best.evaluation ? current : best
@@ -299,18 +309,21 @@ export class MinimaxAI {
       // Get all possible moves for the opponent Owl
       const owlMoves = this.getPossibleMoves(opponentOwl, tempGameState);
 
-      console.log(`🔍 WIN THREAT CHECK: ${opponentColor} Owl at ${opponentOwl.position}`);
-      console.log(`   Possible moves (${owlMoves.length}):`, owlMoves.slice(0, 10));
-
       // Check if any move reaches a nest square
+      let threatDetected = false;
       for (const move of owlMoves) {
         if (nestSquares.includes(move)) {
           // Opponent can win on next move - CRITICAL THREAT!
-          console.log(`⚠️⚠️⚠️ CRITICAL WIN THREAT DETECTED: ${opponentColor} Owl can reach NEST at ${move}!`);
-          console.log(`   Applying -100000 penalty to this position`);
+          threatDetected = true;
+          console.log(`⚠️⚠️⚠️ CRITICAL WIN THREAT: ${opponentColor} Owl can reach NEST at ${move}!`);
+          console.log(`   Applying -100000 penalty`);
           score -= 100000; // Massive penalty to ensure we block/prevent this
           break;
         }
+      }
+
+      if (!threatDetected) {
+        console.log(`✅ No win threat from ${opponentColor} Owl at ${opponentOwl.position}`);
       }
     }
 
