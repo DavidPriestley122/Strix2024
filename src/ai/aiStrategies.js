@@ -31,6 +31,52 @@ export class MinimaxAI {
     return nestSquares.includes(move.targetSquare);
   }
 
+  // Calculate shadowed squares based on piece positions
+  // Based on gameStateManager.updateShadowedRows logic
+  calculateShadowedSquares(piecePositions, excludedPiece = null) {
+    const shadowedSquares = {
+      b: [],
+      y: [],
+      g: []
+    };
+
+    for (let pieceName in piecePositions) {
+      let piecePosition = piecePositions[pieceName];
+
+      // Skip excluded piece, owlHalla squares, and captured pieces
+      if (pieceName === excludedPiece || piecePosition.includes("--") || piecePosition === "captured") {
+        continue;
+      }
+
+      let boardColor = piecePosition.charAt(0);
+      let row = parseInt(piecePosition.charAt(1));
+      let column = parseInt(piecePosition.charAt(3));
+
+      // Update shadowed squares based on piece position
+      if (boardColor === "b") {
+        // Brown piece shadows Yellow board (column) and Green board (row)
+        for (let i = 1; i <= 7; i++) {
+          shadowedSquares.y.push(`y${column}-${i}`);
+          shadowedSquares.g.push(`g${i}-${row}`);
+        }
+      } else if (boardColor === "y") {
+        // Yellow piece shadows Brown board (row) and Green board (column)
+        for (let i = 1; i <= 7; i++) {
+          shadowedSquares.b.push(`b${i}-${row}`);
+          shadowedSquares.g.push(`g${column}-${i}`);
+        }
+      } else if (boardColor === "g") {
+        // Green piece shadows Brown board (column) and Yellow board (row)
+        for (let i = 1; i <= 7; i++) {
+          shadowedSquares.b.push(`b${column}-${i}`);
+          shadowedSquares.y.push(`y${i}-${row}`);
+        }
+      }
+    }
+
+    return shadowedSquares;
+  }
+
   // Strategic logging helper
   logStrategy(message, data = null) {
     if (this.strategicLogging) {
@@ -300,6 +346,11 @@ export class MinimaxAI {
 
     // PART 4: Immediate win threat detection
     // Check if any opponent Owl can reach the nest on their next move
+    // CRITICAL: Must account for shadows created by current piece positions
+
+    // Calculate shadowed squares based on current position (after our move)
+    const shadowedSquares = this.calculateShadowedSquares(tempGameState.piecePositions);
+
     for (const opponentColor of this.playerOrder) {
       if (opponentColor === this.playerColor) continue;
 
@@ -309,16 +360,24 @@ export class MinimaxAI {
       // Get all possible moves for the opponent Owl
       const owlMoves = this.getPossibleMoves(opponentOwl, tempGameState);
 
-      // Check if any move reaches a nest square
+      // Check if any move reaches a nest square that is NOT shadowed
       let threatDetected = false;
       for (const move of owlMoves) {
         if (nestSquares.includes(move)) {
-          // Opponent can win on next move - CRITICAL THREAT!
-          threatDetected = true;
-          console.log(`⚠️⚠️⚠️ CRITICAL WIN THREAT: ${opponentColor} Owl can reach NEST at ${move}!`);
-          console.log(`   Applying -100000 penalty`);
-          score -= 100000; // Massive penalty to ensure we block/prevent this
-          break;
+          // Get the face of the nest square to check correct shadow list
+          const nestFace = move.charAt(0);
+          const isShadowed = shadowedSquares[nestFace].includes(move);
+
+          if (!isShadowed) {
+            // Opponent can win on next move - CRITICAL THREAT!
+            threatDetected = true;
+            console.log(`⚠️⚠️⚠️ CRITICAL WIN THREAT: ${opponentColor} Owl can reach NEST at ${move}!`);
+            console.log(`   Applying -100000 penalty`);
+            score -= 100000; // Massive penalty to ensure we block/prevent this
+            break;
+          } else {
+            console.log(`🛡️ DEFENSIVE SUCCESS: Nest ${move} is SHADOWED - blocked from ${opponentColor} Owl`);
+          }
         }
       }
 
