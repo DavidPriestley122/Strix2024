@@ -422,7 +422,13 @@ export class MinimaxAI {
       
       for (const targetSquare of possibleMoves) {
         const isValid = this.isValidMove(piece.name, targetSquare, state);
-        
+
+        // Debug defensive move validation
+        if ((piece.name === 'yellowKite' || piece.name === 'greenKite') &&
+            (targetSquare === 'b7-6' || targetSquare === 'b7-4')) {
+          console.log(`🔍 VALIDATION: ${piece.name} → ${targetSquare}: ${isValid ? 'VALID' : 'REJECTED'}`);
+        }
+
         if (isValid) {
           moves.push({
             piece: piece,
@@ -481,16 +487,31 @@ export class MinimaxAI {
     const state = gameState || this.gameState;
     const currentPos = piece.position;
 
+    let moves = [];
     switch (piece.type) {
       case "Owl":
-        return getAllOwlMoves(currentPos, state.piecePositions, piece.name);
+        moves = getAllOwlMoves(currentPos, state.piecePositions, piece.name);
+        break;
       case "Kite":
-        return getAllKiteMoves(currentPos, state.piecePositions, piece.name);
+        moves = getAllKiteMoves(currentPos, state.piecePositions, piece.name);
+        // Debug Kite moves for defensive positions
+        if ((currentPos === 'y6-2' || currentPos === 'y4-6') && (piece.name === 'yellowKite' || piece.name === 'greenKite')) {
+          console.log(`🎯 KITE MOVES DEBUG: ${piece.name} at ${currentPos}`);
+          console.log(`   Total moves generated: ${moves.length}`);
+          console.log(`   All moves:`, moves);
+          console.log(`   Contains b7-6: ${moves.includes('b7-6')}`);
+          console.log(`   Contains b7-4: ${moves.includes('b7-4')}`);
+          console.log(`   Contains b1-4: ${moves.includes('b1-4')}`);
+        }
+        break;
       case "Raven":
-        return getAllRavenMoves(currentPos, state.piecePositions, piece.name);
+        moves = getAllRavenMoves(currentPos, state.piecePositions, piece.name);
+        break;
       default:
         return [];
     }
+
+    return moves;
   }
 
   // Utility functions
