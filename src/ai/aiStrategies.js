@@ -3,12 +3,14 @@ import { getAllKiteMoves } from "../game/rules/kiteRules.js";
 import { getAllRavenMoves } from "../game/rules/ravenRules.js";
 import { StrixPatterns } from "./strixPatterns.js";
 import { convertToFlightway, generateFlightwayRoute } from "../game/rules/flightwayUtils.js";
+import { LocalAIStorage } from "./aiStorage.js";
+import { AIMemory } from "./aiMemory.js";
 
 export class MinimaxAI {
   constructor(playerColor, gameStateManager) {
     this.playerColor = playerColor;
     this.gameState = gameStateManager;
-    this.maxDepth = 3; // Increased from 1 to see 3-move winning sequences
+    this.maxDepth = 2; // Reduced from 3 for performance with Max^n
     this.strategicLogging = true;
     this.tacticalLogging = true;
 
@@ -21,6 +23,11 @@ export class MinimaxAI {
 
     // Initialize tactical pattern recognition
     this.patterns = new StrixPatterns(gameStateManager);
+
+    // Initialize AI memory for learning (using LocalStorage for now)
+    const storage = new LocalAIStorage();
+    this.memory = new AIMemory(playerColor, storage);
+    this.memory.initialize().catch(err => console.error('AI memory init error:', err));
   }
 
   // Check if move results in immediate win
@@ -127,8 +134,8 @@ export class MinimaxAI {
       }
     }
 
-    // STEP 2: Use recursive minimax to evaluate each root move
-    this.logStrategy(`🔍 Evaluating ${moves.length} moves with depth-${this.maxDepth} minimax + patterns...`);
+    // STEP 2: Use recursive Max^n to evaluate each root move
+    this.logStrategy(`🔍 Evaluating ${moves.length} moves with depth-${this.maxDepth} Max^n search...`);
 
     const evaluatedMoves = [];
     const nextPlayer = this.getNextPlayer(this.playerColor);
@@ -141,21 +148,23 @@ export class MinimaxAI {
         move.targetSquare
       );
 
-      // Recursively evaluate with minimax (opponent responds, then we respond, etc.)
-      const score = this.minimax(newPositions, this.maxDepth - 1, nextPlayer);
+      // Recursively evaluate with Max^n (each player maximizes their own score)
+      const scores = this.maxn(newPositions, this.maxDepth - 1, nextPlayer);
 
-      move.evaluation = score;
+      // Extract OUR score from the multi-player scores
+      move.evaluation = scores[this.playerColor];
+      move.allScores = scores; // Keep all scores for debugging
       evaluatedMoves.push(move);
 
-      this.logStrategy(`📊 ${move.piece.name}→${move.targetSquare}: minimax score = ${score.toFixed(0)}`);
+      this.logStrategy(`📊 ${move.piece.name}→${move.targetSquare}: our score = ${scores[this.playerColor].toFixed(0)}`);
     }
 
     // Show the top 5 moves for debugging
     const sortedMoves = [...evaluatedMoves].sort((a, b) => b.evaluation - a.evaluation);
-    this.logStrategy(`🏆 Top 5 moves after minimax:`);
+    this.logStrategy(`🏆 Top 5 moves after Max^n search:`);
     for (let i = 0; i < Math.min(5, sortedMoves.length); i++) {
       const move = sortedMoves[i];
-      this.logStrategy(`  ${i + 1}. ${move.piece.name}→${move.targetSquare} (score: ${move.evaluation.toFixed(0)})`);
+      this.logStrategy(`  ${i + 1}. ${move.piece.name}→${move.targetSquare} (our score: ${move.evaluation.toFixed(0)})`);
     }
 
     // Check if any moves occupy nest squares (defensive)
@@ -164,22 +173,22 @@ export class MinimaxAI {
     if (nestMoves.length > 0) {
       console.log(`🛡️ DEFENSIVE NEST MOVES AVAILABLE (${nestMoves.length}):`);
       for (const move of nestMoves) {
-        console.log(`  ${move.piece.name}→${move.targetSquare} (score: ${move.evaluation.toFixed(0)})`);
+        console.log(`  ${move.piece.name}→${move.targetSquare} (our score: ${move.evaluation.toFixed(0)})`);
       }
     }
 
-    // STEP 3: Select best move based on minimax scores
+    // STEP 3: Select best move based on Max^n scores (maximize OUR score)
     const bestMove = evaluatedMoves.reduce((best, current) =>
       current.evaluation > best.evaluation ? current : best
     );
 
     this.logStrategy(
-      `🎯 SELECTED: ${bestMove.piece.name} to ${bestMove.targetSquare} (minimax score: ${bestMove.evaluation.toFixed(0)})`
+      `🎯 SELECTED: ${bestMove.piece.name} to ${bestMove.targetSquare} (Max^n score: ${bestMove.evaluation.toFixed(0)})`
     );
     return bestMove;
   }
 
-  // ========== RECURSIVE MINIMAX IMPLEMENTATION ==========
+  // ========== RECURSIVE MAX^N IMPLEMENTATION ==========
 
   // Simulate a move on a cloned game state
   simulateMove(piecePositions, pieceName, targetSquare) {
@@ -195,21 +204,23 @@ export class MinimaxAI {
     return this.playerOrder[nextIndex];
   }
 
-  // Recursive minimax with alpha-beta pruning
-  minimax(piecePositions, depth, currentPlayer, alpha = -Infinity, beta = Infinity) {
+  // Recursive Max^n search (each player maximizes their own score)
+  maxn(piecePositions, depth, currentPlayer) {
     // Terminal conditions
     if (depth === 0) {
-      return this.evaluatePosition(piecePositions);
+      return this.evaluatePosition(piecePositions); // Returns {brown: X, yellow: Y, green: Z}
     }
 
     // Check for wins (terminal state)
     const winner = this.checkWinner(piecePositions);
     if (winner) {
-      if (winner === this.playerColor) {
-        return 1000000; // We won!
-      } else {
-        return -1000000; // Opponent won
-      }
+      // Winner gets huge score, losers get terrible score
+      const terminalScores = {
+        brown: winner === 'brown' ? 1000000 : -1000000,
+        yellow: winner === 'yellow' ? 1000000 : -1000000,
+        green: winner === 'green' ? 1000000 : -1000000
+      };
+      return terminalScores;
     }
 
     // DISABLE LOGGING during recursive calls to avoid exponential log spam
@@ -224,36 +235,26 @@ export class MinimaxAI {
     this.strategicLogging = savedLogging;
 
     if (moves.length === 0) {
-      // No moves available - neutral
-      return 0;
+      // No moves available - return neutral scores
+      return { brown: 0, yellow: 0, green: 0 };
     }
 
-    const isMaximizing = (currentPlayer === this.playerColor);
     const nextPlayer = this.getNextPlayer(currentPlayer);
 
-    if (isMaximizing) {
-      // Maximizing player (us)
-      let maxScore = -Infinity;
-      for (const move of moves) {
-        const newPositions = this.simulateMove(piecePositions, move.piece.name, move.targetSquare);
-        const score = this.minimax(newPositions, depth - 1, nextPlayer, alpha, beta);
-        maxScore = Math.max(maxScore, score);
-        alpha = Math.max(alpha, score);
-        if (beta <= alpha) break; // Beta cutoff
+    // Max^n: Current player picks move that maximizes THEIR score
+    let bestScores = null;
+
+    for (const move of moves) {
+      const newPositions = this.simulateMove(piecePositions, move.piece.name, move.targetSquare);
+      const childScores = this.maxn(newPositions, depth - 1, nextPlayer);
+
+      // Current player picks the move with the best score FOR THEM
+      if (!bestScores || childScores[currentPlayer] > bestScores[currentPlayer]) {
+        bestScores = childScores;
       }
-      return maxScore;
-    } else {
-      // Minimizing player (opponents)
-      let minScore = Infinity;
-      for (const move of moves) {
-        const newPositions = this.simulateMove(piecePositions, move.piece.name, move.targetSquare);
-        const score = this.minimax(newPositions, depth - 1, nextPlayer, alpha, beta);
-        minScore = Math.min(minScore, score);
-        beta = Math.min(beta, score);
-        if (beta <= alpha) break; // Alpha cutoff
-      }
-      return minScore;
     }
+
+    return bestScores;
   }
 
   // Check if any player has won
@@ -270,12 +271,19 @@ export class MinimaxAI {
     return null;
   }
 
-  // Evaluate a position using flightway-based distances + strategic patterns
+  // Evaluate a position using Max^n (returns scores for ALL players)
   evaluatePosition(piecePositions) {
-    let score = 0;
+    // Max^n: Each player gets their own score
+    const scores = {
+      brown: 0,
+      yellow: 0,
+      green: 0
+    };
     const nestSquares = ["b7-7", "y7-7", "g7-7"];
+    const tempGameState = { piecePositions: piecePositions };
 
     // PART 1: Positional evaluation (flightway distances)
+    // Each player's Owl distance to nest affects THEIR score
     for (const color of this.playerOrder) {
       const owlPiece = `${color}Owl`;
       const owlPosition = piecePositions[owlPiece];
@@ -285,120 +293,92 @@ export class MinimaxAI {
       // Calculate flightway distance to nearest nest
       const distanceToNest = this.calculateDistanceToNearestNest(owlPosition);
 
-      // Closer to nest = better (inverted distance)
+      // Closer to nest = better for THIS player
       const positionalValue = Math.max(0, 120 - (distanceToNest * 10));
-
-      if (color === this.playerColor) {
-        // Our owl - higher score is better
-        score += positionalValue;
-      } else {
-        // Opponent owls - penalize if they're close to winning
-        score -= positionalValue * 0.5; // Opponents getting close hurts us
-      }
+      scores[color] += positionalValue;
     }
 
-    // PART 2: Strategic pattern evaluation (ghosting threats, formations)
-    // Create a temporary game state for pattern evaluation
-    const tempGameState = { piecePositions: piecePositions };
-
-    // Detect opponent ghosting threats in this position
+    // PART 2: Strategic pattern evaluation (ghosting threats)
+    // Having a ghosting threat benefits the player with the threat
     for (const color of this.playerOrder) {
-      if (color === this.playerColor) continue; // Skip our own color
-
       const threats = this.patterns.detectCompleteGhostThreats(color, tempGameState);
       if (threats.length > 0) {
-        // Opponent has a ghosting threat - very bad!
-        score -= 5000 * threats.length; // Heavy penalty for allowing ghost threats
+        scores[color] += 3000 * threats.length; // Good for this player
       }
-    }
-
-    // Detect our own ghosting opportunities
-    const ourThreats = this.patterns.detectCompleteGhostThreats(this.playerColor, tempGameState);
-    if (ourThreats.length > 0) {
-      // We have a ghosting threat - very good!
-      score += 3000 * ourThreats.length;
     }
 
     // PART 3: Capture threat evaluation
-    // Check if any of our pieces are under threat from opponent pieces
-    const myPieces = this.getPlayerPieces(this.playerColor, tempGameState);
+    // Being under threat hurts that player's score
+    for (const color of this.playerOrder) {
+      const playerPieces = this.getPlayerPieces(color, tempGameState);
 
-    for (const myPiece of myPieces) {
-      if (myPiece.position === 'captured') continue;
+      for (const piece of playerPieces) {
+        if (piece.position === 'captured') continue;
 
-      // Check if any opponent piece can capture this piece
-      for (const opponentColor of this.playerOrder) {
-        if (opponentColor === this.playerColor) continue; // Skip our own color
+        // Check if any opponent can capture this piece
+        for (const opponentColor of this.playerOrder) {
+          if (opponentColor === color) continue;
 
-        const opponentPieces = this.getPlayerPieces(opponentColor, tempGameState);
-        for (const oppPiece of opponentPieces) {
-          if (oppPiece.position === 'captured') continue;
+          const opponentPieces = this.getPlayerPieces(opponentColor, tempGameState);
+          for (const oppPiece of opponentPieces) {
+            if (oppPiece.position === 'captured') continue;
 
-          // Check if this opponent piece can capture our piece
-          if (this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, myPiece.position)) {
-            // Our piece is under threat - apply penalty based on piece value
-            const threatPenalty = this.getCaptureValue(myPiece.name) * 0.8;
-            score -= threatPenalty;
+            if (this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position)) {
+              // This player's piece is under threat - bad for them
+              const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
+              scores[color] -= threatPenalty;
+            }
           }
         }
       }
     }
 
     // PART 4: Immediate win threat detection
-    // Check if any opponent Owl can reach the nest on their next move
-    // CRITICAL: Must account for shadows created by current piece positions
-
-    // Calculate shadowed squares based on current position (after our move)
+    // If a player can win next move, that's GREAT for them, BAD for others
     const shadowedSquares = this.calculateShadowedSquares(tempGameState.piecePositions);
 
-    for (const opponentColor of this.playerOrder) {
-      if (opponentColor === this.playerColor) continue;
+    for (const color of this.playerOrder) {
+      const owl = this.getPlayerPieces(color, tempGameState).find(p => p.type === 'Owl');
+      if (!owl || owl.position === 'captured') continue;
 
-      const opponentOwl = this.getPlayerPieces(opponentColor, tempGameState).find(p => p.type === 'Owl');
-      if (!opponentOwl || opponentOwl.position === 'captured') continue;
+      const owlMoves = this.getPossibleMoves(owl, tempGameState);
 
-      // Get all possible moves for the opponent Owl
-      const owlMoves = this.getPossibleMoves(opponentOwl, tempGameState);
-
-      // Check if any move reaches a nest square that is NOT shadowed
-      let threatDetected = false;
       for (const move of owlMoves) {
         if (nestSquares.includes(move)) {
-          // Get the face of the nest square to check correct shadow list
           const nestFace = move.charAt(0);
           const isShadowed = shadowedSquares[nestFace].includes(move);
 
           if (!isShadowed) {
-            // Opponent can win on next move - CRITICAL THREAT!
-            threatDetected = true;
-            console.log(`⚠️⚠️⚠️ CRITICAL WIN THREAT: ${opponentColor} Owl can reach NEST at ${move}!`);
-            console.log(`   Applying -100000 penalty`);
-            score -= 100000; // Massive penalty to ensure we block/prevent this
+            // This player can win! Great for them, terrible for others
+            scores[color] += 100000; // Massive bonus for potential win
+
+            // Penalize OTHER players (they would lose)
+            for (const otherColor of this.playerOrder) {
+              if (otherColor !== color) {
+                scores[otherColor] -= 100000;
+              }
+            }
             break;
-          } else {
-            console.log(`🛡️ DEFENSIVE SUCCESS: Nest ${move} is SHADOWED - blocked from ${opponentColor} Owl`);
           }
         }
-      }
-
-      if (!threatDetected) {
-        console.log(`✅ No win threat from ${opponentColor} Owl at ${opponentOwl.position}`);
       }
     }
 
     // PART 5: Nest blocking bonus
-    // If we occupy a nest square (blocking opponents), give a bonus
-    const ourPieces = this.getPlayerPieces(this.playerColor, tempGameState);
-    for (const piece of ourPieces) {
-      if (nestSquares.includes(piece.position)) {
-        score += 1000; // Bonus for blocking the nest
+    // Occupying nest is good for that player (defensive position)
+    for (const color of this.playerOrder) {
+      const playerPieces = this.getPlayerPieces(color, tempGameState);
+      for (const piece of playerPieces) {
+        if (nestSquares.includes(piece.position)) {
+          scores[color] += 1000; // Bonus for blocking the nest
+        }
       }
     }
 
-    return score;
+    return scores;
   }
 
-  // ========== END MINIMAX IMPLEMENTATION ==========
+  // ========== END MAX^N IMPLEMENTATION ==========
 
   // Generate all valid moves for a player
   generateAllMoves(playerColor, gameState = null) {
