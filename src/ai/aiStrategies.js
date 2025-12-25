@@ -860,8 +860,44 @@ export class MinimaxAI {
       return kitePossibleMoves.some(move => adjacentToVictim.includes(move));
     }
     else if (pieceType === 'Raven') {
-      // Check if Raven can mob (simplified - requires another Raven)
-      return false; // Complex mobbing logic - simplified for threat analysis
+      // Get all valid Raven moves including mobbing opportunities
+      const ravenMoves = getAllRavenMoves(attackerPosition, this.gameState.piecePositions, attackerPiece);
+
+      // Check if Raven can move directly to victim square (direct capture)
+      if (ravenMoves.includes(victimSquare)) {
+        return true;
+      }
+
+      // Check if Raven can mob the victim from any of its possible moves
+      // Simplified: Check if any move creates a potential mobbing configuration
+      const attackerColor = attackerPiece.substring(0, attackerPiece.search(/[A-Z]/));
+      const victimFace = victimSquare[0];
+      const attackerFace = attackerPosition[0];
+
+      // Mobbing requires cross-face move
+      for (const move of ravenMoves) {
+        const moveFace = move[0];
+        if (moveFace !== attackerFace) {
+          // This is a cross-face move - check if it could enable mobbing
+          // Check if there's a passive Raven of same color on victim's face
+          for (const [pieceName, position] of Object.entries(this.gameState.piecePositions)) {
+            if (position === 'captured') continue;
+            if (pieceName.includes('Raven') &&
+                pieceName.startsWith(attackerColor) &&
+                pieceName !== attackerPiece) {
+              const passiveFace = position[0];
+              // If passive Raven is on victim's face, potential mobbing threat
+              if (passiveFace === victimFace || moveFace === victimFace) {
+                // Conservative: assume Raven could mob from this position
+                // This may overestimate threats but prevents missing captures
+                return true;
+              }
+            }
+          }
+        }
+      }
+
+      return false;
     }
     
     return false;
