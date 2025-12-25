@@ -414,3 +414,312 @@ If 50 pixels proves insufficient:
 - Both values are constants at the top of the function for easy adjustment
 
 Console logging can be removed in production by commenting out the `console.log()` statements in the `isDoubleClick()` function.
+
+---
+
+# AI Player Implementation - Max^n Refactoring
+
+## Date
+December 25, 2025
+
+## Project Goal Shift
+**Discovery**: This is not a production AI for casual play - it's a **research tool** for game theory analysis.
+
+### Research Questions to Answer
+1. **Opening theory**: Does Brown have forced losses after certain opening moves?
+2. **Game balance**: Are there forced wins/draws from the starting position?
+3. **Third Bird Rule impact**: Does it make the game unwinnable or always drawn?
+4. **Tourney dynamics**: Can one strong player beat two weak players consistently?
+
+**Implication**: Speed is not critical (AI can think for hours per move). Depth and accuracy matter most.
+
+## Architecture: Paranoid Minimax → Max^n
+
+### The Problem with Paranoid Minimax
+
+**Original approach**: Treated all opponents as allied against the AI
+```javascript
+if (currentPlayer === this.playerColor) {
+  maximize(score);  // My turn
+} else {
+  minimize(score);  // Opponent turn (Yellow AND Green minimize my score)
+}
+```
+
+**Why this fails for 3-player games**:
+- Assumes opponents cooperate against you
+- Doesn't model Yellow vs Green competition
+- **Incompatible with Third Bird Foul** (requires understanding opponent-vs-opponent dynamics)
+
+### Max^n Solution
+
+**New approach**: Each player independently maximizes their own score
+```javascript
+// Each player picks move that maximizes THEIR score
+const scores = {
+  brown: evaluateForBrown(position),
+  yellow: evaluateForYellow(position),
+  green: evaluateForGreen(position)
+};
+
+if (currentPlayer === 'brown') {
+  pickMoveThatMaximizes(scores.brown);
+} else if (currentPlayer === 'yellow') {
+  pickMoveThatMaximizes(scores.yellow);
+}
+// etc.
+```
+
+**Benefits**:
+- ✅ Models realistic 3-player competition
+- ✅ Compatible with Third Bird Foul detection (can check "does my move help Yellow beat Green?")
+- ✅ Backend-ready architecture (storage abstraction added)
+- ✅ Foundation for AI learning (AIMemory class added)
+
+## Files Created
+
+### 1. `src/ai/aiStorage.js`
+**Storage abstraction layer** - allows swapping between LocalStorage and Railway backend without changing AI logic.
+
+**Classes**:
+- `AIStorage` (abstract base)
+- `LocalAIStorage` (browser localStorage implementation)
+- `BackendAIStorage` (Railway API implementation - future)
+
+**Data format** (works for both local and remote):
+```json
+{
+  "playerColor": "brown",
+  "version": "1.0",
+  "statistics": {
+    "gamesPlayed": 100,
+    "wins": 35,
+    "losses": 40,
+    "draws": 25
+  },
+  "patterns": [...],
+  "evaluationWeights": {...}
+}
+```
+
+### 2. `src/ai/aiMemory.js`
+**AI learning and pattern management** - tracks game outcomes, stores learned patterns.
+
+**Current features**:
+- Game statistics tracking (wins/losses/draws)
+- Win rate calculation
+- Evaluation weight storage
+
+**Future features** (Phase 2):
+- Pattern-based learning ("avoid positions that led to losses")
+- Position hashing for pattern matching
+- Automatic weight tuning based on outcomes
+
+## Files Modified
+
+### `src/ai/aiStrategies.js`
+
+**Major changes**:
+
+1. **Imports**:
+   - Added `LocalAIStorage`, `AIMemory`
+   - Reduced depth from 3 → 2 → 1
+
+2. **evaluatePosition()** - Returns scores for all 3 players:
+```javascript
+// Before (single score from AI's perspective)
+evaluatePosition(piecePositions) {
+  let score = 0;
+  // Add to score for our pieces
+  // Subtract from score for opponent pieces
+  return score;
+}
+
+// After (Max^n - scores for each player)
+evaluatePosition(piecePositions) {
+  const scores = {
+    brown: 0,
+    yellow: 0,
+    green: 0
+  };
+
+  // Part 1: Each player's Owl distance to nest affects THEIR score
+  scores[color] += positionalValue;
+
+  // Part 2: Ghosting threats benefit the threatening player
+  scores[color] += ghostingBonus;
+
+  // Part 3: Being under attack hurts that player's score
+  scores[color] -= threatPenalty;
+
+  // Part 4: Ability to win benefits that player, hurts others
+  if (canWin) {
+    scores[color] += 100000;
+    for (otherColor of opponents) {
+      scores[otherColor] -= 100000;
+    }
+  }
+
+  return scores;
+}
+```
+
+3. **minimax() → maxn()** - Each player maximizes their own score:
+```javascript
+// Before (paranoid)
+minimax(position, depth, currentPlayer) {
+  if (currentPlayer === this.playerColor) {
+    return Math.max(childScores);  // Maximize
+  } else {
+    return Math.min(childScores);  // Minimize (opponent)
+  }
+}
+
+// After (Max^n)
+maxn(position, depth, currentPlayer) {
+  const childScores = evaluateChildren();  // Returns {brown: X, yellow: Y, green: Z}
+
+  // Current player picks move with best score FOR THEM
+  return bestScores where childScores[currentPlayer] is highest;
+}
+```
+
+4. **Shadow filtering** - Added to prevent illegal moves:
+   - AI calculates shadowed squares during evaluation
+   - Filters out shadowed destinations in `getPossibleMoves()`
+   - Fixes bug where AI didn't recognize defensive moves blocked opponent wins
+
+## Performance Investigation
+
+### The Slowness Problem
+- **Depth 2**: 15-20 seconds per move (expected: <2 seconds)
+- **Depth 1**: Should be <1 second (30 positions vs 900)
+
+### Root Cause Analysis
+
+**Not the branching factor**:
+- Strix: 9 pieces, ~30 moves per position
+- Chess: 32 pieces, ~30-40 moves per position
+- Strix should be easier!
+
+**The real bottleneck**:
+1. **JSON cloning** (for each position simulation):
+   ```javascript
+   const newState = JSON.parse(JSON.stringify(piecePositions));
+   // Called ~900 times at depth 2
+   // JSON.parse/stringify is VERY slow: 10-20ms per call
+   // 900 × 20ms = 18 seconds just for cloning!
+   ```
+
+2. **Expensive evaluation**:
+   - Shadow calculation: 9 pieces × 7 shadow squares = loops at every position
+   - Ghosting detection: 3 players × 9 pieces × cross-adjacency checks = ~27 complex operations
+   - Pattern detection: Called at every position
+
+3. **Position evaluation complexity**:
+   - Chess: Count material, check king safety (~100-200 operations)
+   - Strix: Shadow calc + ghosting + captures + move generation (~250+ operations)
+   - 10-50x more work per position!
+
+### Solution Path (Research Mode)
+
+**Not focusing on speed** (user can wait hours):
+- Keep depth 1 for now (basic competence)
+- Later add depth 4-6 with:
+  - **Transposition tables** (cache evaluated positions)
+  - **Iterative deepening** (search deeper over time)
+  - **Opening book** (pre-compute opening sequences)
+
+**Future optimization** (if needed for production):
+- WebAssembly (C++ compiled to run in browser at 10-50x speed)
+- Or Railway backend (C++ on server)
+
+## Depth Levels Explained
+
+**Depth 0**: No search, just evaluate current position
+
+**Depth 1** (current):
+- Try each of my moves
+- Evaluate resulting positions
+- Pick best one
+- **Can see**: Immediate wins, captures, positional gains
+- **Cannot see**: Opponent responses, 2-move combinations
+
+**Depth 2**:
+- Try each of my moves
+- For each, simulate next player's responses
+- Evaluate positions after their response
+- **Can see**: "If I move here, opponent can respond with X"
+- **Positions evaluated**: ~900 (30 my moves × 30 their responses)
+
+**Depth 3**:
+- One full round (my move + next player + third player)
+- **Positions evaluated**: ~27,000 (30 × 30 × 30)
+
+**For research**:
+- Depth 4-6 needed to find forced sequences
+- With transposition tables: Many positions cached, so actual evaluations much lower
+
+## Research Roadmap
+
+### Phase 1: Basic Competence (Current)
+- ✅ Max^n refactoring complete
+- ✅ Shadow filtering integrated
+- ✅ Depth reduced to 1
+- ⏳ Testing basic tactics (win/capture/defend)
+
+### Phase 2: Deep Search Infrastructure
+- Add transposition tables (position caching)
+- Add iterative deepening (search deeper over time)
+- Increase depth to 4-6
+- Let AI think for minutes/hours per move
+
+### Phase 3: Opening Analysis
+- AI vs AI games from all possible first moves
+- Database all games with outcomes
+- Statistical analysis: "Brown's first move X leads to Y% win rate"
+
+### Phase 4: Third Bird Foul Integration
+- Implement Third Bird Foul detection in Max^n
+- Re-run all opening analysis with rule enabled
+- Compare: Does it balance the game?
+
+### Phase 5: Tourney Simulation
+- AI at different depths = different skill levels
+- Simulate: Depth 2 (weak) + Depth 2 (weak) vs Depth 6 (strong)
+- Run 100s of games
+- Analyze: "Can strong player beat two weak players?"
+
+## Commits
+
+1. **239f094** - "Add shadow filtering to AI move generation for defensive play"
+   - Added calculateShadows() to flightwayUtils.js
+   - Modified AI's getPossibleMoves() to filter shadowed squares
+   - Bug fix: AI now recognizes defensive moves block opponent wins
+
+2. **d8c9f6d** - "Refactor AI from paranoid minimax to Max^n for proper 3-player modeling"
+   - Created aiStorage.js, aiMemory.js
+   - Converted evaluatePosition() to return 3-player scores
+   - Replaced minimax with maxn algorithm
+   - Reduced depth to 2 for performance
+
+3. **5574518** - "Reduce AI search depth to 1 for basic competence testing"
+   - Changed depth 2 → 1
+   - Fast response for initial testing
+   - Foundation for research phase
+
+## Current Status
+
+**Working**:
+- Max^n correctly models 3-player competition
+- Shadow filtering prevents illegal moves
+- Backend-ready architecture
+- Depth 1 should be fast (<1 second)
+
+**Testing needed**:
+- Does AI win when Owl can reach nest?
+- Does AI capture pieces when possible?
+- Does AI defend against immediate threats?
+- Does AI make sensible positional moves?
+
+**Next**: After verifying basic competence, build deep search for game analysis.
