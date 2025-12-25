@@ -323,7 +323,7 @@ export class MinimaxAI {
           for (const oppPiece of opponentPieces) {
             if (oppPiece.position === 'captured') continue;
 
-            if (this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position)) {
+            if (this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position, tempGameState)) {
               // This player's piece is under threat - bad for them
               const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
               scores[color] -= threatPenalty;
@@ -842,11 +842,13 @@ export class MinimaxAI {
     return captures;
   }
 
-  canPieceCaptureAtSquare(attackerPiece, attackerPosition, victimSquare) {
+  canPieceCaptureAtSquare(attackerPiece, attackerPosition, victimSquare, gameState = null) {
+    const state = gameState || this.gameState;
+    const piecePositions = state.piecePositions || state;
     const pieceType = this.getPieceType(attackerPiece);
-    
+
     if (pieceType === 'Owl') {
-      return this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Owl'})
+      return this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Owl'}, state)
                .includes(victimSquare);
     }
     else if (pieceType === 'Kite') {
@@ -854,14 +856,14 @@ export class MinimaxAI {
       const attackerFace = attackerPosition[0];
       const victimFace = victimSquare[0];
       if (attackerFace === victimFace) return false; // Same face = no swoop
-      
-      const kitePossibleMoves = this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Kite'});
+
+      const kitePossibleMoves = this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Kite'}, state);
       const adjacentToVictim = this.getAdjacentSquares(victimSquare);
       return kitePossibleMoves.some(move => adjacentToVictim.includes(move));
     }
     else if (pieceType === 'Raven') {
       // Get all valid Raven moves including mobbing opportunities
-      const ravenMoves = getAllRavenMoves(attackerPosition, this.gameState.piecePositions, attackerPiece);
+      const ravenMoves = getAllRavenMoves(attackerPosition, piecePositions, attackerPiece);
 
       // Check if Raven can move directly to victim square (direct capture)
       if (ravenMoves.includes(victimSquare)) {
@@ -880,7 +882,7 @@ export class MinimaxAI {
         if (moveFace !== attackerFace) {
           // This is a cross-face move - check if it could enable mobbing
           // Check if there's a passive Raven of same color on victim's face
-          for (const [pieceName, position] of Object.entries(this.gameState.piecePositions)) {
+          for (const [pieceName, position] of Object.entries(piecePositions)) {
             if (position === 'captured') continue;
             if (pieceName.includes('Raven') &&
                 pieceName.startsWith(attackerColor) &&
@@ -899,7 +901,7 @@ export class MinimaxAI {
 
       return false;
     }
-    
+
     return false;
   }
 
