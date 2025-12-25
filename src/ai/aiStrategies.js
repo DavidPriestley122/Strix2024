@@ -10,7 +10,7 @@ export class MinimaxAI {
   constructor(playerColor, gameStateManager) {
     this.playerColor = playerColor;
     this.gameState = gameStateManager;
-    this.maxDepth = 2; // Reduced from 3 for performance with Max^n
+    this.maxDepth = 1; // Depth 1: Evaluate immediate moves only (basic competence)
     this.strategicLogging = true;
     this.tacticalLogging = true;
 
