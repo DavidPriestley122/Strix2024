@@ -323,10 +323,15 @@ export class MinimaxAI {
           for (const oppPiece of opponentPieces) {
             if (oppPiece.position === 'captured') continue;
 
-            if (this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position, tempGameState)) {
+            const canCapture = this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position, tempGameState);
+            if (canCapture) {
               // This player's piece is under threat - bad for them
               const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
+              console.log(`🚨 THREAT DETECTED: ${oppPiece.name} at ${oppPiece.position} can capture ${piece.name} at ${piece.position} (penalty: -${threatPenalty})`);
               scores[color] -= threatPenalty;
+            } else if (piece.name === 'yellowOwl' && piece.position === 'b47') {
+              // Debug: Why isn't Yellow's Owl at b47 seen as threatened?
+              console.log(`❌ NO THREAT: ${oppPiece.name} at ${oppPiece.position} CANNOT capture yellowOwl at b47`);
             }
           }
         }
@@ -865,8 +870,12 @@ export class MinimaxAI {
       // Get all valid Raven moves including mobbing opportunities
       const ravenMoves = getAllRavenMoves(attackerPosition, piecePositions, attackerPiece);
 
+      console.log(`🐦 RAVEN CHECK: ${attackerPiece} at ${attackerPosition} checking if can capture at ${victimSquare}`);
+      console.log(`   Raven has ${ravenMoves.length} possible moves:`, ravenMoves.slice(0, 10));
+
       // Check if Raven can move directly to victim square (direct capture)
       if (ravenMoves.includes(victimSquare)) {
+        console.log(`   ✅ DIRECT: Raven can move directly to ${victimSquare}`);
         return true;
       }
 
@@ -892,6 +901,7 @@ export class MinimaxAI {
               if (passiveFace === victimFace || moveFace === victimFace) {
                 // Conservative: assume Raven could mob from this position
                 // This may overestimate threats but prevents missing captures
+                console.log(`   ✅ MOBBING: ${attackerPiece} + passive ${pieceName} at ${position} threatens ${victimSquare}`);
                 return true;
               }
             }
@@ -899,6 +909,7 @@ export class MinimaxAI {
         }
       }
 
+      console.log(`   ❌ NO CAPTURE: Raven cannot capture at ${victimSquare}`);
       return false;
     }
 
