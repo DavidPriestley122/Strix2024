@@ -307,7 +307,7 @@ export class MinimaxAI {
       }
     }
 
-    // PART 3: Capture threat evaluation
+    // PART 3: Capture threat evaluation (EN PRISE DETECTION)
     // Being under threat hurts that player's score
     for (const color of this.playerOrder) {
       const playerPieces = this.getPlayerPieces(color, tempGameState);
@@ -323,15 +323,24 @@ export class MinimaxAI {
           for (const oppPiece of opponentPieces) {
             if (oppPiece.position === 'captured') continue;
 
+            // CHECK 1: IMMEDIATE THREAT - Can opponent capture from current position?
             const canCapture = this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position, tempGameState);
             if (canCapture) {
-              // This player's piece is under threat - bad for them
+              // This player's piece is under immediate threat - bad for them
               const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
-              console.log(`🚨 THREAT DETECTED: ${oppPiece.name} at ${oppPiece.position} can capture ${piece.name} at ${piece.position} (penalty: -${threatPenalty})`);
+              console.log(`🚨 IMMEDIATE THREAT: ${oppPiece.name} at ${oppPiece.position} can capture ${piece.name} at ${piece.position} (penalty: -${threatPenalty})`);
               scores[color] -= threatPenalty;
-            } else if (piece.name === 'yellowOwl' && piece.position === 'b47') {
-              // Debug: Why isn't Yellow's Owl at b47 seen as threatened?
-              console.log(`❌ NO THREAT: ${oppPiece.name} at ${oppPiece.position} CANNOT capture yellowOwl at b47`);
+            }
+
+            // CHECK 2: EN PRISE - Can opponent MOVE to threaten this piece?
+            // This is critical for depth-1 AI to avoid blunders like moving into capture range
+            const movingThreat = this.canPieceMoveToThreaten(oppPiece, piece, tempGameState);
+            if (movingThreat) {
+              // Significant penalty for en prise positions (piece can be captured next turn)
+              // Slightly less than immediate threat since opponent needs a move to execute it
+              const enPrisePenalty = this.getCaptureValue(piece.name) * 0.6;
+              console.log(`⚠️ EN PRISE: ${oppPiece.name} at ${oppPiece.position} can move to threaten ${piece.name} at ${piece.position} (penalty: -${enPrisePenalty})`);
+              scores[color] -= enPrisePenalty;
             }
           }
         }
@@ -912,6 +921,40 @@ export class MinimaxAI {
 
       console.log(`   ❌ NO CAPTURE: Raven cannot capture at ${victimSquare}`);
       return false;
+    }
+
+    return false;
+  }
+
+  // EN PRISE DETECTION: Check if opponent piece can MOVE to threaten my piece
+  // This is essential for depth-1 AI to avoid moving into positions where piece can be captured
+  canPieceMoveToThreaten(oppPiece, myPiece, gameState = null) {
+    const state = gameState || this.gameState;
+
+    // Get all possible moves for the opponent piece
+    const possibleMoves = this.getPossibleMoves(oppPiece, state);
+
+    // For each possible move, check if opponent could capture my piece from that position
+    for (const targetSquare of possibleMoves) {
+      // Simulate opponent moving to this square
+      const hypotheticalState = this.simulateMove(
+        state.piecePositions || state,
+        oppPiece.name,
+        targetSquare
+      );
+
+      // Check if opponent can capture my piece from this new position
+      const canCaptureFromHere = this.canPieceCaptureAtSquare(
+        oppPiece.name,
+        targetSquare,
+        myPiece.position,
+        { piecePositions: hypotheticalState }
+      );
+
+      if (canCaptureFromHere) {
+        console.log(`🎯 EN PRISE DETECTED: ${oppPiece.name} can move ${oppPiece.position}→${targetSquare} to threaten ${myPiece.name} at ${myPiece.position}`);
+        return true;
+      }
     }
 
     return false;
