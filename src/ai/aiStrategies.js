@@ -871,7 +871,8 @@ export class MinimaxAI {
       const ravenMoves = getAllRavenMoves(attackerPosition, piecePositions, attackerPiece);
 
       console.log(`🐦 RAVEN CHECK: ${attackerPiece} at ${attackerPosition} checking if can capture at ${victimSquare}`);
-      console.log(`   Raven has ${ravenMoves.length} possible moves:`, ravenMoves.slice(0, 10));
+      console.log(`   Raven has ${ravenMoves.length} possible moves:`, ravenMoves);
+      console.log(`   Contains g5-5? ${ravenMoves.includes('g5-5')}`);
 
       // Check if Raven can move directly to victim square (direct capture)
       if (ravenMoves.includes(victimSquare)) {
