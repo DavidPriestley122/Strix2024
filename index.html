@@ -374,7 +374,9 @@
 
         // Auto-collapse on smaller screens
         function checkScreenSize() {
-          if (window.innerWidth < 1400) {
+          // Game is 1840px + 250px left sidebar + 250px right sidebar = 2340px total
+          // Collapse sidebars when window can't fit everything
+          if (window.innerWidth < 2340) {
             leftSidebar.classList.add("collapsed");
             rightSidebar.classList.add("collapsed");
             document.body.classList.add("left-sidebar-collapsed", "right-sidebar-collapsed");
