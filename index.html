@@ -98,6 +98,10 @@
     </header>
 
     <main style="position: relative">
+      <!-- Sidebar toggle buttons -->
+      <button class="sidebar-toggle left" id="left-sidebar-toggle" aria-label="Toggle left sidebar" title="Toggle Menu">◀</button>
+      <button class="sidebar-toggle right" id="right-sidebar-toggle" aria-label="Toggle right sidebar" title="Toggle AI Controls">▶</button>
+
       <aside id="game-sidebar" class="sidebar">
         <div class="main-categories">
           <button class="category-button" data-category="about-strix">
@@ -346,6 +350,44 @@
             restartGame();
           }
         });
+
+        // Sidebar toggle functionality
+        const leftToggle = document.getElementById("left-sidebar-toggle");
+        const rightToggle = document.getElementById("right-sidebar-toggle");
+        const leftSidebar = document.getElementById("game-sidebar");
+        const rightSidebar = document.getElementById("ai-sidebar");
+
+        function toggleLeftSidebar() {
+          leftSidebar.classList.toggle("collapsed");
+          leftToggle.textContent = leftSidebar.classList.contains("collapsed") ? "▶" : "◀";
+        }
+
+        function toggleRightSidebar() {
+          rightSidebar.classList.toggle("collapsed");
+          rightToggle.textContent = rightSidebar.classList.contains("collapsed") ? "◀" : "▶";
+        }
+
+        leftToggle.addEventListener("click", toggleLeftSidebar);
+        rightToggle.addEventListener("click", toggleRightSidebar);
+
+        // Auto-collapse on smaller screens
+        function checkScreenSize() {
+          if (window.innerWidth < 1400) {
+            leftSidebar.classList.add("collapsed");
+            rightSidebar.classList.add("collapsed");
+            leftToggle.textContent = "▶";
+            rightToggle.textContent = "◀";
+          } else {
+            leftSidebar.classList.remove("collapsed");
+            rightSidebar.classList.remove("collapsed");
+            leftToggle.textContent = "◀";
+            rightToggle.textContent = "▶";
+          }
+        }
+
+        // Check on load and resize
+        checkScreenSize();
+        window.addEventListener("resize", checkScreenSize);
       });
     </script>
   </body>

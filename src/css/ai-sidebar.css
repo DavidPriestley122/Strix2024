@@ -5,13 +5,18 @@
   top: var(--header-height);
   width: var(--sidebar-width);
   height: calc(100vh - var(--header-height));
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: var(--owl-dark);
   color: white;
   padding: var(--sidebar-padding);
   box-sizing: border-box;
   overflow-y: auto;
   z-index: 1000;
   font-family: "Libre Baskerville", serif;
+  transition: transform 0.3s ease;
+}
+
+#ai-sidebar.collapsed {
+  transform: translateX(100%);
 }
 
 /* Style the AI sidebar title */
