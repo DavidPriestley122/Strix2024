@@ -1,5 +1,6 @@
 [build]
   publish = "."
+  command = ""  # No build needed - serve static files
 
 [build.environment]
   NODE_VERSION = "20"
