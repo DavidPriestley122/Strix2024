@@ -37,6 +37,7 @@ body > header * {
 }
 
 main {
+  display: flex;
   flex-grow: 1;
   position: relative;
 }
@@ -165,47 +166,4 @@ main {
   font-size: 0.9em;
   color: var(--owl-light);
   margin-top: 10px;
-}
-
-/* Sidebar toggle buttons */
-.sidebar-toggle {
-  position: fixed;
-  top: calc(var(--header-height) + 10px);
-  width: 40px;
-  height: 40px;
-  background: var(--dark-chocolate);
-  border: 2px solid var(--owl-beak);
-  border-radius: 8px;
-  color: var(--owl-beak);
-  font-size: 20px;
-  cursor: pointer;
-  z-index: 1001;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.sidebar-toggle:hover {
-  background: var(--owl-beak);
-  color: var(--dark-chocolate);
-  transform: scale(1.05);
-}
-
-.sidebar-toggle.left {
-  left: 10px;
-}
-
-.sidebar-toggle.right {
-  right: 10px;
-}
-
-/* Adjust toggle button position when sidebar is visible */
-.sidebar:not(.collapsed) ~ .sidebar-toggle.left {
-  left: calc(var(--sidebar-width) - 30px);
-}
-
-#ai-sidebar:not(.collapsed) ~ .sidebar-toggle.right {
-  right: calc(var(--sidebar-width) - 30px);
 }

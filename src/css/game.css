@@ -4,19 +4,9 @@
   height: 1380px;
   box-sizing: content-box;
   margin: 0 auto;
-  padding-left: var(--sidebar-width);
-  padding-right: var(--sidebar-width);
-  transition: padding 0.3s ease;
+  left: var(--sidebar-width);
+  transition: left 0.3s ease;
   top: var(--header-height);
-}
-
-/* Adjust game position when sidebars are collapsed */
-body.left-sidebar-collapsed #game-wrapper {
-  padding-left: 0;
-}
-
-body.right-sidebar-collapsed #game-wrapper {
-  padding-right: 0;
 }
 
 #game-container {
