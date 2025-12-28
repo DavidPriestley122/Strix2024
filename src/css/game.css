@@ -9,13 +9,13 @@
   top: var(--header-height);
 }
 
-/* Adjust game position when sidebars are collapsed */
+/* Adjust game position when sidebars are collapsed - center the game */
 body.left-sidebar-collapsed #game-wrapper {
-  margin-left: 0;
+  margin-left: auto;
 }
 
 body.right-sidebar-collapsed #game-wrapper {
-  margin-right: 0;
+  margin-right: auto;
 }
 
 #game-container {
