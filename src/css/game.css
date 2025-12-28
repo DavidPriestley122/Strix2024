@@ -5,8 +5,18 @@
   box-sizing: content-box;
   margin: 0 auto;
   left: var(--sidebar-width);
-  transition: left 0.3s ease;
+  right: var(--sidebar-width);
+  transition: left 0.3s ease, right 0.3s ease, margin 0.3s ease;
   top: var(--header-height);
+}
+
+/* Adjust game position when sidebars are collapsed */
+body.left-sidebar-collapsed #game-wrapper {
+  left: 0;
+}
+
+body.right-sidebar-collapsed #game-wrapper {
+  right: 0;
 }
 
 #game-container {

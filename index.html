@@ -359,11 +359,13 @@
 
         function toggleLeftSidebar() {
           leftSidebar.classList.toggle("collapsed");
+          document.body.classList.toggle("left-sidebar-collapsed", leftSidebar.classList.contains("collapsed"));
           leftToggle.textContent = leftSidebar.classList.contains("collapsed") ? "▶" : "◀";
         }
 
         function toggleRightSidebar() {
           rightSidebar.classList.toggle("collapsed");
+          document.body.classList.toggle("right-sidebar-collapsed", rightSidebar.classList.contains("collapsed"));
           rightToggle.textContent = rightSidebar.classList.contains("collapsed") ? "◀" : "▶";
         }
 
@@ -375,11 +377,13 @@
           if (window.innerWidth < 1400) {
             leftSidebar.classList.add("collapsed");
             rightSidebar.classList.add("collapsed");
+            document.body.classList.add("left-sidebar-collapsed", "right-sidebar-collapsed");
             leftToggle.textContent = "▶";
             rightToggle.textContent = "◀";
           } else {
             leftSidebar.classList.remove("collapsed");
             rightSidebar.classList.remove("collapsed");
+            document.body.classList.remove("left-sidebar-collapsed", "right-sidebar-collapsed");
             leftToggle.textContent = "◀";
             rightToggle.textContent = "▶";
           }
