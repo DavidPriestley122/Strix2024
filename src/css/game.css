@@ -122,3 +122,12 @@
     height: auto;
   }
 }
+
+/* Mobile responsiveness - remove sidebar offset, keep game proportions */
+@media (max-width: 768px) {
+  #game-wrapper {
+    left: 0;
+    transform: scale(0.95);
+    transform-origin: top center;
+  }
+}

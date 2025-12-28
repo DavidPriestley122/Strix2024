@@ -98,6 +98,13 @@
     </header>
 
     <main style="position: relative">
+      <!-- Mobile menu buttons -->
+      <button class="mobile-menu-btn left" id="left-menu-btn" aria-label="Toggle left menu">☰</button>
+      <button class="mobile-menu-btn right" id="right-menu-btn" aria-label="Toggle right menu">☰</button>
+
+      <!-- Mobile backdrop -->
+      <div class="mobile-backdrop" id="mobile-backdrop"></div>
+
       <aside id="game-sidebar" class="sidebar">
         <div class="main-categories">
           <button class="category-button" data-category="about-strix">
@@ -346,6 +353,37 @@
             restartGame();
           }
         });
+
+        // Mobile sidebar toggle functionality
+        const leftMenuBtn = document.getElementById("left-menu-btn");
+        const rightMenuBtn = document.getElementById("right-menu-btn");
+        const leftSidebar = document.getElementById("game-sidebar");
+        const rightSidebar = document.getElementById("ai-sidebar");
+        const backdrop = document.getElementById("mobile-backdrop");
+
+        function toggleLeftSidebar() {
+          leftSidebar.classList.toggle("mobile-open");
+          backdrop.classList.toggle("active");
+          // Close right sidebar if open
+          rightSidebar.classList.remove("mobile-open");
+        }
+
+        function toggleRightSidebar() {
+          rightSidebar.classList.toggle("mobile-open");
+          backdrop.classList.toggle("active");
+          // Close left sidebar if open
+          leftSidebar.classList.remove("mobile-open");
+        }
+
+        function closeAllSidebars() {
+          leftSidebar.classList.remove("mobile-open");
+          rightSidebar.classList.remove("mobile-open");
+          backdrop.classList.remove("active");
+        }
+
+        leftMenuBtn.addEventListener("click", toggleLeftSidebar);
+        rightMenuBtn.addEventListener("click", toggleRightSidebar);
+        backdrop.addEventListener("click", closeAllSidebars);
       });
     </script>
   </body>
