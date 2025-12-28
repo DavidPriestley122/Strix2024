@@ -3,19 +3,20 @@
   width: 1840px;
   height: 1380px;
   box-sizing: content-box;
-  margin-left: var(--sidebar-width);
-  margin-right: var(--sidebar-width);
-  transition: margin 0.3s ease;
+  margin: 0 auto;
+  padding-left: var(--sidebar-width);
+  padding-right: var(--sidebar-width);
+  transition: padding 0.3s ease;
   top: var(--header-height);
 }
 
-/* Adjust game position when sidebars are collapsed - center the game */
+/* Adjust game position when sidebars are collapsed */
 body.left-sidebar-collapsed #game-wrapper {
-  margin-left: auto;
+  padding-left: 0;
 }
 
 body.right-sidebar-collapsed #game-wrapper {
-  margin-right: auto;
+  padding-right: 0;
 }
 
 #game-container {
