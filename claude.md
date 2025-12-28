@@ -723,3 +723,155 @@ maxn(position, depth, currentPlayer) {
 - Does AI make sensible positional moves?
 
 **Next**: After verifying basic competence, build deep search for game analysis.
+
+---
+
+# Mobile Responsiveness Attempts - December 28, 2025
+
+## Problem Statement
+
+Game is optimized for desktop with fixed dimensions (1840x1380px). On mobile and smaller screens:
+- Right sidebar (AI controls) overlays the game, making it unplayable
+- Left sidebar also overlays when window is narrow
+- Game needs full screen width on mobile
+- Sidebars should be accessible but not block the game
+
+## User Requirements
+
+From user feedback:
+- Desktop: Works very well in full screen, pieces big enough to click
+- Both sidebars rarely needed during active play (occasional use)
+- Left sidebar: Game info, how to play (occasional access)
+- Right sidebar: AI controls (set once per game)
+- **Core insight**: Don't try to make game responsive - make sidebars collapsible to give game more space
+
+## Attempts Made (December 28, 2025)
+
+### Attempt 1: Hamburger Menus with Slide-in Sidebars
+**Commits**: b8e23c2, f17a77f (experimental branch: mobile-fix-experiment)
+
+**Approach**:
+- Hide sidebars on mobile (< 768px)
+- Add hamburger buttons (☰) to toggle sidebars
+- Sidebars slide in from off-screen with `transform: translateX()`
+- Auto-collapse at < 1400px (later changed to < 2340px)
+
+**Problems encountered**:
+- Game appeared tiny in top right corner on mobile
+- Existing media query `(max-width: 1024px)` set `width: 100%; height: auto;` - conflicted with fixed 1840px width
+- `transform: scale(0.95)` made already-small game even smaller
+- Game not centering properly
+
+**Commits reverted**: Experimental branch deleted
+
+### Attempt 2: Collapsible Sidebars for Desktop and Mobile
+**Commits**: 56aeb62 through cb3c397
+
+**Approach**:
+- Make right sidebar solid (not translucent) to match left
+- Add toggle buttons (◀ ▶) for both sidebars
+- Sidebars collapse with `transform: translateX()`
+- Auto-collapse when window < 2340px (game width + both sidebars)
+- Game wrapper adjusts with margins/padding to avoid sidebars
+
+**Problems encountered**:
+1. **Sidebar asymmetry**: Right sidebar encroached on game space when resizing, left didn't
+   - Tried: `margin-left` and `margin-right` on game wrapper
+   - Issue: Game has `left: 250px` offset for left sidebar but no corresponding right offset
+
+2. **Centering issues**: Game not centered when sidebars collapsed
+   - Tried: `margin: auto` when collapsed
+   - Issue: Flexbox on `<main>` interfered with margin-based centering
+
+3. **Flexbox conflicts**: Added `justify-content: center` to `<main>`
+   - Issue: Flexbox + margins don't play well together
+   - Game not centered in full screen vs normal window modes
+
+4. **Padding approach**: Switched to padding instead of margins
+   - Issue: Still not centering properly, asymmetric resize behavior
+
+**Root cause identified**:
+- `<main>` has `display: flex` (line 40 of main.css)
+- Game wrapper is a flex item
+- Mixing flexbox layout + margin/padding centering causes conflicts
+- Fixed width game (1840px) + viewport constraints + sidebar space = complex layout math
+
+**Final state**: Reverted all changes (commit 55fc199)
+
+## Lessons Learned
+
+### What Doesn't Work:
+1. **Simple CSS transforms alone** - Need proper layout adjustments for game wrapper
+2. **Mixing centering approaches** - Flexbox + margin-based centering conflict
+3. **Fixed width game + flexible sidebars** - Math becomes complex:
+   - Game: 1840px
+   - Left sidebar: 250px
+   - Right sidebar: 250px
+   - Total needed: 2340px
+   - When viewport < 2340px, something must give
+
+### Key Technical Issues:
+1. **Flexbox on main** - Makes game wrapper a flex item, interfering with traditional centering
+2. **Existing media query** - `@media (max-width: 1024px)` sets `width: 100%; height: auto;` but doesn't handle aspect ratio properly
+3. **Sidebar positioning** - Both are `position: fixed`, game wrapper is `position: relative`
+4. **No consistent layout model** - Mixing fixed positioning, flexbox, and block layout
+
+## Recommended Approach for Future Attempts
+
+### Option A: Simplified Overlay (Easiest)
+- Keep sidebars as `position: fixed` overlays
+- Add simple hide/show toggle buttons
+- Don't try to adjust game wrapper at all
+- On mobile: sidebars start hidden, show on tap
+- Accept that open sidebars will overlay game (user closes them to play)
+
+### Option B: Proper Responsive Layout (More work)
+1. **Remove flexbox from main** - Use block or grid layout
+2. **Make game truly responsive**:
+   - Use viewport units: `width: min(1840px, 100vw - 500px)`
+   - Use aspect-ratio CSS or padding-bottom hack: `aspect-ratio: 1840 / 1380`
+   - Let game scale down naturally while maintaining proportions
+3. **Sidebars**:
+   - Desktop: visible by default
+   - < 2340px: auto-collapse
+   - Provide toggle to show when needed
+4. **Center game with grid or flexbox** - Pick ONE layout model and stick with it
+
+### Option C: Mobile-first Redesign (Best UX)
+- Separate mobile and desktop layouts entirely
+- Mobile: Stack vertically (header, game, controls below)
+- Desktop: Current three-column layout
+- Use proper responsive breakpoints
+
+## Current State (After Revert)
+
+**Working**:
+- Desktop layout perfectly centered and functional
+- Game at natural size on large screens
+- No mobile optimization but also not broken
+
+**Not working**:
+- Mobile: Sidebars overlay game
+- Smaller desktop windows: Sidebars encroach on game space
+
+**Files at good state**:
+- Commit: 55fc199 (after revert)
+- All CSS back to pre-mobile-attempt state
+- Only addition: netlify.toml for Node 20
+
+## Next Steps (When Revisiting)
+
+1. **Decide on layout model**: Flexbox OR grid OR block (not mixed)
+2. **Test incrementally**: Make ONE change at a time, test on multiple screen sizes
+3. **Use browser DevTools device emulation**: Test before deploying
+4. **Consider CSS frameworks**: Or study how responsive game sites handle this (chess.com, etc.)
+5. **Accept tradeoffs**: Perfect mobile experience might require compromises on desktop or vice versa
+
+## Related Commits
+
+- b8e23c2: Initial mobile responsiveness attempt (reverted)
+- 56aeb62: Collapsible sidebars attempt (reverted)
+- 55fc199: Revert to working desktop state
+- Branch: mobile-fix-experiment (deleted locally and remotely)
+
+**Important**: Don't retry the same approaches. Study the layout model first, pick one approach, test thoroughly before pushing.
