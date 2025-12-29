@@ -118,8 +118,8 @@ function getRavenMobbingMoves(fromSquare, piecePositions, movingRavenName, fligh
   const mobbingMoves = [];
   
   // Get all possible landing squares along both flightways
-  const landingSquares1 = getMovesAlongFlightway(fromSquare, flightway1, piecePositions);
-  const landingSquares2 = getMovesAlongFlightway(fromSquare, flightway2, piecePositions);
+  const landingSquares1 = getMovesAlongFlightway(fromSquare, flightway1, piecePositions, movingRavenName);
+  const landingSquares2 = getMovesAlongFlightway(fromSquare, flightway2, piecePositions, movingRavenName);
   const allLandingSquares = [...landingSquares1, ...landingSquares2];
   
   // Get the face the attacking Raven is currently on

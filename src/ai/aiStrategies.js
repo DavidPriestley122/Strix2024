@@ -110,6 +110,9 @@ export class MinimaxAI {
 
   // Main decision function - now with recursive minimax lookahead
   selectBestMove() {
+    console.log("=".repeat(80));
+    console.log(`🚀 AI MOVE SELECTION STARTED FOR: ${this.playerColor}`);
+    console.log("=".repeat(80));
     this.logStrategy(`=== AI SEARCH (${this.playerColor}) WITH DEPTH-${this.maxDepth} MINIMAX ===`);
 
     // Debug: Show current board state
