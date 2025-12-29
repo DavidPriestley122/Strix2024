@@ -1,6 +1,6 @@
 import { getAllOwlMoves } from "../game/rules/owlRules.js";
 import { getAllKiteMoves } from "../game/rules/kiteRules.js";
-import { getAllRavenMoves } from "../game/rules/ravenRules.js";
+import { getAllRavenMoves, isValidMobbingConfiguration } from "../game/rules/ravenRules.js";
 import { StrixPatterns } from "./strixPatterns.js";
 import { convertToFlightway, generateFlightwayRoute } from "../game/rules/flightwayUtils.js";
 import { LocalAIStorage } from "./aiStorage.js";
@@ -191,9 +191,64 @@ export class MinimaxAI {
   // ========== RECURSIVE MAX^N IMPLEMENTATION ==========
 
   // Simulate a move on a cloned game state
+  // CRITICAL: Must execute captures so material evaluation works correctly!
   simulateMove(piecePositions, pieceName, targetSquare) {
     const newState = JSON.parse(JSON.stringify(piecePositions));
+    const pieceType = this.getPieceType(pieceName);
+    const fromSquare = piecePositions[pieceName];
+
+    // Move the piece
     newState[pieceName] = targetSquare;
+
+    // Execute captures based on piece type
+    if (pieceType === 'Owl') {
+      // Owl direct capture: if target square is occupied by opponent, capture it
+      const victim = this.findPieceAtSquare(targetSquare, { piecePositions });
+      if (victim && !this.isSameTeam(pieceName, victim)) {
+        newState[victim] = 'captured';
+      }
+    }
+    else if (pieceType === 'Kite') {
+      // Kite swoop capture: cross-face move captures adjacent opponents
+      const fromFace = fromSquare[0];
+      const toFace = targetSquare[0];
+
+      if (fromFace !== toFace) { // Must be cross-face swoop
+        const adjacentSquares = this.getAdjacentSquares(targetSquare);
+        for (const adjSquare of adjacentSquares) {
+          const victim = this.findPieceAtSquare(adjSquare, { piecePositions });
+          if (victim && !this.isSameTeam(pieceName, victim)) {
+            newState[victim] = 'captured';
+          }
+        }
+      }
+    }
+    else if (pieceType === 'Raven') {
+      // Raven mobbing capture: cross-face move + passive Raven forms sandwich
+      const fromFace = fromSquare[0];
+      const toFace = targetSquare[0];
+
+      if (fromFace !== toFace) { // Must be cross-face move
+        // Check all potential victims
+        for (const [victimName, victimPos] of Object.entries(piecePositions)) {
+          if (victimPos === 'captured' || victimName === pieceName) continue;
+          if (this.isSameTeam(pieceName, victimName)) continue;
+
+          // Look for a passive Raven that creates valid mobbing configuration
+          for (const [passiveName, passivePos] of Object.entries(piecePositions)) {
+            if (!passiveName.endsWith('Raven')) continue;
+            if (passiveName === pieceName || passivePos === 'captured') continue;
+
+            // Check if attacking Raven (at targetSquare), passive Raven, and victim form valid mob
+            if (isValidMobbingConfiguration(targetSquare, passivePos, victimPos)) {
+              newState[victimName] = 'captured';
+              break; // Each victim can only be captured once
+            }
+          }
+        }
+      }
+    }
+
     return newState;
   }
 
@@ -282,7 +337,37 @@ export class MinimaxAI {
     const nestSquares = ["b7-7", "y7-7", "g7-7"];
     const tempGameState = { piecePositions: piecePositions };
 
-    // PART 1: Positional evaluation (flightway distances)
+    // PART 1: Material evaluation (piece count and value)
+    // Each player gets points for their pieces, loses points when opponent pieces exist
+    for (const [pieceName, position] of Object.entries(piecePositions)) {
+      if (position === 'captured') continue;
+
+      // Determine which player owns this piece
+      let pieceOwner = null;
+      for (const color of this.playerOrder) {
+        if (pieceName.startsWith(color)) {
+          pieceOwner = color;
+          break;
+        }
+      }
+
+      if (!pieceOwner) continue;
+
+      // Get piece value
+      const pieceValue = this.getCaptureValue(pieceName);
+
+      // Add value to owner's score
+      scores[pieceOwner] += pieceValue;
+
+      // Subtract value from opponents' scores (having enemy pieces is bad for you)
+      for (const color of this.playerOrder) {
+        if (color !== pieceOwner) {
+          scores[color] -= pieceValue * 0.5; // Opponents lose half the piece value
+        }
+      }
+    }
+
+    // PART 2: Positional evaluation (flightway distances)
     // Each player's Owl distance to nest affects THEIR score
     for (const color of this.playerOrder) {
       const owlPiece = `${color}Owl`;
@@ -298,7 +383,7 @@ export class MinimaxAI {
       scores[color] += positionalValue;
     }
 
-    // PART 2: Strategic pattern evaluation (ghosting threats)
+    // PART 3: Strategic pattern evaluation (ghosting threats)
     // Having a ghosting threat benefits the player with the threat
     for (const color of this.playerOrder) {
       const threats = this.patterns.detectCompleteGhostThreats(color, tempGameState);
@@ -307,7 +392,7 @@ export class MinimaxAI {
       }
     }
 
-    // PART 3: Capture threat evaluation (EN PRISE DETECTION)
+    // PART 4: Capture threat evaluation (EN PRISE DETECTION)
     // Being under threat hurts that player's score
     for (const color of this.playerOrder) {
       const playerPieces = this.getPlayerPieces(color, tempGameState);
@@ -347,7 +432,7 @@ export class MinimaxAI {
       }
     }
 
-    // PART 4: Immediate win threat detection
+    // PART 5: Immediate win threat detection
     // If a player can win next move, that's GREAT for them, BAD for others
     const shadowedSquares = this.calculateShadowedSquares(tempGameState.piecePositions);
 
@@ -378,7 +463,7 @@ export class MinimaxAI {
       }
     }
 
-    // PART 5: Nest blocking bonus
+    // PART 6: Nest blocking bonus
     // Occupying nest is good for that player (defensive position)
     for (const color of this.playerOrder) {
       const playerPieces = this.getPlayerPieces(color, tempGameState);
