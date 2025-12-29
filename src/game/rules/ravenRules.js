@@ -33,12 +33,12 @@ export function getAllRavenMoves(fromSquare, piecePositions = {}, movingPieceNam
   const flightway1 = `${face1}${num1}`;
   const flightway2 = `${face2}${num2}`;
 
-  // Get regular moves along first flightway
-  const moves1 = getMovesAlongFlightway(fromSquare, flightway1, piecePositions);
+  // Get regular moves along first flightway (exclude moving piece from occupation checks)
+  const moves1 = getMovesAlongFlightway(fromSquare, flightway1, piecePositions, movingPieceName);
   validMoves.push(...moves1);
 
-  // Get regular moves along second flightway
-  const moves2 = getMovesAlongFlightway(fromSquare, flightway2, piecePositions);
+  // Get regular moves along second flightway (exclude moving piece from occupation checks)
+  const moves2 = getMovesAlongFlightway(fromSquare, flightway2, piecePositions, movingPieceName);
   validMoves.push(...moves2);
 
   // Add mobbing moves if piece name is provided
@@ -50,7 +50,7 @@ export function getAllRavenMoves(fromSquare, piecePositions = {}, movingPieceNam
   return validMoves;
 }
 
-function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
+function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions, excludePiece = null) {
   const validMoves = [];
 
   // Generate the complete 14-square flightway sequence
@@ -59,7 +59,7 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
   const flightwayRoute = generateFlightwayRoute(face, num);
 
   if (DEBUG_FLIGHTWAY_Y3 && flightwayName === 'y3') {
-    console.log(`\n🛤️ DEBUG y3 FLIGHTWAY from ${currentSquare}:`);
+    console.log(`\n🛤️ DEBUG y3 FLIGHTWAY from ${currentSquare} (excluding ${excludePiece}):`);
     console.log(`   Full route (${flightwayRoute.length} squares):`, flightwayRoute);
   }
 
@@ -73,8 +73,8 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
 
     const targetSquare = flightwayRoute[i];
 
-    // Check if destination is occupied
-    if (isSquareOccupied(targetSquare, piecePositions)) {
+    // Check if destination is occupied (excluding the moving piece!)
+    if (isSquareOccupied(targetSquare, piecePositions, excludePiece)) {
       if (DEBUG_FLIGHTWAY_Y3 && flightwayName === 'y3') {
         console.log(`   ❌ ${targetSquare} is OCCUPIED - blocking further movement in this direction`);
       }
@@ -89,8 +89,8 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
       }
     }
 
-    // Check if path is clear (no pieces between current and target)
-    if (!isPathClear(currentSquare, targetSquare, piecePositions)) {
+    // Check if path is clear (no pieces between current and target, excluding the moving piece!)
+    if (!isPathClear(currentSquare, targetSquare, piecePositions, excludePiece)) {
       if (DEBUG_FLIGHTWAY_Y3 && flightwayName === 'y3') {
         console.log(`   ❌ Path to ${targetSquare} is BLOCKED - stopping`);
       }

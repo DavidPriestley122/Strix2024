@@ -496,8 +496,12 @@ export function calculateSimpleGhostingDestination(
   return destinationSquare;
 }
 
-export function isSquareOccupied(square, piecePositions) {
-  return Object.values(piecePositions || {}).includes(square);
+export function isSquareOccupied(square, piecePositions, excludePiece = null) {
+  for (const [pieceName, position] of Object.entries(piecePositions || {})) {
+    if (pieceName === excludePiece) continue; // Exclude moving piece
+    if (position === square) return true;
+  }
+  return false;
 }
 
 /**
@@ -567,7 +571,7 @@ export function isSquareShadowed(square, piecePositions, excludedPiece = null) {
   return shadows[face] && shadows[face].includes(square);
 }
 
-export function isPathClear(fromSquare, toSquare, piecePositions) {
+export function isPathClear(fromSquare, toSquare, piecePositions, excludePiece = null) {
   // For now, let's implement basic same-face path checking
   // This can be enhanced later for cross-face moves
 
@@ -602,8 +606,8 @@ export function isPathClear(fromSquare, toSquare, piecePositions) {
     }
   }
 
-  // Check if any piece blocks the path
-  return !path.some((square) => isSquareOccupied(square, piecePositions));
+  // Check if any piece blocks the path (excluding the moving piece)
+  return !path.some((square) => isSquareOccupied(square, piecePositions, excludePiece));
 }
 
 /**
