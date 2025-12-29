@@ -140,6 +140,12 @@ export class MinimaxAI {
     const evaluatedMoves = [];
     const nextPlayer = this.getNextPlayer(this.playerColor);
 
+    // DEBUG: Log all moves being considered
+    console.log(`\n🔍 ALL MOVES BEING EVALUATED FOR ${this.playerColor}:`);
+    for (const move of moves) {
+      console.log(`  - ${move.piece.name} → ${move.targetSquare}`);
+    }
+
     for (const move of moves) {
       // Simulate this move
       const newPositions = this.simulateMove(
@@ -155,6 +161,15 @@ export class MinimaxAI {
       move.evaluation = scores[this.playerColor];
       move.allScores = scores; // Keep all scores for debugging
       evaluatedMoves.push(move);
+
+      // DEBUG: Show if this move resulted in any captures
+      const capturedPieces = Object.entries(newPositions).filter(([name, pos]) =>
+        pos === 'captured' && this.gameState.piecePositions[name] !== 'captured'
+      ).map(([name]) => name);
+
+      if (capturedPieces.length > 0) {
+        console.log(`  💥 CAPTURE MOVE: ${move.piece.name}→${move.targetSquare} captures ${capturedPieces.join(', ')} | Score: ${scores[this.playerColor].toFixed(0)}`);
+      }
 
       this.logStrategy(`📊 ${move.piece.name}→${move.targetSquare}: our score = ${scores[this.playerColor].toFixed(0)}`);
     }
@@ -229,6 +244,7 @@ export class MinimaxAI {
       const toFace = targetSquare[0];
 
       if (fromFace !== toFace) { // Must be cross-face move
+        console.log(`🐦 RAVEN CROSS-FACE MOVE: ${pieceName} from ${fromSquare} to ${targetSquare}`);
         // Check all potential victims
         for (const [victimName, victimPos] of Object.entries(piecePositions)) {
           if (victimPos === 'captured' || victimName === pieceName) continue;
@@ -240,7 +256,9 @@ export class MinimaxAI {
             if (passiveName === pieceName || passivePos === 'captured') continue;
 
             // Check if attacking Raven (at targetSquare), passive Raven, and victim form valid mob
+            console.log(`  🔍 Checking mobbing: attacking=${targetSquare}, passive=${passivePos}, victim=${victimPos}`);
             if (isValidMobbingConfiguration(targetSquare, passivePos, victimPos)) {
+              console.log(`  ✅ MOBBING CAPTURE DETECTED: ${pieceName} captures ${victimName}!`);
               newState[victimName] = 'captured';
               break; // Each victim can only be captured once
             }
