@@ -7,6 +7,7 @@ import {
 
 // Logging control - set to false to hide mechanistic logging
 const ENABLE_MECHANISTIC_LOGGING = false;
+const DEBUG_FLIGHTWAY_Y3 = true; // Debug y3 flightway specifically
 
 export function validateRavenMove(fromSquare, toSquare, piecePositions = {}) {
   if (!fromSquare || !toSquare) return false;
@@ -57,6 +58,11 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
   const num = parseInt(flightwayName[1]);
   const flightwayRoute = generateFlightwayRoute(face, num);
 
+  if (DEBUG_FLIGHTWAY_Y3 && flightwayName === 'y3') {
+    console.log(`\n🛤️ DEBUG y3 FLIGHTWAY from ${currentSquare}:`);
+    console.log(`   Full route (${flightwayRoute.length} squares):`, flightwayRoute);
+  }
+
   // Find current position in the route
   const currentIndex = flightwayRoute.indexOf(currentSquare);
   if (currentIndex === -1) return validMoves;
@@ -69,6 +75,9 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
 
     // Check if destination is occupied
     if (isSquareOccupied(targetSquare, piecePositions)) {
+      if (DEBUG_FLIGHTWAY_Y3 && flightwayName === 'y3') {
+        console.log(`   ❌ ${targetSquare} is OCCUPIED - blocking further movement in this direction`);
+      }
       // Can't move to occupied square, but also can't jump over it
       // So if we're going in this direction, stop here
       if (i > currentIndex) {
@@ -82,6 +91,9 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
 
     // Check if path is clear (no pieces between current and target)
     if (!isPathClear(currentSquare, targetSquare, piecePositions)) {
+      if (DEBUG_FLIGHTWAY_Y3 && flightwayName === 'y3') {
+        console.log(`   ❌ Path to ${targetSquare} is BLOCKED - stopping`);
+      }
       // Path blocked - if going in this direction, stop
       if (i > currentIndex) {
         break;
@@ -91,6 +103,9 @@ function getMovesAlongFlightway(currentSquare, flightwayName, piecePositions) {
     }
 
     // Valid move
+    if (DEBUG_FLIGHTWAY_Y3 && flightwayName === 'y3') {
+      console.log(`   ✅ ${targetSquare} is valid`);
+    }
     validMoves.push(targetSquare);
   }
 
