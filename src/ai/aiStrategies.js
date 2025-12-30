@@ -11,8 +11,8 @@ export class MinimaxAI {
     this.playerColor = playerColor;
     this.gameState = gameStateManager;
     this.maxDepth = 1; // Depth 1: Evaluate immediate moves only (basic competence)
-    this.strategicLogging = true;
-    this.tacticalLogging = true;
+    this.strategicLogging = false; // DISABLED - too much spam
+    this.tacticalLogging = false;  // DISABLED - too much spam
 
     // Player order for three-player game
     this.playerOrder = ["brown", "yellow", "green"];
@@ -110,44 +110,22 @@ export class MinimaxAI {
 
   // Main decision function - now with recursive minimax lookahead
   selectBestMove() {
-    console.log("=".repeat(80));
-    console.log(`🚀 AI MOVE SELECTION STARTED FOR: ${this.playerColor}`);
-    console.log("=".repeat(80));
-    this.logStrategy(`=== AI SEARCH (${this.playerColor}) WITH DEPTH-${this.maxDepth} MINIMAX ===`);
-
-    // Debug: Show current board state
-    this.logBoardState();
-
-
     const moves = this.generateAllMoves(this.playerColor);
-    this.logStrategy(`Generated ${moves.length} moves for evaluation`);
 
     if (moves.length === 0) {
-      this.logStrategy(`❌ No valid moves found!`);
       return null;
     }
 
-    // STEP 1: Check for immediate winning moves
+    // Check for immediate winning moves
     for (const move of moves) {
       if (this.isImmediateWinningMove(move)) {
-        this.logStrategy(
-          `🏆 IMMEDIATE WIN: ${move.piece.name} → ${move.targetSquare}`
-        );
+        console.log(`🏆 ${this.playerColor.toUpperCase()} WINS: ${move.piece.name} → ${move.targetSquare}`);
         return move;
       }
     }
 
-    // STEP 2: Use recursive Max^n to evaluate each root move
-    this.logStrategy(`🔍 Evaluating ${moves.length} moves with depth-${this.maxDepth} Max^n search...`);
-
     const evaluatedMoves = [];
     const nextPlayer = this.getNextPlayer(this.playerColor);
-
-    // DEBUG: Log all moves being considered
-    console.log(`\n🔍 ALL MOVES BEING EVALUATED FOR ${this.playerColor}:`);
-    for (const move of moves) {
-      console.log(`  - ${move.piece.name} → ${move.targetSquare}`);
-    }
 
     for (const move of moves) {
       // Simulate this move
@@ -171,44 +149,25 @@ export class MinimaxAI {
       move.allScores = scores; // Keep all scores for debugging
       evaluatedMoves.push(move);
 
-      // DEBUG: Show if this move resulted in any captures
+      // Show only capture moves with their scores
       const capturedVictims = Object.entries(newPositions).filter(([name, pos]) =>
         pos === 'captured' && this.gameState.piecePositions[name] !== 'captured'
       ).map(([name]) => name);
 
       if (capturedVictims.length > 0) {
-        console.log(`  💥 CAPTURE MOVE: ${move.piece.name}→${move.targetSquare} captures ${capturedVictims.join(', ')} | Score: ${scores[this.playerColor].toFixed(0)}`);
-      }
-
-      this.logStrategy(`📊 ${move.piece.name}→${move.targetSquare}: our score = ${scores[this.playerColor].toFixed(0)}`);
-    }
-
-    // Show the top 5 moves for debugging
-    const sortedMoves = [...evaluatedMoves].sort((a, b) => b.evaluation - a.evaluation);
-    this.logStrategy(`🏆 Top 5 moves after Max^n search:`);
-    for (let i = 0; i < Math.min(5, sortedMoves.length); i++) {
-      const move = sortedMoves[i];
-      this.logStrategy(`  ${i + 1}. ${move.piece.name}→${move.targetSquare} (our score: ${move.evaluation.toFixed(0)})`);
-    }
-
-    // Check if any moves occupy nest squares (defensive)
-    const nestSquares = ["b7-7", "y7-7", "g7-7"];
-    const nestMoves = evaluatedMoves.filter(m => nestSquares.includes(m.targetSquare));
-    if (nestMoves.length > 0) {
-      console.log(`🛡️ DEFENSIVE NEST MOVES AVAILABLE (${nestMoves.length}):`);
-      for (const move of nestMoves) {
-        console.log(`  ${move.piece.name}→${move.targetSquare} (our score: ${move.evaluation.toFixed(0)})`);
+        // Show detailed breakdown for captures to understand why AI rejects them
+        const materialScore = this.evaluateMaterial(newPositions);
+        console.log(`💥 ${this.playerColor.toUpperCase()} CAPTURE: ${move.piece.name}→${move.targetSquare} captures ${capturedVictims.join(', ')}`);
+        console.log(`   Material after: B=${materialScore.brown} Y=${materialScore.yellow} G=${materialScore.green} | ${this.playerColor} score=${scores[this.playerColor].toFixed(0)}`);
       }
     }
 
-    // STEP 3: Select best move based on Max^n scores (maximize OUR score)
+    // Select best move
     const bestMove = evaluatedMoves.reduce((best, current) =>
       current.evaluation > best.evaluation ? current : best
     );
 
-    this.logStrategy(
-      `🎯 SELECTED: ${bestMove.piece.name} to ${bestMove.targetSquare} (Max^n score: ${bestMove.evaluation.toFixed(0)})`
-    );
+    console.log(`🎯 ${this.playerColor.toUpperCase()} plays: ${bestMove.piece.name} → ${bestMove.targetSquare} (score: ${bestMove.evaluation.toFixed(0)})`);
     return bestMove;
   }
 
@@ -295,9 +254,6 @@ export class MinimaxAI {
   maxn(piecePositions, depth, currentPlayer, debugCapture = null) {
     // Terminal conditions
     if (depth === 0) {
-      if (debugCapture) {
-        console.log(`📊 After ${debugCapture}, position evaluated at depth 0`);
-      }
       return this.evaluatePosition(piecePositions); // Returns {brown: X, yellow: Y, green: Z}
     }
 
@@ -344,11 +300,6 @@ export class MinimaxAI {
         bestScores = childScores;
         bestMove = move;
       }
-    }
-
-    // DEBUG: Show opponent's predicted response to capture
-    if (debugCapture && depth === 1 && bestMove) {
-      console.log(`   🎯 After ${debugCapture}, ${currentPlayer} responds with ${bestMove.piece.name}→${bestMove.targetSquare}`);
     }
 
     return bestScores;

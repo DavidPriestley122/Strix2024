@@ -12,7 +12,7 @@ export class AIPlayer {
     this.strategy = 'minimax'; // Enhanced tactical AI
     
     // Logging controls
-    this.strategicLogging = true;  // Strategic thinking logs
+    this.strategicLogging = false;  // Strategic thinking logs - DISABLED to reduce console spam
     this.mechanisticLogging = false; // Detailed move validation logs - disabled for cleaner output
     
     // Initialize minimax AI
