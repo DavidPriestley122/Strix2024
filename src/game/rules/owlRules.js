@@ -2,6 +2,7 @@
 
 // DISABLE ALL OWL DEBUG LOGGING TO REDUCE CONSOLE SPAM
 const ENABLE_OWL_LOGGING = false;
+const ENABLE_MECHANISTIC_LOGGING = false;
 
 import {
   checkCrossAdjacency,
