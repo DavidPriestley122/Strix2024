@@ -157,8 +157,14 @@ export class MinimaxAI {
         move.targetSquare
       );
 
+      // DEBUG: Show opponent's predicted response for capture moves
+      const capturedPieces = Object.entries(newPositions).filter(([name, pos]) =>
+        pos === 'captured' && this.gameState.piecePositions[name] !== 'captured'
+      );
+      const isCapture = capturedPieces.length > 0;
+
       // Recursively evaluate with Max^n (each player maximizes their own score)
-      const scores = this.maxn(newPositions, this.maxDepth - 1, nextPlayer);
+      const scores = this.maxn(newPositions, this.maxDepth - 1, nextPlayer, isCapture ? `${move.piece.name}→${move.targetSquare}` : null);
 
       // Extract OUR score from the multi-player scores
       move.evaluation = scores[this.playerColor];
@@ -166,12 +172,12 @@ export class MinimaxAI {
       evaluatedMoves.push(move);
 
       // DEBUG: Show if this move resulted in any captures
-      const capturedPieces = Object.entries(newPositions).filter(([name, pos]) =>
+      const capturedVictims = Object.entries(newPositions).filter(([name, pos]) =>
         pos === 'captured' && this.gameState.piecePositions[name] !== 'captured'
       ).map(([name]) => name);
 
-      if (capturedPieces.length > 0) {
-        console.log(`  💥 CAPTURE MOVE: ${move.piece.name}→${move.targetSquare} captures ${capturedPieces.join(', ')} | Score: ${scores[this.playerColor].toFixed(0)}`);
+      if (capturedVictims.length > 0) {
+        console.log(`  💥 CAPTURE MOVE: ${move.piece.name}→${move.targetSquare} captures ${capturedVictims.join(', ')} | Score: ${scores[this.playerColor].toFixed(0)}`);
       }
 
       this.logStrategy(`📊 ${move.piece.name}→${move.targetSquare}: our score = ${scores[this.playerColor].toFixed(0)}`);
@@ -286,9 +292,12 @@ export class MinimaxAI {
   }
 
   // Recursive Max^n search (each player maximizes their own score)
-  maxn(piecePositions, depth, currentPlayer) {
+  maxn(piecePositions, depth, currentPlayer, debugCapture = null) {
     // Terminal conditions
     if (depth === 0) {
+      if (debugCapture) {
+        console.log(`📊 After ${debugCapture}, position evaluated at depth 0`);
+      }
       return this.evaluatePosition(piecePositions); // Returns {brown: X, yellow: Y, green: Z}
     }
 
@@ -324,15 +333,22 @@ export class MinimaxAI {
 
     // Max^n: Current player picks move that maximizes THEIR score
     let bestScores = null;
+    let bestMove = null;
 
     for (const move of moves) {
       const newPositions = this.simulateMove(piecePositions, move.piece.name, move.targetSquare);
-      const childScores = this.maxn(newPositions, depth - 1, nextPlayer);
+      const childScores = this.maxn(newPositions, depth - 1, nextPlayer, debugCapture);
 
       // Current player picks the move with the best score FOR THEM
       if (!bestScores || childScores[currentPlayer] > bestScores[currentPlayer]) {
         bestScores = childScores;
+        bestMove = move;
       }
+    }
+
+    // DEBUG: Show opponent's predicted response to capture
+    if (debugCapture && depth === 1 && bestMove) {
+      console.log(`   🎯 After ${debugCapture}, ${currentPlayer} responds with ${bestMove.piece.name}→${bestMove.targetSquare}`);
     }
 
     return bestScores;
