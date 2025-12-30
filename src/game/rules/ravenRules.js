@@ -7,7 +7,7 @@ import {
 
 // Logging control - set to false to hide mechanistic logging
 const ENABLE_MECHANISTIC_LOGGING = false;
-const DEBUG_FLIGHTWAY_Y3 = true; // Debug y3 flightway specifically
+const DEBUG_FLIGHTWAY_Y3 = false; // Debug y3 flightway specifically
 
 export function validateRavenMove(fromSquare, toSquare, piecePositions = {}) {
   if (!fromSquare || !toSquare) return false;

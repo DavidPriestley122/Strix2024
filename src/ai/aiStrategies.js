@@ -247,7 +247,12 @@ export class MinimaxAI {
       const toFace = targetSquare[0];
 
       if (fromFace !== toFace) { // Must be cross-face move
-        console.log(`🐦 RAVEN CROSS-FACE MOVE: ${pieceName} from ${fromSquare} to ${targetSquare}`);
+        // DEBUG: Show all Ravens available for mobbing (once per cross-face move)
+        const allRavensDebug = Object.entries(piecePositions)
+          .filter(([name, pos]) => name.endsWith('Raven') && pos !== 'captured' && name !== pieceName)
+          .map(([name, pos]) => `${name}@${pos}`);
+        console.log(`🐦 ${pieceName} ${fromSquare}→${targetSquare}: Ravens available: [${allRavensDebug.join(', ')}]`);
+
         // Check all potential victims
         for (const [victimName, victimPos] of Object.entries(piecePositions)) {
           if (victimPos === 'captured' || victimName === pieceName) continue;
@@ -259,7 +264,7 @@ export class MinimaxAI {
             if (passiveName === pieceName || passivePos === 'captured') continue;
 
             // Check if attacking Raven (at targetSquare), passive Raven, and victim form valid mob
-            console.log(`  🔍 Checking mobbing: attacking=${targetSquare}, passive=${passivePos}, victim=${victimPos}`);
+            // console.log(`  🔍 Checking mobbing: attacking=${targetSquare}, passive=${passivePos}, victim=${victimPos}`);
             if (isValidMobbingConfiguration(targetSquare, passivePos, victimPos)) {
               console.log(`  ✅ MOBBING CAPTURE DETECTED: ${pieceName} captures ${victimName}!`);
               newState[victimName] = 'captured';
