@@ -212,10 +212,7 @@ export class MinimaxAI {
 
       if (fromFace !== toFace) { // Must be cross-face move
         // DEBUG: Show all Ravens available for mobbing (once per cross-face move)
-        const allRavensDebug = Object.entries(piecePositions)
-          .filter(([name, pos]) => name.endsWith('Raven') && pos !== 'captured' && name !== pieceName)
-          .map(([name, pos]) => `${name}@${pos}`);
-        console.log(`🐦 ${pieceName} ${fromSquare}→${targetSquare}: Ravens available: [${allRavensDebug.join(', ')}]`);
+        // Ravens available debug - disabled to reduce spam
 
         // Check all potential victims
         for (const [victimName, victimPos] of Object.entries(piecePositions)) {
@@ -416,7 +413,7 @@ export class MinimaxAI {
               // Significant penalty for en prise positions (piece can be captured next turn)
               // Slightly less than immediate threat since opponent needs a move to execute it
               const enPrisePenalty = this.getCaptureValue(piece.name) * 0.6;
-              console.log(`⚠️ EN PRISE: ${oppPiece.name} at ${oppPiece.position} can move to threaten ${piece.name} at ${piece.position} (penalty: -${enPrisePenalty})`);
+              // En prise penalty applied (logging disabled)
               scores[color] -= enPrisePenalty;
             }
           }
@@ -567,12 +564,7 @@ export class MinimaxAI {
         moves = getAllKiteMoves(currentPos, state.piecePositions, piece.name);
         // Debug Kite moves for defensive positions
         if ((currentPos === 'y6-2' || currentPos === 'y4-6') && (piece.name === 'yellowKite' || piece.name === 'greenKite')) {
-          console.log(`🎯 KITE MOVES DEBUG: ${piece.name} at ${currentPos}`);
-          console.log(`   Total moves generated: ${moves.length}`);
-          console.log(`   All moves:`, moves);
-          console.log(`   Contains b7-6: ${moves.includes('b7-6')}`);
-          console.log(`   Contains b7-4: ${moves.includes('b7-4')}`);
-          console.log(`   Contains b1-4: ${moves.includes('b1-4')}`);
+          // Kite moves debug - disabled to reduce spam
         }
         break;
       case "Raven":
@@ -597,10 +589,7 @@ export class MinimaxAI {
       return !isShadowed;
     });
 
-    // Debug if we filtered out any moves
-    if (moves.length !== unshadowedMoves.length) {
-      console.log(`🛡️ Shadow filtering: ${piece.name} - ${moves.length} total moves, ${unshadowedMoves.length} unshadowed`);
-    }
+    // Shadow filtering applied (logging disabled to reduce spam)
 
     return unshadowedMoves;
   }
@@ -956,13 +945,10 @@ export class MinimaxAI {
       // Get all valid Raven moves including mobbing opportunities
       const ravenMoves = getAllRavenMoves(attackerPosition, piecePositions, attackerPiece);
 
-      console.log(`🐦 RAVEN CHECK: ${attackerPiece} at ${attackerPosition} checking if can capture at ${victimSquare}`);
-      console.log(`   Raven has ${ravenMoves.length} possible moves:`, ravenMoves);
-      console.log(`   Contains g5-5? ${ravenMoves.includes('g5-5')}`);
+      // Raven check debug - disabled to reduce spam
 
       // Check if Raven can move directly to victim square (direct capture)
       if (ravenMoves.includes(victimSquare)) {
-        console.log(`   ✅ DIRECT: Raven can move directly to ${victimSquare}`);
         return true;
       }
 
@@ -996,7 +982,6 @@ export class MinimaxAI {
         }
       }
 
-      console.log(`   ❌ NO CAPTURE: Raven cannot capture at ${victimSquare}`);
       return false;
     }
 
@@ -1029,7 +1014,7 @@ export class MinimaxAI {
       );
 
       if (canCaptureFromHere) {
-        console.log(`🎯 EN PRISE DETECTED: ${oppPiece.name} can move ${oppPiece.position}→${targetSquare} to threaten ${myPiece.name} at ${myPiece.position}`);
+        // En prise detected (logging disabled)
         return true;
       }
     }
