@@ -399,9 +399,7 @@ export class MinimaxAI {
 
     // PART 4: Capture threat evaluation (EN PRISE DETECTION)
     // Being under threat hurts that player's score
-    // TEMPORARILY DISABLED TO TEST IF THIS IS THE SOURCE OF -900
     const enPrisePenalties = { brown: 0, yellow: 0, green: 0 };
-    if (false) { // DISABLED
     for (const color of this.playerOrder) {
       const playerPieces = this.getPlayerPieces(color, tempGameState);
 
@@ -439,7 +437,6 @@ export class MinimaxAI {
         }
       }
     }
-    } // END if (false) - en prise checking disabled
 
     // PART 5: Immediate win threat detection
     // If a player can win next move, that's GREAT for them, BAD for others
@@ -952,8 +949,8 @@ export class MinimaxAI {
     const pieceType = this.getPieceType(attackerPiece);
 
     if (pieceType === 'Owl') {
-      return this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Owl'}, state)
-               .includes(victimSquare);
+      // TEMP: Disable to test if Owls cause false threat detections
+      return false;
     }
     else if (pieceType === 'Kite') {
       // Check if Kite can swoop to adjacent square
