@@ -6,6 +6,7 @@ import { OpeningBook } from "./openingBook.js";
 
 export class AIPlayer {
   constructor(playerColor, gameStateManager, moveExecutor) {
+    console.log(`🔥🔥🔥 CONSOLE FRESH TEST 1 - RAVEN BUGFIX VERSION 20251230-1435 🔥🔥🔥`);
     this.playerColor = playerColor;
     this.gameState = gameStateManager;
     this.moveExecutor = moveExecutor;

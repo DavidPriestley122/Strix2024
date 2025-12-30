@@ -110,6 +110,7 @@ export class MinimaxAI {
 
   // Main decision function - now with recursive minimax lookahead
   selectBestMove() {
+    console.log(`🚀🚀🚀 RAVEN-BUGFIX-DEPLOYED-VERSION-20251230 🚀🚀🚀`);
     const moves = this.generateAllMoves(this.playerColor);
 
     if (moves.length === 0) {
