@@ -1,5 +1,8 @@
 // flightwayUtils.js - Clean flightway system utilities for Strix
 
+// DISABLE ALL DEBUG LOGGING TO REDUCE CONSOLE SPAM
+const ENABLE_GHOSTING_DEBUG = false;
+
 /**
  * Convert square notation to flightway coordinates
  * @param {string} square - Square in format "b3-4"
@@ -246,8 +249,8 @@ export function calculateSimpleGhostingDestination(
   crossPiecePosition,
   crossAdjacency
 ) {
-  const isBrownOwl = owlPosition === "b7-6";
-  const isYellowOwl = owlPosition === "b4-7" || owlPosition === "b5-7";
+  const isBrownOwl = ENABLE_GHOSTING_DEBUG && owlPosition === "b7-6";
+  const isYellowOwl = ENABLE_GHOSTING_DEBUG && (owlPosition === "b4-7" || owlPosition === "b5-7");
   
   if (isBrownOwl) {
     console.log(`🔧 GHOSTING CALC: ${owlPosition} around ${crossPiecePosition}`);
