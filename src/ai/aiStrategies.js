@@ -155,9 +155,15 @@ export class MinimaxAI {
       ).map(([name]) => name);
 
       if (capturedVictims.length > 0) {
-        // Show detailed breakdown for captures to understand why AI rejects them
+        // Get detailed breakdown for captures to understand why AI rejects them
+        const evaluation = this.evaluatePosition(newPositions);
+        const breakdown = evaluation.breakdown;
+
         console.log(`💥 ${this.playerColor.toUpperCase()} CAPTURE: ${move.piece.name}→${move.targetSquare} captures ${capturedVictims.join(', ')}`);
-        console.log(`   Position eval: B=${scores.brown.toFixed(0)} Y=${scores.yellow.toFixed(0)} G=${scores.green.toFixed(0)} | ${this.playerColor} score=${scores[this.playerColor].toFixed(0)}`);
+        console.log(`   Total scores: B=${scores.brown.toFixed(0)} Y=${scores.yellow.toFixed(0)} G=${scores.green.toFixed(0)} | ${this.playerColor}=${scores[this.playerColor].toFixed(0)}`);
+        console.log(`   Material:     B=${breakdown.material.brown.toFixed(0)} Y=${breakdown.material.yellow.toFixed(0)} G=${breakdown.material.green.toFixed(0)}`);
+        console.log(`   Positional:   B=${breakdown.positional.brown.toFixed(0)} Y=${breakdown.positional.yellow.toFixed(0)} G=${breakdown.positional.green.toFixed(0)}`);
+        console.log(`   EnPrise pen:  B=-${breakdown.enPrise.brown.toFixed(0)} Y=-${breakdown.enPrise.yellow.toFixed(0)} G=-${breakdown.enPrise.green.toFixed(0)}`);
       }
     }
 
@@ -250,7 +256,8 @@ export class MinimaxAI {
   maxn(piecePositions, depth, currentPlayer, debugCapture = null) {
     // Terminal conditions
     if (depth === 0) {
-      return this.evaluatePosition(piecePositions); // Returns {brown: X, yellow: Y, green: Z}
+      const evaluation = this.evaluatePosition(piecePositions);
+      return evaluation.scores; // Returns {brown: X, yellow: Y, green: Z}
     }
 
     // Check for wins (terminal state)
@@ -327,7 +334,8 @@ export class MinimaxAI {
     const tempGameState = { piecePositions: piecePositions };
 
     // PART 1: Material evaluation (piece count and value)
-    // Each player gets points for their pieces, loses points when opponent pieces exist
+    const materialScores = { brown: 0, yellow: 0, green: 0 };
+
     for (const [pieceName, position] of Object.entries(piecePositions)) {
       if (position === 'captured') continue;
 
@@ -346,18 +354,24 @@ export class MinimaxAI {
       const pieceValue = this.getCaptureValue(pieceName);
 
       // Add value to owner's score
-      scores[pieceOwner] += pieceValue;
+      materialScores[pieceOwner] += pieceValue;
 
-      // Subtract value from opponents' scores (having enemy pieces is bad for you)
+      // Subtract value from opponents' scores (relative material advantage)
       for (const color of this.playerOrder) {
         if (color !== pieceOwner) {
-          scores[color] -= pieceValue * 0.5; // Opponents lose half the piece value
+          materialScores[color] -= pieceValue * 0.5;
         }
       }
     }
 
+    // Add material scores to total
+    for (const color of this.playerOrder) {
+      scores[color] += materialScores[color];
+    }
+
     // PART 2: Positional evaluation (flightway distances)
     // Each player's Owl distance to nest affects THEIR score
+    const positionalScores = { brown: 0, yellow: 0, green: 0 };
     for (const color of this.playerOrder) {
       const owlPiece = `${color}Owl`;
       const owlPosition = piecePositions[owlPiece];
@@ -369,6 +383,7 @@ export class MinimaxAI {
 
       // Closer to nest = better for THIS player
       const positionalValue = Math.max(0, 120 - (distanceToNest * 10));
+      positionalScores[color] += positionalValue;
       scores[color] += positionalValue;
     }
 
@@ -383,6 +398,7 @@ export class MinimaxAI {
 
     // PART 4: Capture threat evaluation (EN PRISE DETECTION)
     // Being under threat hurts that player's score
+    const enPrisePenalties = { brown: 0, yellow: 0, green: 0 };
     for (const color of this.playerOrder) {
       const playerPieces = this.getPlayerPieces(color, tempGameState);
 
@@ -402,7 +418,7 @@ export class MinimaxAI {
             if (canCapture) {
               // This player's piece is under immediate threat - bad for them
               const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
-              // Immediate threat penalty applied (logging disabled)
+              enPrisePenalties[color] += threatPenalty;
               scores[color] -= threatPenalty;
             }
 
@@ -413,7 +429,7 @@ export class MinimaxAI {
               // Significant penalty for en prise positions (piece can be captured next turn)
               // Slightly less than immediate threat since opponent needs a move to execute it
               const enPrisePenalty = this.getCaptureValue(piece.name) * 0.6;
-              // En prise penalty applied (logging disabled)
+              enPrisePenalties[color] += enPrisePenalty;
               scores[color] -= enPrisePenalty;
             }
           }
@@ -463,7 +479,14 @@ export class MinimaxAI {
       }
     }
 
-    return scores;
+    return {
+      scores,
+      breakdown: {
+        material: materialScores,
+        positional: positionalScores,
+        enPrise: enPrisePenalties
+      }
+    };
   }
 
   // ========== END MAX^N IMPLEMENTATION ==========
