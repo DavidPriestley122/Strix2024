@@ -967,11 +967,7 @@ export class MinimaxAI {
 
       // Raven check debug - disabled to reduce spam
 
-      // Check if Raven can move directly to victim square (direct capture)
-      if (ravenMoves.includes(victimSquare)) {
-        return true;
-      }
-
+      // CRITICAL: Ravens capture via MOBBING only, not by moving to victim square
       // Check if Raven can mob the victim from any of its possible moves
       // Simplified: Check if any move creates a potential mobbing configuration
       const attackerColor = attackerPiece.substring(0, attackerPiece.search(/[A-Z]/));
