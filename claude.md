@@ -874,4 +874,56 @@ From user feedback:
 - 55fc199: Revert to working desktop state
 - Branch: mobile-fix-experiment (deleted locally and remotely)
 
-**Important**: Don't retry the same approaches. Study the layout model first, pick one approach, test thoroughly before pushing.
+---
+
+# AI Kite En Prise Bug Fix (Dec 30, 2024)
+
+## Problem
+Yellow AI refused to capture Brown Kite with Yellow Raven (mobbing move at g3-3). Yellow scored the capture as -580 (should be positive), so rejected it in favor of worse moves.
+
+## Root Cause Analysis
+After systematic debugging (disabling threat types one by one), identified that Kite threat detection was generating -900 in false en prise penalties.
+
+**The Bug**: In `canPieceMoveToThreaten()` (src/ai/aiStrategies.js:1002), Kite threat detection was doing a **2-move lookahead**:
+1. Simulate Kite moving from position A to position B
+2. From B, check if Kite can move AGAIN to position C (cross-face, adjacent to victim)
+
+This is wrong because **Kites capture DURING their swooping move**, not after. They land on a cross-face square and capture adjacent opponents as part of that single move.
+
+The 2-move lookahead created hundreds of false threats because every simulated Kite position could theoretically make another capture move.
+
+## The Fix
+**Commit**: f228619 (2024-12-30)
+**File**: src/ai/aiStrategies.js
+
+Added special-case handling for Kites in `canPieceMoveToThreaten()`:
+- Check if Kite can move directly (1 move) to a cross-face square adjacent to victim
+- Don't simulate moving there and then check for another move
+- Other piece types (Owls, Ravens) still use the 2-step simulation since they threaten from static positions
+
+```javascript
+// SPECIAL CASE FOR KITES: They capture DURING their move, not after
+if (oppPiece.type === 'Kite') {
+  const oppFace = oppPiece.position[0];
+  const victimFace = myPiece.position[0];
+
+  if (oppFace === victimFace) return false; // Can't swoop on same face
+
+  const possibleMoves = this.getPossibleMoves(oppPiece, state);
+  const adjacentToVictim = this.getAdjacentSquares(myPiece.position);
+
+  // Check if Kite can move to a cross-face square adjacent to victim (1-move capture)
+  const crossFaceMoves = possibleMoves.filter(move => move[0] !== oppFace);
+  return crossFaceMoves.some(move => adjacentToVictim.includes(move));
+}
+```
+
+## Result
+- Eliminated -900 in false en prise penalties
+- Yellow now correctly evaluates capturing Brown Kite as positive and executes it
+- No more console spam from hundreds of Kite threat logs
+
+## Related Commits
+- d2b486c: Initial attempt (wrong - added cross-face filter in wrong function)
+- f96e6ad: Rebuild bundle.js
+- f228619: Actual fix - special-case Kites in canPieceMoveToThreaten
