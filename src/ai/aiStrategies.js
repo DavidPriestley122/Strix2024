@@ -953,8 +953,21 @@ export class MinimaxAI {
                .includes(victimSquare);
     }
     else if (pieceType === 'Kite') {
-      // TEMP: Disable to test if Kites cause false threat detections
-      return false;
+      // Check if Kite can swoop to adjacent square
+      const attackerFace = attackerPosition[0];
+      const victimFace = victimSquare[0];
+      if (attackerFace === victimFace) return false; // Same face = no swoop
+
+      const kitePossibleMoves = this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Kite'}, state);
+      const adjacentToVictim = this.getAdjacentSquares(victimSquare);
+      const canThreaten = kitePossibleMoves.some(move => adjacentToVictim.includes(move));
+
+      if (canThreaten) {
+        const matchingMove = kitePossibleMoves.find(move => adjacentToVictim.includes(move));
+        console.log(`🦅 KITE THREAT: ${attackerPiece}@${attackerPosition} can move to ${matchingMove} (adjacent to victim@${victimSquare})`);
+      }
+
+      return canThreaten;
     }
     else if (pieceType === 'Raven') {
       // Get all valid Raven moves including mobbing opportunities
