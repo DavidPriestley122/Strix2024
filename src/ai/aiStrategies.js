@@ -156,9 +156,8 @@ export class MinimaxAI {
 
       if (capturedVictims.length > 0) {
         // Show detailed breakdown for captures to understand why AI rejects them
-        const materialScore = this.evaluateMaterial(newPositions);
         console.log(`💥 ${this.playerColor.toUpperCase()} CAPTURE: ${move.piece.name}→${move.targetSquare} captures ${capturedVictims.join(', ')}`);
-        console.log(`   Material after: B=${materialScore.brown} Y=${materialScore.yellow} G=${materialScore.green} | ${this.playerColor} score=${scores[this.playerColor].toFixed(0)}`);
+        console.log(`   Position eval: B=${scores.brown.toFixed(0)} Y=${scores.yellow.toFixed(0)} G=${scores.green.toFixed(0)} | ${this.playerColor} score=${scores[this.playerColor].toFixed(0)}`);
       }
     }
 
