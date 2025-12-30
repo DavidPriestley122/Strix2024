@@ -227,7 +227,7 @@ export class MinimaxAI {
             // Check if attacking Raven (at targetSquare), passive Raven, and victim form valid mob
             // console.log(`  🔍 Checking mobbing: attacking=${targetSquare}, passive=${passivePos}, victim=${victimPos}`);
             if (isValidMobbingConfiguration(targetSquare, passivePos, victimPos)) {
-              console.log(`  ✅ MOBBING CAPTURE DETECTED: ${pieceName} captures ${victimName}!`);
+              // Mobbing capture detected (logging disabled)
               newState[victimName] = 'captured';
               break; // Each victim can only be captured once
             }
@@ -402,7 +402,7 @@ export class MinimaxAI {
             if (canCapture) {
               // This player's piece is under immediate threat - bad for them
               const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
-              console.log(`🚨 IMMEDIATE THREAT: ${oppPiece.name} at ${oppPiece.position} can capture ${piece.name} at ${piece.position} (penalty: -${threatPenalty})`);
+              // Immediate threat penalty applied (logging disabled)
               scores[color] -= threatPenalty;
             }
 
@@ -581,10 +581,7 @@ export class MinimaxAI {
       const moveFace = move.charAt(0);
       const isShadowed = shadows[moveFace] && shadows[moveFace].includes(move);
 
-      // Debug shadow filtering for critical moves
-      if (isShadowed && (move === 'g7-7' || move === 'b7-7' || move === 'y7-7')) {
-        console.log(`🛡️ AI SHADOW FILTER: ${piece.name} cannot move to ${move} (shadowed)`);
-      }
+      // Shadow filtering applied to critical moves (logging disabled)
 
       return !isShadowed;
     });

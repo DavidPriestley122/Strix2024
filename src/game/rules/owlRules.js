@@ -1,5 +1,8 @@
 /*// COMPLETE OWL MOVEMENT VALIDATION (Regular + Ghosting)
 
+// DISABLE ALL OWL DEBUG LOGGING TO REDUCE CONSOLE SPAM
+const ENABLE_OWL_LOGGING = false;
+
 import {
   checkCrossAdjacency,
   convertToFlightway,
@@ -18,7 +21,7 @@ export function validateOwlMove(fromSquare, toSquare, piecePositions = {}) {
 }
 
 export function getAllOwlMoves(fromSquare, piecePositions = {}) {
-  const isYellowOwl = fromSquare === "b4-7";
+  const isYellowOwl = ENABLE_OWL_LOGGING && fromSquare === "b4-7";
   
   if (isYellowOwl) console.log(`🦉 DETAILED: getAllOwlMoves for ${fromSquare}`);
   
@@ -43,7 +46,7 @@ export function getAllOwlMoves(fromSquare, piecePositions = {}) {
 }
 
 export function getAdjacentSquares(square) {
-  const isYellowOwl = square === "b4-7";
+  const isYellowOwl = ENABLE_OWL_LOGGING && square === "b4-7";
   
   if (isYellowOwl) console.log(`🦉 getAdjacentSquares for ${square}`);
   
@@ -80,7 +83,7 @@ export function getAdjacentSquares(square) {
 }
 
 function getAdjacentOnFlightway(currentSquare, flightwayName) {
-  const isYellowOwl = currentSquare === "b4-7";
+  const isYellowOwl = ENABLE_OWL_LOGGING && currentSquare === "b4-7";
   
   const face = flightwayName[0];
   const num = parseInt(flightwayName[1]);
@@ -182,7 +185,7 @@ export function validateOwlMove(fromSquare, toSquare, piecePositions = {}, movin
 }
 
 export function getAllOwlMoves(fromSquare, piecePositions = {}, movingPieceName = null) {
-  const isYellowOwl = fromSquare === "b4-7" || fromSquare === "b5-7";
+  const isYellowOwl = ENABLE_OWL_LOGGING && (fromSquare === "b4-7" || fromSquare === "b5-7");
   
   if (isYellowOwl) console.log(`🦉 ACTIVE getAllOwlMoves for ${fromSquare}`);
   
@@ -278,7 +281,7 @@ function getAdjacentMovesAlongFlightway(
 function getGhostingMoves(owlPosition, piecePositions) {
   const ghostMoves = [];
   const isBrownOwl = owlPosition === "b7-6";
-  const isYellowOwl = owlPosition === "b4-7" || owlPosition === "b5-7";
+  const isYellowOwl = ENABLE_OWL_LOGGING && (owlPosition === "b4-7" || owlPosition === "b5-7");
 
   // Debug output for Brown Owl
   if (isBrownOwl) {
