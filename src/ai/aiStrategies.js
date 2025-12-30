@@ -1002,10 +1002,26 @@ export class MinimaxAI {
   canPieceMoveToThreaten(oppPiece, myPiece, gameState = null) {
     const state = gameState || this.gameState;
 
-    // Get all possible moves for the opponent piece
+    // SPECIAL CASE FOR KITES: They capture DURING their move, not after
+    // Check if Kite can move to a cross-face square adjacent to victim (1-move capture)
+    if (oppPiece.type === 'Kite') {
+      const oppFace = oppPiece.position[0];
+      const victimFace = myPiece.position[0];
+
+      // Can't swoop capture on same face
+      if (oppFace === victimFace) return false;
+
+      const possibleMoves = this.getPossibleMoves(oppPiece, state);
+      const adjacentToVictim = this.getAdjacentSquares(myPiece.position);
+
+      // Check if Kite can move to a cross-face square adjacent to victim
+      const crossFaceMoves = possibleMoves.filter(move => move[0] !== oppFace);
+      return crossFaceMoves.some(move => adjacentToVictim.includes(move));
+    }
+
+    // For other pieces: Check if they can move somewhere and THEN threaten
     const possibleMoves = this.getPossibleMoves(oppPiece, state);
 
-    // For each possible move, check if opponent could capture my piece from that position
     for (const targetSquare of possibleMoves) {
       // Simulate opponent moving to this square
       const hypotheticalState = this.simulateMove(
