@@ -953,19 +953,19 @@ export class MinimaxAI {
                .includes(victimSquare);
     }
     else if (pieceType === 'Kite') {
-      // Check if Kite can swoop to adjacent square
+      // Kite captures require cross-face swooping
+      // Must move to a square on DIFFERENT face than origin AND adjacent to victim
       const attackerFace = attackerPosition[0];
       const victimFace = victimSquare[0];
       if (attackerFace === victimFace) return false; // Same face = no swoop
 
       const kitePossibleMoves = this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Kite'}, state);
       const adjacentToVictim = this.getAdjacentSquares(victimSquare);
-      const canThreaten = kitePossibleMoves.some(move => adjacentToVictim.includes(move));
 
-      if (canThreaten) {
-        const matchingMove = kitePossibleMoves.find(move => adjacentToVictim.includes(move));
-        console.log(`🦅 KITE THREAT: ${attackerPiece}@${attackerPosition} can move to ${matchingMove} (adjacent to victim@${victimSquare})`);
-      }
+      // CRITICAL FIX: Only cross-face moves can capture
+      // Filter to moves on different face than attacker's current position
+      const crossFaceMoves = kitePossibleMoves.filter(move => move[0] !== attackerFace);
+      const canThreaten = crossFaceMoves.some(move => adjacentToVictim.includes(move));
 
       return canThreaten;
     }
