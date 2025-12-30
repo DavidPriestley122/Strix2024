@@ -949,18 +949,12 @@ export class MinimaxAI {
     const pieceType = this.getPieceType(attackerPiece);
 
     if (pieceType === 'Owl') {
-      // TEMP: Disable to test if Owls cause false threat detections
-      return false;
+      return this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Owl'}, state)
+               .includes(victimSquare);
     }
     else if (pieceType === 'Kite') {
-      // Check if Kite can swoop to adjacent square
-      const attackerFace = attackerPosition[0];
-      const victimFace = victimSquare[0];
-      if (attackerFace === victimFace) return false; // Same face = no swoop
-
-      const kitePossibleMoves = this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Kite'}, state);
-      const adjacentToVictim = this.getAdjacentSquares(victimSquare);
-      return kitePossibleMoves.some(move => adjacentToVictim.includes(move));
+      // TEMP: Disable to test if Kites cause false threat detections
+      return false;
     }
     else if (pieceType === 'Raven') {
       // Get all valid Raven moves including mobbing opportunities
