@@ -975,30 +975,15 @@ export class MinimaxAI {
       const victimFace = victimSquare[0];
       const attackerFace = attackerPosition[0];
 
-      // Mobbing requires cross-face move
-      for (const move of ravenMoves) {
-        const moveFace = move[0];
-        if (moveFace !== attackerFace) {
-          // This is a cross-face move - check if it could enable mobbing
-          // Check if there's a passive Raven of same color on victim's face
-          for (const [pieceName, position] of Object.entries(piecePositions)) {
-            if (position === 'captured') continue;
-            if (pieceName.includes('Raven') &&
-                pieceName.startsWith(attackerColor) &&
-                pieceName !== attackerPiece) {
-              const passiveFace = position[0];
-              // If passive Raven is on victim's face, potential mobbing threat
-              if (passiveFace === victimFace || moveFace === victimFace) {
-                // Conservative: assume Raven could mob from this position
-                // This may overestimate threats but prevents missing captures
-                console.log(`   ✅ MOBBING: ${attackerPiece} + passive ${pieceName} at ${position} threatens ${victimSquare}`);
-                return true;
-              }
-            }
-          }
-        }
-      }
+      // CRITICAL: Ravens only captured if mobbed from their possible MOBBING moves
+      // The getAllRavenMoves already includes mobbing destination squares
+      // So we just need to check if victimSquare can be mobbed from any of those moves
+      // However, Ravens don't capture pieces AT their destination - they mob pieces
+      // This whole section is fundamentally flawed - Ravens can't threaten by moving
+      // They can only threaten by BEING IN POSITION to mob, which getAllRavenMoves handles
 
+      // For now, return false - Raven threats should be detected via actual mobbing logic
+      // in the move generation, not here
       return false;
     }
 
