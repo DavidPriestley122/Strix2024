@@ -23,7 +23,7 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight, PointLight } from "@babylonjs/core";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight, PointLight, MeshBuilder } from "@babylonjs/core";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -346,12 +346,24 @@ export default function createStrixGame(engine, canvas) {
             if (nest.offset.y) lightPos.y += nest.offset.y;
             if (nest.offset.z) lightPos.z += nest.offset.z;
 
+            console.log(`Creating nest light for ${nest.name} at position:`, lightPos);
+            console.log(`  Nest mesh position:`, nestMesh.position);
+            console.log(`  Offset applied:`, nest.offset);
+
             const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
             light.diffuse = nest.color;
             light.specular = new Color3(0.8, 0.8, 0.8);
             light.intensity = 5.0; // Even brighter to ensure visibility
             light.range = 12; // Larger range to illuminate more of the structure
             nestLights.push(light);
+
+            // DEBUG: Add visible sphere at light position
+            const debugSphere = MeshBuilder.CreateSphere(`debugLight_${nest.name}`, { diameter: 0.3 }, scene);
+            debugSphere.position = lightPos;
+            const debugMat = new StandardMaterial(`debugMat_${nest.name}`, scene);
+            debugMat.emissiveColor = new Color3(1, 0.7, 0.3); // Bright orange glow
+            debugMat.disableLighting = true; // Always visible
+            debugSphere.material = debugMat;
           }
         });
       } else {
