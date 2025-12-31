@@ -23,7 +23,7 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight, PointLight, MeshBuilder } from "@babylonjs/core";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight, PointLight } from "@babylonjs/core";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -361,32 +361,16 @@ export default function createStrixGame(engine, canvas) {
               lightPos.z += 1.0; // Then offset 1.0 units from surface
             }
 
-            console.log(`Creating nest light for ${nest.name} at position:`, lightPos);
-            console.log(`  Nest mesh position:`, nestMesh.position);
-            console.log(`  Surface center calculated, then offset 1.0 units outward`);
-
             // Get boardContainer to parent the lights to it (so they rotate with the board)
             const boardContainer = scene.getTransformNodeByName("boardContainer");
 
             const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
             light.diffuse = nest.color;
             light.specular = new Color3(0.8, 0.8, 0.8);
-            light.intensity = 5.0; // Even brighter to ensure visibility
-            light.range = 12; // Larger range to illuminate more of the structure
+            light.intensity = 5.0; // Bright enough to illuminate glass
+            light.range = 12; // Reaches across the board structure
             light.parent = boardContainer; // Parent to boardContainer so it rotates with the board
             nestLights.push(light);
-
-            // DEBUG: Add visible sphere at light position - LARGE and BRIGHT
-            const debugSphere = MeshBuilder.CreateSphere(`debugLight_${nest.name}`, { diameter: 0.8 }, scene);
-            debugSphere.position = lightPos;
-            const debugMat = new StandardMaterial(`debugMat_${nest.name}`, scene);
-            debugMat.emissiveColor = new Color3(2, 1, 0); // Super bright yellow glow
-            debugMat.diffuseColor = new Color3(1, 1, 0); // Yellow
-            debugMat.disableLighting = true; // Always visible regardless of scene lighting
-            debugMat.alpha = 1.0; // Fully opaque
-            debugSphere.material = debugMat;
-            debugSphere.parent = boardContainer; // Parent to boardContainer so it rotates with the board
-            debugSphere.isPickable = false; // Don't interfere with game clicks
           }
         });
       } else {
