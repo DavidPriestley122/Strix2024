@@ -194,10 +194,9 @@ export default function createStrixGame(engine, canvas) {
         break;
 
       case "tinted_brown_center":
-        // Nest squares: Emit warm light in glass mode
+        // Nest squares: Keep normal appearance, lighting comes from point lights
         glassMat.transparencyMode = PBRMaterial.PBRMATERIAL_OPAQUE;
         glassMat.albedoColor = Color3.FromInts(50, 25, 15); // Dark brown like original brown squares
-        glassMat.emissiveColor = Color3.FromInts(180, 120, 60); // Warm amber glow
         glassMat.roughness = 0.2;
         glassMat.alpha = 1.0; // Fully solid
         glassMat.backFaceCulling = true; // Standard for opaque materials
@@ -340,11 +339,15 @@ export default function createStrixGame(engine, canvas) {
         nestSquares.forEach(nest => {
           const nestMesh = scene.getMeshByName(nest.name);
           if (nestMesh) {
-            const light = new PointLight(`nestLight_${nest.name}`, nestMesh.position.clone(), scene);
+            // Position light slightly above the nest square for better illumination
+            const lightPos = nestMesh.position.clone();
+            lightPos.y += 0.5; // Raise above the nest surface
+
+            const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
             light.diffuse = nest.color;
-            light.specular = new Color3(1, 1, 1);
-            light.intensity = 2.0; // Bright enough to illuminate surrounding glass
-            light.range = 8; // Reaches across the board
+            light.specular = new Color3(0.8, 0.8, 0.8);
+            light.intensity = 4.0; // Much brighter to illuminate glass
+            light.range = 10; // Extended range to reach across board
             nestLights.push(light);
           }
         });
