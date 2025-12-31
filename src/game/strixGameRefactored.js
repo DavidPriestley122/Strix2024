@@ -340,15 +340,30 @@ export default function createStrixGame(engine, canvas) {
         nestSquares.forEach(nest => {
           const nestMesh = scene.getMeshByName(nest.name);
           if (nestMesh) {
-            // Position light outward from the nest square's face
+            // Calculate the center of the visible board-side surface
+            // Cubes are 1x1x1 but scaled to 0.5 in Y (thickness direction)
+            // Half-extent in the thickness direction is 0.25
             const lightPos = nestMesh.position.clone();
-            if (nest.offset.x) lightPos.x += nest.offset.x;
-            if (nest.offset.y) lightPos.y += nest.offset.y;
-            if (nest.offset.z) lightPos.z += nest.offset.z;
+
+            // Brown face (b7-7): No rotation, Y is up, surface at position.y + 0.25
+            if (nest.name === "b7-7") {
+              lightPos.y = nestMesh.position.y + 0.25; // Top of cube
+              lightPos.y += 1.0; // Then offset 1.0 units above surface
+            }
+            // Yellow face (y7-7): Rotated -90° around Z, X is outward, surface at position.x + 0.25
+            else if (nest.name === "y7-7") {
+              lightPos.x = nestMesh.position.x + 0.25; // Outward face of cube
+              lightPos.x += 1.0; // Then offset 1.0 units from surface
+            }
+            // Green face (g7-7): Rotated 90° around X, Z is outward, surface at position.z + 0.25
+            else if (nest.name === "g7-7") {
+              lightPos.z = nestMesh.position.z + 0.25; // Outward face of cube
+              lightPos.z += 1.0; // Then offset 1.0 units from surface
+            }
 
             console.log(`Creating nest light for ${nest.name} at position:`, lightPos);
             console.log(`  Nest mesh position:`, nestMesh.position);
-            console.log(`  Offset applied:`, nest.offset);
+            console.log(`  Surface center calculated, then offset 1.0 units outward`);
 
             const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
             light.diffuse = nest.color;
