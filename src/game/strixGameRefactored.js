@@ -23,7 +23,7 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight } from "@babylonjs/core";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight, PointLight } from "@babylonjs/core";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -142,6 +142,9 @@ export default function createStrixGame(engine, canvas) {
   // Spotlight for glass mode color enhancement
   let glassSpotlight = null;
 
+  // Nest lights for interior illumination
+  let nestLights = [];
+
   function createGlassMaterial(scene, name, type) {
     const glassMat = new PBRMaterial(name, scene);
 
@@ -191,9 +194,10 @@ export default function createStrixGame(engine, canvas) {
         break;
 
       case "tinted_brown_center":
-        // Override transparency mode to OPAQUE for solid rendering
+        // Nest squares: Emit warm light in glass mode
         glassMat.transparencyMode = PBRMaterial.PBRMATERIAL_OPAQUE;
         glassMat.albedoColor = Color3.FromInts(50, 25, 15); // Dark brown like original brown squares
+        glassMat.emissiveColor = Color3.FromInts(180, 120, 60); // Warm amber glow
         glassMat.roughness = 0.2;
         glassMat.alpha = 1.0; // Fully solid
         glassMat.backFaceCulling = true; // Standard for opaque materials
@@ -323,11 +327,38 @@ export default function createStrixGame(engine, canvas) {
         glassSpotlight.intensity = 1.5;
       }
       glassSpotlight.setEnabled(true);
+
+      // Create nest lights for interior illumination if they don't exist
+      if (nestLights.length === 0) {
+        // Find the three nest squares and add point lights at their positions
+        const nestSquares = [
+          { name: "b7-7", color: Color3.FromInts(180, 120, 60) }, // Warm amber
+          { name: "y7-7", color: Color3.FromInts(180, 120, 60) }, // Warm amber
+          { name: "g7-7", color: Color3.FromInts(180, 120, 60) }  // Warm amber
+        ];
+
+        nestSquares.forEach(nest => {
+          const nestMesh = scene.getMeshByName(nest.name);
+          if (nestMesh) {
+            const light = new PointLight(`nestLight_${nest.name}`, nestMesh.position.clone(), scene);
+            light.diffuse = nest.color;
+            light.specular = new Color3(1, 1, 1);
+            light.intensity = 2.0; // Bright enough to illuminate surrounding glass
+            light.range = 8; // Reaches across the board
+            nestLights.push(light);
+          }
+        });
+      } else {
+        // Enable existing nest lights
+        nestLights.forEach(light => light.setEnabled(true));
+      }
     } else {
       // Disable spotlight in non-glass mode
       if (glassSpotlight) {
         glassSpotlight.setEnabled(false);
       }
+      // Disable nest lights in non-glass mode
+      nestLights.forEach(light => light.setEnabled(false));
     }
 
     // Note: Lighting dimming removed - pieces need to stay bright in glass mode
