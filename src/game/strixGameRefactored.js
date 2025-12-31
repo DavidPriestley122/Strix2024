@@ -365,11 +365,15 @@ export default function createStrixGame(engine, canvas) {
             console.log(`  Nest mesh position:`, nestMesh.position);
             console.log(`  Surface center calculated, then offset 1.0 units outward`);
 
+            // Get boardContainer to parent the lights to it (so they rotate with the board)
+            const boardContainer = scene.getTransformNodeByName("boardContainer");
+
             const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
             light.diffuse = nest.color;
             light.specular = new Color3(0.8, 0.8, 0.8);
             light.intensity = 5.0; // Even brighter to ensure visibility
             light.range = 12; // Larger range to illuminate more of the structure
+            light.parent = boardContainer; // Parent to boardContainer so it rotates with the board
             nestLights.push(light);
 
             // DEBUG: Add visible sphere at light position - LARGE and BRIGHT
@@ -381,6 +385,7 @@ export default function createStrixGame(engine, canvas) {
             debugMat.disableLighting = true; // Always visible regardless of scene lighting
             debugMat.alpha = 1.0; // Fully opaque
             debugSphere.material = debugMat;
+            debugSphere.parent = boardContainer; // Parent to boardContainer so it rotates with the board
             debugSphere.isPickable = false; // Don't interfere with game clicks
           }
         });
