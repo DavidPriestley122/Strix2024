@@ -330,24 +330,27 @@ export default function createStrixGame(engine, canvas) {
       // Create nest lights for interior illumination if they don't exist
       if (nestLights.length === 0) {
         // Find the three nest squares and add point lights at their positions
+        // Each face has different orientation, so offset direction varies
         const nestSquares = [
-          { name: "b7-7", color: Color3.FromInts(180, 120, 60) }, // Warm amber
-          { name: "y7-7", color: Color3.FromInts(180, 120, 60) }, // Warm amber
-          { name: "g7-7", color: Color3.FromInts(180, 120, 60) }  // Warm amber
+          { name: "b7-7", color: Color3.FromInts(180, 120, 60), offset: { y: 0.5 } }, // Brown face: Y is up
+          { name: "y7-7", color: Color3.FromInts(180, 120, 60), offset: { x: 0.5 } }, // Yellow face: X is outward
+          { name: "g7-7", color: Color3.FromInts(180, 120, 60), offset: { z: 0.5 } }  // Green face: Z is outward
         ];
 
         nestSquares.forEach(nest => {
           const nestMesh = scene.getMeshByName(nest.name);
           if (nestMesh) {
-            // Position light slightly above the nest square for better illumination
+            // Position light outward from the nest square's face
             const lightPos = nestMesh.position.clone();
-            lightPos.y += 0.5; // Raise above the nest surface
+            if (nest.offset.x) lightPos.x += nest.offset.x;
+            if (nest.offset.y) lightPos.y += nest.offset.y;
+            if (nest.offset.z) lightPos.z += nest.offset.z;
 
             const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
             light.diffuse = nest.color;
             light.specular = new Color3(0.8, 0.8, 0.8);
-            light.intensity = 4.0; // Much brighter to illuminate glass
-            light.range = 10; // Extended range to reach across board
+            light.intensity = 5.0; // Even brighter to ensure visibility
+            light.range = 12; // Larger range to illuminate more of the structure
             nestLights.push(light);
           }
         });
