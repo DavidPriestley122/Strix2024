@@ -357,13 +357,16 @@ export default function createStrixGame(engine, canvas) {
             light.range = 12; // Larger range to illuminate more of the structure
             nestLights.push(light);
 
-            // DEBUG: Add visible sphere at light position
-            const debugSphere = MeshBuilder.CreateSphere(`debugLight_${nest.name}`, { diameter: 0.3 }, scene);
+            // DEBUG: Add visible sphere at light position - LARGE and BRIGHT
+            const debugSphere = MeshBuilder.CreateSphere(`debugLight_${nest.name}`, { diameter: 0.8 }, scene);
             debugSphere.position = lightPos;
             const debugMat = new StandardMaterial(`debugMat_${nest.name}`, scene);
-            debugMat.emissiveColor = new Color3(1, 0.7, 0.3); // Bright orange glow
-            debugMat.disableLighting = true; // Always visible
+            debugMat.emissiveColor = new Color3(2, 1, 0); // Super bright yellow glow
+            debugMat.diffuseColor = new Color3(1, 1, 0); // Yellow
+            debugMat.disableLighting = true; // Always visible regardless of scene lighting
+            debugMat.alpha = 1.0; // Fully opaque
             debugSphere.material = debugMat;
+            debugSphere.isPickable = false; // Don't interfere with game clicks
           }
         });
       } else {
