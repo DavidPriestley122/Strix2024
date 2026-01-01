@@ -22,10 +22,10 @@ export function createEventController(dependencies) {
 
   let selectedPiece = null;
 
-  // Custom double-click detection with position tolerance for trackpad support
+  // Custom double-click detection with position tolerance for trackpad and mouse support
   const lastClicks = new Map(); // pieceName -> { time, screenX, screenY }
   const DOUBLE_CLICK_TIME_MS = 900; // Time window for double-click
-  const DOUBLE_CLICK_DISTANCE_PX = 50; // Position tolerance in pixels
+  const DOUBLE_CLICK_DISTANCE_PX = 35; // Position tolerance in pixels (balanced for both trackpad and mouse)
 
   function isDoubleClick(pieceName, event) {
     const now = Date.now();
