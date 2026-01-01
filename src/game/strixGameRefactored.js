@@ -23,8 +23,7 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight } from "@babylonjs/core";
-import { WoodProceduralTexture } from "@babylonjs/procedural-textures";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight, MeshBuilder } from "@babylonjs/core";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -143,8 +142,8 @@ export default function createStrixGame(engine, canvas) {
   // Spotlight for glass mode color enhancement
   let glassSpotlight = null;
 
-  // Wood grain texture for background in glass mode
-  let woodTexture = null;
+  // Hexagonal plinth for glass mode
+  let glassPlinth = null;
 
   function createGlassMaterial(scene, name, type) {
     const glassMat = new PBRMaterial(name, scene);
@@ -298,30 +297,29 @@ export default function createStrixGame(engine, canvas) {
     // Disable environment texture for now (too distracting)
     scene.environmentIntensity = 0;
 
-    // Change background texture for glass mode - wood grain provides organic visual interest
-    const backgroundPlane = scene.getMeshByName("backgroundPlane");
-    if (backgroundPlane && backgroundPlane.material) {
-      if (isGlassMode) {
-        // Create wood grain texture if it doesn't exist
-        if (!woodTexture) {
-          woodTexture = new WoodProceduralTexture("woodTexture", 512, scene);
-          woodTexture.woodColor = new Color3(0.82, 0.70, 0.55); // Light ash/maple wood
-          woodTexture.ampScale = 5.0; // Very fine grain
-          // Scale texture to repeat many times for fine detail
-          woodTexture.uScale = 100; // Repeat 100 times horizontally
-          woodTexture.vScale = 100; // Repeat 100 times vertically
-        }
-        // Apply wood texture
-        backgroundPlane.material.diffuseTexture = woodTexture;
-        backgroundPlane.material.diffuseColor = new Color3(1, 1, 1); // Full texture visibility
-      } else {
-        // Restore original solid color (no texture)
-        backgroundPlane.material.diffuseTexture = null;
-        backgroundPlane.material.diffuseColor = new Color3(
-          GAME_CONFIG.BACKGROUND.COLOR_RGB.R,
-          GAME_CONFIG.BACKGROUND.COLOR_RGB.G,
-          GAME_CONFIG.BACKGROUND.COLOR_RGB.B
-        );
+    // Create hexagonal plinth for glass mode - provides visual context
+    if (isGlassMode) {
+      if (!glassPlinth) {
+        // Create hexagonal plinth (table/platform for the glass set)
+        glassPlinth = MeshBuilder.CreateCylinder("glassPlinth", {
+          diameter: 16, // About 2x the base diameter for visible edges
+          height: 0.4, // Thin like a tabletop
+          tessellation: 6 // Hexagonal shape
+        }, scene);
+
+        // Position below the game base
+        glassPlinth.position.y = 0.3; // Just below base at 0.51
+
+        // Create material for plinth
+        const plinthMaterial = new StandardMaterial("plinthMaterial", scene);
+        plinthMaterial.diffuseColor = new Color3(0.85, 0.80, 0.72); // Warm light grey/beige
+        plinthMaterial.specularColor = new Color3(0.2, 0.2, 0.2); // Subtle shine
+        glassPlinth.material = plinthMaterial;
+      }
+      glassPlinth.setEnabled(true);
+    } else {
+      if (glassPlinth) {
+        glassPlinth.setEnabled(false);
       }
     }
 
