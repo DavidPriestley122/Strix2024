@@ -305,9 +305,12 @@ export default function createStrixGame(engine, canvas) {
       if (isGlassMode) {
         // Create wood grain texture if it doesn't exist
         if (!woodTexture) {
-          woodTexture = new WoodProceduralTexture("woodTexture", 1024, scene);
+          woodTexture = new WoodProceduralTexture("woodTexture", 512, scene);
           woodTexture.woodColor = new Color3(0.82, 0.70, 0.55); // Light ash/maple wood
-          woodTexture.ampScale = 50.0; // Grain intensity
+          woodTexture.ampScale = 10.0; // Finer grain (was 50, too coarse)
+          // Scale texture to repeat across the large background plane
+          woodTexture.uScale = 20; // Repeat 20 times horizontally
+          woodTexture.vScale = 20; // Repeat 20 times vertically
         }
         // Apply wood texture
         backgroundPlane.material.diffuseTexture = woodTexture;
