@@ -180,7 +180,7 @@ export default function createStrixGame(engine, canvas) {
       case "frosted":
         glassMat.albedoColor = new Color3(0.92, 0.92, 0.94);
         glassMat.roughness = 0.3;
-        glassMat.alpha = 0.5; // Slightly more opaque for frosted effect
+        glassMat.alpha = 0.25; // More transparent for better glass effect
         glassMat.subSurface.refractionIntensity = 0.6;
         break;
 
@@ -261,14 +261,10 @@ export default function createStrixGame(engine, canvas) {
         mat.subMaterials.forEach((subMat, index) => {
           if (subMat.name.includes("_checker")) {
             let glassType;
-            if (isNestSquare) {
-              // Nest squares get brown tint
-              glassType = "tinted_brown_center";
-            } else {
-              // REVERSED: Light squares (isDark=false) are now frosted, dark squares are clear
-              const isDark = subMat.metadata?.isDark || false;
-              glassType = isDark ? "clear" : "frosted";
-            }
+            // Nest squares match dark board squares for consistent checkerboard
+            // Light squares (isDark=false) are frosted, dark squares are clear brown
+            const isDark = subMat.metadata?.isDark || false;
+            glassType = isDark ? "clear" : "frosted";
             glassMultiMat.subMaterials.push(
               createGlassMaterial(scene, subMat.name + "_glassVer", glassType)
             );
