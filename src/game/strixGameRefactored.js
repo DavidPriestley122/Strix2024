@@ -240,12 +240,10 @@ export default function createStrixGame(engine, canvas) {
       originalMaterials.set(mesh.uniqueId, mat);
 
       // Create glass alternatives based on mesh/material type
-      if (matName === "baseMaterial") {
-        glassMaterials.set(mesh.uniqueId, createGlassMaterial(scene, matName + "_glassVer", "clear"));
-      }
-      else if (matName === "finMaterial") {
-        // Fins should be transparent glass, not opaque brown
-        glassMaterials.set(mesh.uniqueId, createGlassMaterial(scene, matName + "_glassVer", "tinted"));
+      // Base and fins remain wooden (don't create glass versions)
+      if (matName === "baseMaterial" || matName === "finMaterial") {
+        // Keep original brown wooden material - don't swap in glass mode
+        glassMaterials.set(mesh.uniqueId, mat);
       }
       else if (matName === "backPanelMaterial") {
         glassMaterials.set(mesh.uniqueId, createGlassMaterial(scene, matName + "_glassVer", "tinted"));
