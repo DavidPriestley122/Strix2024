@@ -151,6 +151,9 @@ export default function createStrixGame(engine, canvas) {
     // THE KEY FIX: Enable alpha transparency mode
     glassMat.transparencyMode = PBRMaterial.PBRMATERIAL_ALPHABLEND;
 
+    // Allow more lights to affect this material (default is 4, we have 8)
+    glassMat.maxSimultaneousLights = 10;
+
     // Common glass properties
     glassMat.metallic = 0.0;
     glassMat.backFaceCulling = false;
