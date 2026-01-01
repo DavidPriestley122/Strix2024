@@ -15,6 +15,7 @@
     "@babylonjs/core": "^7.6.1",
     "@babylonjs/gui": "^7.5.0",
     "@babylonjs/loaders": "^7.4.0",
+    "@babylonjs/procedural-textures": "^7.54.3",
     "earcut": "^2.2.4"
   },
   "devDependencies": {

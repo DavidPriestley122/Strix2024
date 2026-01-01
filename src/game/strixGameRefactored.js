@@ -23,7 +23,8 @@ import { createExportController } from "./controllers/exportController.js";
 import { GAME_CONFIG } from "../config/gameConfig.js";
 
 // Babylon.js imports
-import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight, PointLight } from "@babylonjs/core";
+import { Color3, StandardMaterial, Vector3, PBRMaterial, MultiMaterial, CubeTexture, SpotLight } from "@babylonjs/core";
+import { WoodProceduralTexture } from "@babylonjs/procedural-textures";
 
 // MAIN SCENE CREATION FUNCTION
 export default function createStrixGame(engine, canvas) {
@@ -142,8 +143,8 @@ export default function createStrixGame(engine, canvas) {
   // Spotlight for glass mode color enhancement
   let glassSpotlight = null;
 
-  // Nest lights for interior illumination
-  let nestLights = [];
+  // Wood grain texture for background in glass mode
+  let woodTexture = null;
 
   function createGlassMaterial(scene, name, type) {
     const glassMat = new PBRMaterial(name, scene);
@@ -298,14 +299,22 @@ export default function createStrixGame(engine, canvas) {
     // Higher intensity for glass mode as per Opus recommendation
     scene.environmentIntensity = isGlassMode ? 0.9 : 0;
 
-    // Change background color for better glass contrast
+    // Change background texture for glass mode - wood grain provides organic visual interest
     const backgroundPlane = scene.getMeshByName("backgroundPlane");
     if (backgroundPlane && backgroundPlane.material) {
       if (isGlassMode) {
-        // Pale warm grey for glass mode - provides better contrast for transparency
-        backgroundPlane.material.diffuseColor = new Color3(0.92, 0.92, 0.88);
+        // Create wood grain texture if it doesn't exist
+        if (!woodTexture) {
+          woodTexture = new WoodProceduralTexture("woodTexture", 1024, scene);
+          woodTexture.woodColor = new Color3(0.82, 0.70, 0.55); // Light ash/maple wood
+          woodTexture.ampScale = 50.0; // Grain intensity
+        }
+        // Apply wood texture
+        backgroundPlane.material.diffuseTexture = woodTexture;
+        backgroundPlane.material.diffuseColor = new Color3(1, 1, 1); // Full texture visibility
       } else {
-        // Restore original dark blue-grey
+        // Restore original solid color (no texture)
+        backgroundPlane.material.diffuseTexture = null;
         backgroundPlane.material.diffuseColor = new Color3(
           GAME_CONFIG.BACKGROUND.COLOR_RGB.R,
           GAME_CONFIG.BACKGROUND.COLOR_RGB.G,
@@ -329,64 +338,11 @@ export default function createStrixGame(engine, canvas) {
         glassSpotlight.intensity = 1.5;
       }
       glassSpotlight.setEnabled(true);
-
-      // Create nest lights for interior illumination if they don't exist
-      if (nestLights.length === 0) {
-        // Find the three nest squares and add point lights at their positions
-        // Each face has different orientation, so offset direction varies
-        const nestSquares = [
-          { name: "b7-7", color: Color3.FromInts(180, 120, 60), offset: { y: 0.5 } }, // Brown face: Y is up
-          { name: "y7-7", color: Color3.FromInts(180, 120, 60), offset: { x: 0.5 } }, // Yellow face: X is outward
-          { name: "g7-7", color: Color3.FromInts(180, 120, 60), offset: { z: 0.5 } }  // Green face: Z is outward
-        ];
-
-        nestSquares.forEach(nest => {
-          const nestMesh = scene.getMeshByName(nest.name);
-          if (nestMesh) {
-            // Calculate the center of the visible board-side surface
-            // Cubes are 1x1x1 but scaled to 0.5 in Y (thickness direction)
-            // Half-extent in the thickness direction is 0.25
-            const lightPos = nestMesh.position.clone();
-
-            // Brown face (b7-7): No rotation, Y is up, surface at position.y + 0.25
-            if (nest.name === "b7-7") {
-              lightPos.y = nestMesh.position.y + 0.25; // Top of cube
-              lightPos.y += 1.0; // Then offset 1.0 units above surface
-            }
-            // Yellow face (y7-7): Rotated -90° around Z, X is outward, surface at position.x + 0.25
-            else if (nest.name === "y7-7") {
-              lightPos.x = nestMesh.position.x + 0.25; // Outward face of cube
-              lightPos.x += 1.0; // Then offset 1.0 units from surface
-            }
-            // Green face (g7-7): Rotated 90° around X, Z is outward, surface at position.z + 0.25
-            else if (nest.name === "g7-7") {
-              lightPos.z = nestMesh.position.z + 0.25; // Outward face of cube
-              lightPos.z += 1.0; // Then offset 1.0 units from surface
-            }
-
-            // Get boardContainer to parent the lights to it (so they rotate with the board)
-            const boardContainer = scene.getTransformNodeByName("boardContainer");
-
-            const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
-            light.diffuse = nest.color;
-            light.specular = new Color3(1, 1, 1); // Bright white specular
-            light.intensity = 15.0; // Much brighter to make effect clearly visible
-            light.range = 15; // Extended range to illuminate more glass
-            light.parent = boardContainer; // Parent to boardContainer so it rotates with the board
-            nestLights.push(light);
-          }
-        });
-      } else {
-        // Enable existing nest lights
-        nestLights.forEach(light => light.setEnabled(true));
-      }
     } else {
       // Disable spotlight in non-glass mode
       if (glassSpotlight) {
         glassSpotlight.setEnabled(false);
       }
-      // Disable nest lights in non-glass mode
-      nestLights.forEach(light => light.setEnabled(false));
     }
 
     // Note: Lighting dimming removed - pieces need to stay bright in glass mode
