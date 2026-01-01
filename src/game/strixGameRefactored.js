@@ -307,8 +307,8 @@ export default function createStrixGame(engine, canvas) {
           tessellation: 6 // Hexagonal shape
         }, scene);
 
-        // Position below the game base
-        glassPlinth.position.y = 0.3; // Just below base at 0.51
+        // Position below the game base with visible gap
+        glassPlinth.position.y = 0.0; // Lower so full base thickness is visible
 
         // Create material for plinth
         const plinthMaterial = new StandardMaterial("plinthMaterial", scene);
