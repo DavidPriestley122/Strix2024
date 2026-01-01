@@ -366,9 +366,9 @@ export default function createStrixGame(engine, canvas) {
 
             const light = new PointLight(`nestLight_${nest.name}`, lightPos, scene);
             light.diffuse = nest.color;
-            light.specular = new Color3(0.8, 0.8, 0.8);
-            light.intensity = 5.0; // Bright enough to illuminate glass
-            light.range = 12; // Reaches across the board structure
+            light.specular = new Color3(1, 1, 1); // Bright white specular
+            light.intensity = 15.0; // Much brighter to make effect clearly visible
+            light.range = 15; // Extended range to illuminate more glass
             light.parent = boardContainer; // Parent to boardContainer so it rotates with the board
             nestLights.push(light);
           }
