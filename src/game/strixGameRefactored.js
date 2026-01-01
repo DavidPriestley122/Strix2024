@@ -295,9 +295,8 @@ export default function createStrixGame(engine, canvas) {
 
     isGlassMode = !isGlassMode;
 
-    // Toggle environment texture intensity - this does 80% of the work for glass
-    // Higher intensity for glass mode as per Opus recommendation
-    scene.environmentIntensity = isGlassMode ? 0.9 : 0;
+    // Disable environment texture for now (too distracting)
+    scene.environmentIntensity = 0;
 
     // Change background texture for glass mode - wood grain provides organic visual interest
     const backgroundPlane = scene.getMeshByName("backgroundPlane");
@@ -307,10 +306,10 @@ export default function createStrixGame(engine, canvas) {
         if (!woodTexture) {
           woodTexture = new WoodProceduralTexture("woodTexture", 512, scene);
           woodTexture.woodColor = new Color3(0.82, 0.70, 0.55); // Light ash/maple wood
-          woodTexture.ampScale = 10.0; // Finer grain (was 50, too coarse)
-          // Scale texture to repeat across the large background plane
-          woodTexture.uScale = 20; // Repeat 20 times horizontally
-          woodTexture.vScale = 20; // Repeat 20 times vertically
+          woodTexture.ampScale = 5.0; // Very fine grain
+          // Scale texture to repeat many times for fine detail
+          woodTexture.uScale = 100; // Repeat 100 times horizontally
+          woodTexture.vScale = 100; // Repeat 100 times vertically
         }
         // Apply wood texture
         backgroundPlane.material.diffuseTexture = woodTexture;
