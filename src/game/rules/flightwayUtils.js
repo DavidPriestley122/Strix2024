@@ -356,58 +356,7 @@ export function calculateSimpleGhostingDestination(
     return null;
   }
 
-  // Edge case validation: Check if crosspiece is at position 8 of its flightway (face transition)
-  if (crossAdjacency.ghostDirection === "in") {
-    // Find which flightway the crosspiece and owl share
-    const crossMatch = crossFlightway.match(/([byg])(\d)([byg])(\d)/);
-    const owlMatch = owlFlightway.match(/([byg])(\d)([byg])(\d)/);
-    
-    if (crossMatch && owlMatch) {
-      const crossFlightways = [`${crossMatch[1]}${crossMatch[2]}`, `${crossMatch[3]}${crossMatch[4]}`];
-      const owlFlightways = [`${owlMatch[1]}${owlMatch[2]}`, `${owlMatch[3]}${owlMatch[4]}`];
-      
-      // Find the shared adjacent flightway
-      for (const crossFw of crossFlightways) {
-        for (const owlFw of owlFlightways) {
-          if (crossFw[0] === owlFw[0]) { // Same flightway type
-            const crossNum = parseInt(crossFw[1]);
-            const owlNum = parseInt(owlFw[1]);
-            if (Math.abs(crossNum - owlNum) === 1) {
-              // Found the adjacent flightway - check crosspiece position
-              const crossFlightwayFace = crossFw[0];
-              const crossFlightwayNum = crossNum;
-              const crossFlightwayRoute = generateFlightwayRoute(crossFlightwayFace, crossFlightwayNum);
-              const crossPositionIndex = crossFlightwayRoute.indexOf(crossPiecePosition);
-              
-              if (crossPositionIndex === 7) { // Position 8 (0-indexed = 7) - face transition point
-                if (isBrownOwl || isYellowOwl) {
-                  console.log(`🚫 EDGE CASE: Cannot ghost "in" - crosspiece at position 8 (face transition) of ${crossFw}. Cross position: ${crossPiecePosition}`);
-                }
-                return null;
-              }
-
-              // Symmetric check: also check if OWL is at transition point
-              const owlFlightwayFace = owlFw[0];
-              const owlFlightwayNum = owlNum;
-              const owlFlightwayRoute = generateFlightwayRoute(owlFlightwayFace, owlFlightwayNum);
-              const owlPositionIndex = owlFlightwayRoute.indexOf(owlPosition);
-
-              if (owlPositionIndex === 7) { // Owl at position 8 (0-indexed = 7) - face transition point
-                if (isBrownOwl || isYellowOwl) {
-                  console.log(`🚫 EDGE CASE: Cannot ghost "in" - owl at position 8 (face transition) of ${owlFw}. Owl position: ${owlPosition}`);
-                }
-                return null;
-              }
-
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // Find which of owl's flightways goes to the target face
+  // Find which of owl's flightways goes to the target face (needed for edge case validation)
   let owlTargetFlightway;
   if (targetFace === "brown") {
     owlTargetFlightway = owlFlightways.find(fw => fw[0] === "b" || fw[0] === "g");
@@ -443,10 +392,32 @@ export function calculateSimpleGhostingDestination(
   const currentOwlIndex = flightwayRoute.indexOf(owlPosition);
   if (currentOwlIndex === -1) return null;
 
+  // EDGE CASE VALIDATION: Two checks to prevent illegal ghosting near the Nest
+  if (crossAdjacency.ghostDirection === "in") {
+    // CHECK 1: If intersection is a Nest square, block ghosting "in"
+    // This prevents jumping through a crosspiece directly into the Nest from far away
+    if (intersectionSquare.includes('7-7')) {
+      if (isBrownOwl || isYellowOwl) {
+        console.log(`🚫 EDGE CASE 1: Cannot ghost "in" - intersection is Nest square ${intersectionSquare}`);
+      }
+      return null;
+    }
+
+    // CHECK 2: If Owl is at position 8 (index 7) of TARGET flightway, block ghosting "in"
+    // Position 8 is the face transition point - ghosting "in" from here runs out of squares
+    // CRITICAL: We check the TARGET flightway (where owl travels), not the SHARED flightway
+    if (currentOwlIndex === 7) {
+      if (isBrownOwl || isYellowOwl) {
+        console.log(`🚫 EDGE CASE 2: Cannot ghost "in" - owl at position 8 (face transition) of TARGET flightway ${owlTargetFlightway}`);
+      }
+      return null;
+    }
+  }
+
   if (isBrownOwl) {
     console.log(`🔧 Owl at index: ${currentOwlIndex}, Intersection at index: ${intersectionIndex}`);
   }
-  
+
   if (isYellowOwl) {
     console.log(`🟡 Owl at index: ${currentOwlIndex}, Intersection at index: ${intersectionIndex}`);
     console.log(`🟡 Owl position: ${owlPosition}, Intersection: ${intersectionSquare}`);
