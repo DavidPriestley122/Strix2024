@@ -59,10 +59,22 @@ export function createGameImportManager(gameState) {
         // Parse moves
         let moves = [];
         if (movesStartIndex !== -1) {
-          const moveLines = lines.slice(movesStartIndex).filter(line => 
+          // Found MOVES: header, parse from that point
+          const moveLines = lines.slice(movesStartIndex).filter(line =>
             line && !line.startsWith('//') && line.trim() !== ''
           );
           moves = this.parseTextMoves(moveLines.join(' '));
+        } else {
+          // No MOVES: header found - assume entire content is moves
+          // (allows pasting just "1. bK-y21 yO-y72..." without headers)
+          const moveLines = lines.filter(line =>
+            line && !line.startsWith('//') && !line.startsWith('Date:') &&
+            !line.startsWith('Players:') && !line.startsWith('Result:') &&
+            line.trim() !== ''
+          );
+          if (moveLines.length > 0) {
+            moves = this.parseTextMoves(moveLines.join(' '));
+          }
         }
         
         return {
