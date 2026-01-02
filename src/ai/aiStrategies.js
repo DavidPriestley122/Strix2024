@@ -11,8 +11,8 @@ export class MinimaxAI {
     this.playerColor = playerColor;
     this.gameState = gameStateManager;
     this.maxDepth = 1; // Depth 1: Evaluate immediate moves only (basic competence)
-    this.strategicLogging = false; // DISABLED - too much spam
-    this.tacticalLogging = false;  // DISABLED - too much spam
+    this.strategicLogging = true; // TEMPORARILY ENABLED FOR DEBUGGING
+    this.tacticalLogging = true;  // TEMPORARILY ENABLED FOR DEBUGGING
 
     // Player order for three-player game
     this.playerOrder = ["brown", "yellow", "green"];
