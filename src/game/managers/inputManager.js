@@ -7,6 +7,25 @@ export function createInputManager(gameState, resetFunctions) {
   const { scene, animatePieceMovement } = resetFunctions;
 
   return {
+    // FORMAT CONVERSION HELPER
+    // Convert Strix Game Notation (SGN) format "b67" to internal game format "b6-7"
+    convertSGNToInternal: function(square) {
+      // Don't convert if already in internal format, captured, or invalid
+      if (!square || square.includes('-') || square === 'captured') {
+        return square;
+      }
+
+      // Convert "b67" to "b6-7"
+      if (square.length === 3) {
+        const face = square[0];
+        const row = square[1];
+        const col = square[2];
+        return `${face}${row}-${col}`;
+      }
+
+      return square; // Return unchanged if format unexpected
+    },
+
     // MOVE INPUT INITIALIZATION
     initializeMoveInput: function() {
       // Get HTML elements
@@ -220,9 +239,9 @@ export function createInputManager(gameState, resetFunctions) {
       if (typeof animatePieceMovement === 'function') {
         animatePieceMovement(piece3D, targetPosition, targetRotation, 30, () => {
           console.log(`✅ Movement animation complete - now processing captures`);
-          
-          // Update game state after movement
-          gameState.piecePositions[pieceName] = parsedMove.destination;
+
+          // Update game state after movement (convert SGN format to internal format)
+          gameState.piecePositions[pieceName] = this.convertSGNToInternal(parsedMove.destination);
           
           // Add basic move to history (captures will be added later)
           // Note: We pass a special flag to indicate this is a hybrid move in progress
@@ -233,8 +252,8 @@ export function createInputManager(gameState, resetFunctions) {
         });
       } else {
         console.log('❌ animatePieceMovement function not available');
-        // Fallback: update position without animation
-        gameState.piecePositions[pieceName] = parsedMove.destination;
+        // Fallback: update position without animation (convert SGN format to internal format)
+        gameState.piecePositions[pieceName] = this.convertSGNToInternal(parsedMove.destination);
         gameState.addMoveToHistory(pieceName, currentPosition, parsedMove.destination, { name: "hybrid_in_progress" }, gameStateBeforeMove);
         gameState.startHybridCaptureMode(parsedMove);
       }
@@ -260,8 +279,8 @@ export function createInputManager(gameState, resetFunctions) {
         gameOver: gameState.gameOver
       };
 
-      // Update piece position AND animate visually
-      gameState.piecePositions[pieceName] = parsedMove.destination;
+      // Update piece position AND animate visually (convert SGN format to internal format)
+      gameState.piecePositions[pieceName] = this.convertSGNToInternal(parsedMove.destination);
       
       // Animate the piece movement visually
       const piece3D = scene.getMeshByName(pieceName);

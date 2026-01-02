@@ -497,10 +497,6 @@ export class MinimaxAI {
     const state = gameState || this.gameState;
     const moves = [];
 
-    // DEBUG: Check what piecePositions looks like
-    console.log(`🔍 DEBUG: state.piecePositions =`, state.piecePositions);
-    console.log(`🔍 DEBUG: typeof state.piecePositions =`, typeof state.piecePositions);
-
     const pieces = this.getPlayerPieces(playerColor, state);
     this.logStrategy(`🔍 Found ${pieces.length} pieces for ${playerColor}:`);
     
@@ -583,14 +579,10 @@ export class MinimaxAI {
     const state = gameState || this.gameState;
     const currentPos = piece.position;
 
-    console.log(`🔍 DEBUG getPossibleMoves: ${piece.name} at "${currentPos}" (length=${currentPos.length})`);
-    console.log(`🔍 DEBUG: Passing piecePositions to move functions:`, state.piecePositions);
-
     let moves = [];
     switch (piece.type) {
       case "Owl":
         moves = getAllOwlMoves(currentPos, state.piecePositions, piece.name);
-        console.log(`🔍 DEBUG: getAllOwlMoves returned ${moves.length} moves:`, moves);
         break;
       case "Kite":
         moves = getAllKiteMoves(currentPos, state.piecePositions, piece.name);
