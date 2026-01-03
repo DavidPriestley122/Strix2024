@@ -20,6 +20,7 @@ import { createUIManager } from "./uiManager.js";
 import { createInputManager } from "./inputManager.js";
 import { createGameExportManager } from "./gameExportManager.js";
 import { createGameImportManager } from "./gameImportManager.js";
+import { createGameAnalysisManager } from "./gameAnalysisManager.js";
 
 //GUI CREATION FUNCTION
 export function createGUI() {
@@ -878,10 +879,14 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
   
   // Initialize gameExportManager with reference to gameStateManager
   const gameExportManager = createGameExportManager(gameStateManager);
-  
+
   // Initialize gameImportManager with reference to gameStateManager
   const gameImportManager = createGameImportManager(gameStateManager);
-  
+
+  // Initialize gameAnalysisManager with reference to gameStateManager
+  const gameAnalysisManager = createGameAnalysisManager(gameStateManager);
+  gameAnalysisManager.initialize();
+
   // Integrate captureManager methods into gameStateManager
   gameStateManager.captureManager = captureManager;
   gameStateManager.recordCapture = captureManager.recordCapture.bind(captureManager);

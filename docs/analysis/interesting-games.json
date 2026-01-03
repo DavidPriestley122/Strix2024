@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "description": "Curated collection of interesting games for pattern analysis and AI training",
+  "games": [],
+  "patternDefinitions": {
+    "kingmaking-via-ghosting": {
+      "description": "Move creates ghosting opportunity for third player when second player near victory",
+      "severity": "high",
+      "preventable": true,
+      "rule": "third-bird"
+    }
+  }
+}

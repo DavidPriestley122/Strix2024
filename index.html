@@ -267,9 +267,62 @@
               </div>
             </div>
           </div>
+
+          <!-- ANALYSIS FEATURE - Consider access control for multiplayer version -->
+          <div class="collapsible-section">
+            <button class="section-header" data-section="analysis">
+              <span class="section-title">📊 Game Analysis</span>
+              <span class="section-arrow">▼</span>
+            </button>
+            <div class="section-content" id="analysis-content">
+              <div class="analysis-controls">
+                <button id="save-to-analysis-btn" class="control-button primary" title="Save current game for pattern analysis">💾 Save to Analysis</button>
+                <button id="analysis-library-btn" class="control-button secondary" title="Browse saved games" style="margin-top: 8px;">📚 Analysis Library</button>
+                <button id="export-analysis-btn" class="control-button secondary" title="Download analysis library" style="margin-top: 8px;">📥 Export Library</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </aside>
+
+    <!-- Analysis Dialog Modal -->
+    <div id="analysis-dialog" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--dark-chocolate); border: 2px solid var(--owl-beak); border-radius: 10px; padding: 20px; z-index: 2000; width: 500px; max-height: 80vh; overflow-y: auto;">
+      <h3 style="color: var(--owl-beak); margin-top: 0;">Save Game to Analysis</h3>
+
+      <label style="display: block; margin-top: 15px; color: var(--owl-light);">
+        Pattern Name:
+        <input type="text" id="analysis-pattern-name" placeholder="e.g., kingmaking-via-ghosting" style="width: 100%; margin-top: 5px; padding: 8px; background: rgba(0,0,0,0.6); border: 1px solid var(--owl-light); border-radius: 4px; color: white;">
+      </label>
+
+      <label style="display: block; margin-top: 15px; color: var(--owl-light);">
+        Tags (comma-separated):
+        <input type="text" id="analysis-tags" placeholder="e.g., kingmaking, ghosting, third-bird-violation" style="width: 100%; margin-top: 5px; padding: 8px; background: rgba(0,0,0,0.6); border: 1px solid var(--owl-light); border-radius: 4px; color: white;">
+      </label>
+
+      <label style="display: block; margin-top: 15px; color: var(--owl-light);">
+        Critical Move Number:
+        <input type="number" id="analysis-critical-move" min="1" placeholder="Move number" style="width: 100%; margin-top: 5px; padding: 8px; background: rgba(0,0,0,0.6); border: 1px solid var(--owl-light); border-radius: 4px; color: white;">
+      </label>
+
+      <label style="display: block; margin-top: 15px; color: var(--owl-light);">
+        Thicket Level (0-3):
+        <input type="number" id="analysis-thicket" min="0" max="3" value="1" style="width: 100%; margin-top: 5px; padding: 8px; background: rgba(0,0,0,0.6); border: 1px solid var(--owl-light); border-radius: 4px; color: white;">
+      </label>
+
+      <label style="display: block; margin-top: 15px; color: var(--owl-light);">
+        Notes:
+        <textarea id="analysis-notes" rows="4" placeholder="Describe what makes this game interesting..." style="width: 100%; margin-top: 5px; padding: 8px; background: rgba(0,0,0,0.6); border: 1px solid var(--owl-light); border-radius: 4px; color: white; font-family: inherit;"></textarea>
+      </label>
+
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="analysis-cancel-btn" class="control-button secondary">Cancel</button>
+        <button id="analysis-save-btn" class="control-button primary">Save</button>
+      </div>
+    </div>
+
+    <!-- Overlay for modal -->
+    <div id="analysis-overlay" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1999;"></div>
 
     <footer>
       <p>&copy; 2024 David Priestley. All rights reserved.</p>
