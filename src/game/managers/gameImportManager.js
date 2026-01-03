@@ -250,7 +250,7 @@ export function createGameImportManager(gameState) {
       // Execute move sequence using existing functionality
       if (gameState.executeMoveSequence) {
         // Use the integrated function which has built-in timing and error handling
-        gameState.executeMoveSequence(importResult.moves);
+        gameState.executeMoveSequence(importResult.moves, replayOptions.speed);
       } else {
         // Fallback: use our custom replay sequence
         this.executeReplaySequence(importResult.moves, replayOptions);

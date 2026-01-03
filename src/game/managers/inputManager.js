@@ -426,29 +426,49 @@ export function createInputManager(gameState, resetFunctions) {
     },
 
     // BATCH MOVE PROCESSING
-    executeMoveSequence: function(moveSequence) {
+    executeMoveSequence: function(moveSequence, speed = 1000) {
       if (!Array.isArray(moveSequence) || moveSequence.length === 0) {
         gameState.displayInfoMessage('Invalid move sequence');
         return;
       }
 
-      console.log(`🎯 Executing move sequence:`, moveSequence);
-      
+      console.log(`🎯 Executing move sequence with speed: ${speed}ms`);
+
+      const nextMoveBtn = document.getElementById('next-move-btn');
+      const isStepByStep = speed === 0;
+
+      // Show/hide Next Move button based on mode
+      if (nextMoveBtn) {
+        nextMoveBtn.style.display = isStepByStep ? 'block' : 'none';
+      }
+
       // Execute moves one by one with delays
       let index = 0;
       const executeNext = () => {
         if (index >= moveSequence.length) {
           gameState.displayInfoMessage(`Completed ${moveSequence.length} move sequence`);
+          if (nextMoveBtn) {
+            nextMoveBtn.style.display = 'none';
+          }
           return;
         }
 
         const move = moveSequence[index];
         const parsedMove = moveNotation.parseMove(move);
-        
+
         if (parsedMove && parsedMove.valid) {
           this.executeParsedMove(parsedMove);
           index++;
-          setTimeout(executeNext, 1000); // 1 second delay between moves
+
+          if (isStepByStep) {
+            // Step-by-step mode: wait for button click
+            if (nextMoveBtn) {
+              nextMoveBtn.onclick = executeNext;
+            }
+          } else {
+            // Timed mode: auto-advance after delay
+            setTimeout(executeNext, speed);
+          }
         } else {
           gameState.displayInfoMessage(`Invalid move in sequence: ${move}`);
         }
