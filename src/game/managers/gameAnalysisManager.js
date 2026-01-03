@@ -123,6 +123,13 @@ export function createGameAnalysisManager(gameState) {
       // Parse tags
       const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
 
+      // Extract notation strings from move history
+      // moveHistory contains objects with {notation, piece, from, to, ...}
+      // We only need the notation strings for replay
+      const moveNotations = gameState.moveHistory
+        .map(move => typeof move === 'string' ? move : move.notation)
+        .filter(notation => notation && !notation.includes('wins!')); // Filter out winning messages
+
       // Collect game data
       const gameData = {
         id: this.generateGameId(),
@@ -134,15 +141,15 @@ export function createGameAnalysisManager(gameState) {
         notes: notes,
 
         // Game state
-        moves: [...gameState.moveHistory],
-        totalMoves: gameState.moveHistory.length,
+        moves: moveNotations,
+        totalMoves: moveNotations.length,
         currentPlayer: gameState.currentPlayer,
         winner: gameState.winner || null,
 
         // Metadata
         metadata: {
           date: new Date().toLocaleDateString(),
-          moveCount: gameState.moveHistory.length,
+          moveCount: moveNotations.length,
           capturedPieces: this.getCapturedPiecesSummary()
         }
       };
@@ -374,16 +381,29 @@ export function createGameAnalysisManager(gameState) {
 
       console.log(`📥 Loading game from library: ${game.patternName}`);
 
+      // Extract notation strings (handle both old and new format)
+      const moveNotations = game.moves.map(move =>
+        typeof move === 'string' ? move : move.notation
+      ).filter(notation => notation && !notation.includes('wins!'));
+
+      if (moveNotations.length === 0) {
+        gameState.displayInfoMessage('No moves to replay in this game');
+        return;
+      }
+
       // Reset game
       gameState.resetGame();
 
       // Display info
-      gameState.displayInfoMessage(`Loading: ${game.patternName} (${game.totalMoves} moves)`);
+      gameState.displayInfoMessage(`Loading: ${game.patternName} (${moveNotations.length} moves)`);
 
       // Replay the game using executeMoveSequence
       if (gameState.executeMoveSequence) {
         // Use step-by-step mode so user can analyze
-        gameState.executeMoveSequence(game.moves, 0);
+        gameState.executeMoveSequence(moveNotations, 0);
+      } else {
+        console.error('executeMoveSequence not available');
+        gameState.displayInfoMessage('Error: Cannot replay game');
       }
     },
 
