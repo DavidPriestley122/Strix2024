@@ -376,8 +376,19 @@
 
         function restartGame() {
           console.log("Game restarting...");
-          // Add your game restart logic here
-          // For now, let's just reload the page
+
+          // Check if there are moves in the history
+          const moveHistory = document.getElementById('move-history-display');
+          const hasMoves = moveHistory && moveHistory.children.length > 0;
+
+          // Confirm before restarting if game is in progress
+          if (hasMoves) {
+            if (!confirm('Restart game and lose all current moves?')) {
+              console.log("Restart cancelled by user");
+              return;
+            }
+          }
+
           location.reload();
         }
 
@@ -396,7 +407,15 @@
         });
 
         document.addEventListener("keydown", function (event) {
-          if (event.key === "r" || event.key === "R") {
+          // Don't trigger shortcuts when typing in input fields
+          const activeElement = document.activeElement;
+          const isTyping = activeElement && (
+            activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "TEXTAREA" ||
+            activeElement.isContentEditable
+          );
+
+          if (!isTyping && (event.key === "r" || event.key === "R")) {
             restartGame();
           }
         });
