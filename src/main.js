@@ -65,7 +65,15 @@ function restartGame() {
 window.addEventListener("DOMContentLoaded", initGame);
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "r" || event.key === "R") {
+  // Don't trigger shortcuts when typing in input fields
+  const activeElement = document.activeElement;
+  const isTyping = activeElement && (
+    activeElement.tagName === "INPUT" ||
+    activeElement.tagName === "TEXTAREA" ||
+    activeElement.isContentEditable
+  );
+
+  if (!isTyping && (event.key === "r" || event.key === "R")) {
     restartGame();
   }
 });
