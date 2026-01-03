@@ -460,6 +460,11 @@ export function createInputManager(gameState, resetFunctions) {
           this.executeParsedMove(parsedMove);
           index++;
 
+          // Update button text for next move
+          if (nextMoveBtn && index < moveSequence.length) {
+            nextMoveBtn.textContent = `Next Move (${index + 1}/${moveSequence.length})`;
+          }
+
           if (isStepByStep) {
             // Step-by-step mode: wait for button click
             if (nextMoveBtn) {
@@ -474,7 +479,17 @@ export function createInputManager(gameState, resetFunctions) {
         }
       };
 
-      executeNext();
+      // Start execution
+      if (isStepByStep) {
+        // Step-by-step: show button and wait for first click
+        if (nextMoveBtn) {
+          nextMoveBtn.textContent = `Start Replay (1/${moveSequence.length})`;
+          nextMoveBtn.onclick = executeNext;
+        }
+      } else {
+        // Timed mode: start immediately
+        executeNext();
+      }
     }
   };
 }
