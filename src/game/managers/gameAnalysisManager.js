@@ -53,11 +53,11 @@ export function createGameAnalysisManager(gameState) {
       }
     },
 
-    openSaveDialog: function() {
+    openSaveDialog: function(existingGame = null) {
       console.log('📋 Opening Save to Analysis dialog');
 
-      // Check if there are any moves in the game
-      if (!gameState.moveHistory || gameState.moveHistory.length === 0) {
+      // Check if there are any moves in the game (unless editing existing)
+      if (!existingGame && (!gameState.moveHistory || gameState.moveHistory.length === 0)) {
         gameState.displayInfoMessage('No moves to save - play some moves first');
         return;
       }
@@ -67,10 +67,23 @@ export function createGameAnalysisManager(gameState) {
       const overlay = document.getElementById('analysis-overlay');
 
       if (dialog && overlay) {
-        // Pre-fill current move number
-        const criticalMoveInput = document.getElementById('analysis-critical-move');
-        if (criticalMoveInput) {
-          criticalMoveInput.value = gameState.moveHistory.length;
+        if (existingGame) {
+          // Pre-fill with existing game data
+          document.getElementById('analysis-pattern-name').value = existingGame.patternName || '';
+          document.getElementById('analysis-tags').value = existingGame.tags ? existingGame.tags.join(', ') : '';
+          document.getElementById('analysis-critical-move').value = existingGame.criticalMove || '';
+          document.getElementById('analysis-thicket').value = existingGame.thicket || 1;
+          document.getElementById('analysis-notes').value = existingGame.notes || '';
+
+          // Store the game ID for updating
+          dialog.dataset.editingGameId = existingGame.id;
+        } else {
+          // Pre-fill current move number for new game
+          const criticalMoveInput = document.getElementById('analysis-critical-move');
+          if (criticalMoveInput) {
+            criticalMoveInput.value = gameState.moveHistory.length;
+          }
+          delete dialog.dataset.editingGameId;
         }
 
         dialog.style.display = 'block';
@@ -100,7 +113,10 @@ export function createGameAnalysisManager(gameState) {
     },
 
     saveCurrentGame: function() {
-      console.log('💾 Saving current game to analysis library');
+      const dialog = document.getElementById('analysis-dialog');
+      const isEditing = dialog && dialog.dataset.editingGameId;
+
+      console.log(isEditing ? '✏️ Updating game in analysis library' : '💾 Saving current game to analysis library');
 
       // Collect metadata from form
       const patternName = document.getElementById('analysis-pattern-name').value.trim();
@@ -115,13 +131,26 @@ export function createGameAnalysisManager(gameState) {
         return;
       }
 
+      // Parse tags
+      const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
+
+      if (isEditing) {
+        // Update existing game metadata
+        this.updateGameMetadata(dialog.dataset.editingGameId, {
+          patternName,
+          tags,
+          criticalMove,
+          thicket,
+          notes
+        });
+        return;
+      }
+
+      // Validation for new games only
       if (!criticalMove || criticalMove < 1 || criticalMove > gameState.moveHistory.length) {
         gameState.displayInfoMessage(`Critical move must be between 1 and ${gameState.moveHistory.length}`);
         return;
       }
-
-      // Parse tags
-      const tags = tagsInput ? tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag) : [];
 
       // Extract notation strings from move history
       // moveHistory contains objects with {notation, piece, from, to, ...}
@@ -239,6 +268,33 @@ export function createGameAnalysisManager(gameState) {
       console.log(`✅ Added game to library: ${gameData.patternName}`);
     },
 
+    updateGameMetadata: function(gameId, metadata) {
+      const game = this.library.games.find(g => g.id === gameId);
+
+      if (!game) {
+        gameState.displayInfoMessage('Game not found in library');
+        return;
+      }
+
+      // Update metadata fields
+      game.patternName = metadata.patternName;
+      game.tags = metadata.tags;
+      game.criticalMove = metadata.criticalMove;
+      game.thicket = metadata.thicket;
+      game.notes = metadata.notes;
+
+      // Update timestamp
+      game.updatedAt = new Date().toISOString();
+
+      this.saveLibraryToStorage();
+      console.log(`✏️ Updated game metadata: ${game.patternName}`);
+
+      // Close dialog
+      this.closeSaveDialog();
+
+      gameState.displayInfoMessage(`Updated "${game.patternName}" in library`);
+    },
+
     exportLibrary: function() {
       console.log('📥 Exporting analysis library');
 
@@ -322,6 +378,19 @@ export function createGameAnalysisManager(gameState) {
         });
       });
 
+      // Edit game buttons
+      const editButtons = container.querySelectorAll('.edit-game-btn');
+      editButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const gameId = e.target.dataset.gameId;
+          const game = this.library.games.find(g => g.id === gameId);
+          if (game) {
+            document.body.removeChild(container);
+            this.openSaveDialog(game);
+          }
+        });
+      });
+
       // Delete game buttons
       const deleteButtons = container.querySelectorAll('.delete-game-btn');
       deleteButtons.forEach(btn => {
@@ -360,10 +429,13 @@ export function createGameAnalysisManager(gameState) {
             </div>
           ` : ''}
           <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <button class="load-game-btn control-button primary" data-game-id="${game.id}" style="flex: 1;">
+            <button class="load-game-btn control-button primary" data-game-id="${game.id}" style="flex: 2;">
               Load & Replay
             </button>
-            <button class="delete-game-btn control-button secondary" data-game-id="${game.id}">
+            <button class="edit-game-btn control-button secondary" data-game-id="${game.id}" style="flex: 1;">
+              Edit
+            </button>
+            <button class="delete-game-btn control-button secondary" data-game-id="${game.id}" style="flex: 1;">
               Delete
             </button>
           </div>
