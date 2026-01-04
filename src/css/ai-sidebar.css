@@ -32,8 +32,8 @@
 }
 
 .player-config {
-  margin-bottom: 15px;
-  padding: 12px 16px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: var(--button-border-radius);
   border: 2px solid;
@@ -109,7 +109,7 @@ input[type="radio"]:hover {
 
 .game-controls {
   margin-top: var(--button-group-spacing);
-  padding: 16px;
+  padding: 12px;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.08));
   border-radius: var(--button-border-radius);
   border: 2px solid var(--owl-beak);
@@ -157,7 +157,7 @@ input[type="radio"]:hover {
 
 .move-panel {
   margin-top: var(--button-group-spacing);
-  padding: 16px;
+  padding: 12px;
   background: linear-gradient(135deg, rgba(34, 139, 34, 0.15), rgba(26, 58, 26, 0.12));
   border-radius: var(--button-border-radius);
   border: 2px solid var(--owl-eye);
@@ -197,7 +197,7 @@ input[type="radio"]:hover {
   background: rgba(0, 0, 0, 0.4);
   border-radius: 6px;
   padding: 8px;
-  max-height: 120px;
+  max-height: 80px;
   overflow-y: auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -550,11 +550,16 @@ input[type="radio"]:hover {
 /* Responsive adjustments */
 @media (max-height: 800px) {
   .move-history-list {
-    max-height: 100px;
+    max-height: 60px;
   }
-  
+
   .move-panel {
-    padding: 15px;
+    padding: 12px;
+  }
+
+  .player-config {
+    padding: 6px 10px;
+    margin-bottom: 8px;
   }
 }
 
