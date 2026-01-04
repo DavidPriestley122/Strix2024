@@ -428,12 +428,19 @@ export const content = {
         </ul>
 
         <h5>Rule 17 (i): Thicket Depth</h5>
-        <p>Before the game begins, players must agree on the "Thicket" depth – the number of complete turns (cycles of moves by all players) from the current player's move within which a potential Third Bird Foul can be identified. The recommended Thicket depth for each version of Strix is as follows:</p>
+        <p><strong>Terminology:</strong> A <em>move</em> is any piece moving or capturing. A <em>turn</em> is one player's move within a round. A <em>round</em> is a complete set of turns by all active players, starting from the current player.</p>
+
+        <p>Before the game begins, players must agree on the "Thicket" depth. A <strong>Thicket of n</strong> means looking ahead <em>n</em> complete rounds to detect potential Third Bird Fouls. The recommended Thicket depth for each version of Strix is as follows:</p>
+
         <ul>
-          <li>Simple STRIX: 1 turn (the next player's move and the third player's move)</li>
-          <li>Standard STRIX: 2 turns (the next two players' moves, the current player's next move, and the next two players' moves again)</li>
-          <li>Advanced STRIX: 3 turns</li>
+          <li><strong>Simple STRIX: Thicket of 0</strong> – Check only the current round (the remaining turns after the current player's move)</li>
+          <li><strong>Standard STRIX: Thicket of 1</strong> – Check the current round plus one more complete round ahead (up to 5 moves ahead with 3 players)</li>
+          <li><strong>Advanced STRIX: Thicket of 2</strong> – Check the current round plus two more complete rounds ahead (up to 8 moves ahead with 3 players)</li>
         </ul>
+
+        <p><strong>Example:</strong> With 3 active players and Brown to move, a Thicket of 1 means checking: Yellow's turn (1 move ahead), Green's turn (2 moves ahead), Brown's next turn (3 moves ahead), Yellow's next turn (4 moves ahead), and Green's next turn (5 moves ahead).</p>
+
+        <p><strong>Note:</strong> If a player has been eliminated, rounds contain fewer turns, so the number of moves checked is reduced accordingly.</p>
 
         <h5>Rule 17 (ii): Move Confirmation</h5>
         <p>After making a move, the active player shall invite the player on their left (the preceding player in turn order) to examine the new board position.</p>
