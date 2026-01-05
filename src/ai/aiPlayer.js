@@ -55,7 +55,7 @@ export class AIPlayer {
     
     // Check opening book first (for both strategies)
     const moveNumber = this.getCurrentMoveNumber();
-    if (moveNumber <= 6) { // Use opening book for first few moves
+    if (false && moveNumber <= 6) { // TEMPORARILY DISABLED - Use opening book for first few moves
       this.logStrategy(`📚 Checking opening book for move ${moveNumber}...`);
       const openingMove = this.openingBook.getOpeningMove(this.playerColor, this.gameState, moveNumber);
       
