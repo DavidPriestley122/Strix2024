@@ -238,8 +238,8 @@ export class MinimaxAI {
     // Sort moves by evaluation score and show top candidates
     const sortedMoves = evaluatedMoves.sort((a, b) => b.evaluation - a.evaluation);
 
-    console.log(`\n📊 ${this.playerColor.toUpperCase()} - Top 10 moves evaluated:`);
-    sortedMoves.slice(0, 10).forEach((move, index) => {
+    console.log(`\n📊 ${this.playerColor.toUpperCase()} - All ${sortedMoves.length} moves evaluated (showing all):`);
+    sortedMoves.forEach((move, index) => {
       const nextPlayer = this.getNextPlayer(this.playerColor);
       const newPositions = this.simulateMove(
         this.gameState.piecePositions,
@@ -247,8 +247,10 @@ export class MinimaxAI {
         move.targetSquare
       );
       const givesNestSight = this.hasNestSight(nextPlayer, newPositions);
-      const nestSightMarker = givesNestSight ? ' 🚫' : '';
-      console.log(`  ${index + 1}. ${move.piece.name} → ${move.targetSquare}: ${move.evaluation.toFixed(0)}${nestSightMarker}`);
+      const iHaveNestSight = this.hasNestSight(this.playerColor, newPositions);
+      const nestSightMarker = givesNestSight ? ' 🚫ThirdBird' : '';
+      const myNestSightMarker = iHaveNestSight ? ' ⭐NESTSIGHT' : '';
+      console.log(`  ${index + 1}. ${move.piece.name} → ${move.targetSquare}: ${move.evaluation.toFixed(0)}${myNestSightMarker}${nestSightMarker}`);
     });
 
     // Select best move
