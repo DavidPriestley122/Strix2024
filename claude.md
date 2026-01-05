@@ -927,3 +927,293 @@ if (oppPiece.type === 'Kite') {
 - d2b486c: Initial attempt (wrong - added cross-face filter in wrong function)
 - f96e6ad: Rebuild bundle.js
 - f228619: Actual fix - special-case Kites in canPieceMoveToThreaten
+
+---
+
+# Third Bird Rule Implementation - Simple STRIX (Jan 4-5, 2026)
+
+## Overview
+
+The Third Bird Rule is a fundamental rule in STRIX that prevents "kingmaking" - where one player inadvertently helps another player win while leaving the third player helpless to prevent it. This implementation adds the first version of automated Third Bird Rule checking to the AI system.
+
+## What is the Third Bird Rule?
+
+**From the official rules (Rule 17):**
+
+A "Third Bird Foul" occurs when a player makes a move that unintentionally allows another player to win within a pre-determined number of turns (the "Thicket"), while the third player ("the Third Bird") is left helpless to prevent the impending victory, despite the existence of an alternative move that would not have led to this outcome.
+
+### Key Terminology
+
+- **Move**: Any piece moving or capturing
+- **Turn**: One player's move within a round
+- **Round**: A complete set of turns by all active players, starting from the current player
+- **Thicket**: The depth of lookahead for detecting Third Bird Fouls
+
+### Thicket Depth Levels
+
+The Thicket depth determines how far ahead the rule checks for potential fouls:
+
+1. **Simple STRIX: Thicket of 0**
+   - Check only the current round (remaining turns after current player's move)
+   - With 3 active players: checks up to 2 moves ahead (next player, then third player)
+   - Easiest to learn and play
+   - 3 takebacks per player
+
+2. **Standard STRIX: Thicket of 1** (Not yet implemented)
+   - Check current round plus one more complete round ahead
+   - With 3 active players: checks up to 5 moves ahead
+   - Recommended for normal play
+   - 2 takebacks per player
+
+3. **Advanced STRIX: Thicket of 2** (Not yet implemented)
+   - Check current round plus two more complete rounds ahead
+   - With 3 active players: checks up to 8 moves ahead
+   - Most strategic depth
+   - 1 takeback per player
+
+## What Was Implemented
+
+### Version: Simple STRIX (Thicket 0, Type 1 Only)
+
+**Implementation Date:** January 4-5, 2026
+
+**Scope:** AI self-checking for Third Bird Rule violations before making moves (preventive approach)
+
+### Type 1: Active Kingmaking
+
+**Definition:** A move that gives "nest sight" to the next player who didn't have it before.
+
+**Nest Sight:** A player has nest sight if their Owl can reach any nest square (b7-7, y7-7, g7-7) on their next turn.
+
+**Example:**
+```
+Before Brown's move: Yellow's Owl cannot reach the nest
+Brown moves: bK-y25 (creating a ghosting pivot for Yellow)
+After Brown's move: Yellow's Owl can ghost into the nest
+Result: Type 1 Third Bird Foul! (Active kingmaking)
+```
+
+### Technical Implementation
+
+**File:** `src/ai/aiStrategies.js`
+
+**Key Functions Added:**
+
+1. **`hasNestSight(playerColor, positions)`** (line 43)
+   - Checks if a player's Owl can reach a nest square in one move
+   - Returns boolean
+   - Foundation for all Thicket 0 checking
+
+2. **`isType1ThirdBirdViolation(move, nextPlayer)`** (line 62)
+   - Detects active kingmaking violations
+   - Compares nest sight before and after the move
+   - Returns true if move gives nest sight to next player who didn't have it
+
+3. **Move Filtering in `selectBestMove()`** (line 174-186)
+   - Separates legal moves from violating moves
+   - Logs violations with 🚫 marker
+   - Fallback: If all moves violate, choose least bad option
+   - Only evaluates legal moves (or all moves if no legal ones exist)
+
+### AI Behavior
+
+**Normal Case:**
+```javascript
+// AI considers all possible moves
+// Filters out moves that would give nest sight to next player
+// Evaluates only legal (non-violating) moves
+// Selects best legal move
+```
+
+**Edge Case (All moves violate):**
+```javascript
+// All possible moves give nest sight to next player
+// AI logs warning: "ALL moves violate Third Bird Rule!"
+// Chooses least bad option (best evaluation among violating moves)
+// This represents an unavoidable foul situation
+```
+
+### Example Console Output
+
+```
+🚫 THIRD BIRD VIOLATION: BROWN bK→y25 would give nest sight to yellow
+🚫 THIRD BIRD VIOLATION: BROWN bR→y67 would give nest sight to yellow
+✅ BROWN selects legal move: bO-b72 (evaluation: 45)
+```
+
+Or in edge case:
+```
+⚠️ BROWN: ALL moves violate Third Bird Rule! Choosing least bad option...
+```
+
+## What's NOT Implemented Yet
+
+### Type 2: Passive Kingmaking (Future)
+**Definition:** Failing to block when you're the only player who can prevent the next player from winning.
+
+**Example:**
+```
+Situation: Yellow's Owl has nest sight
+Brown can block by moving bR-y73
+Green cannot block (no pieces in position)
+If Brown doesn't block: Type 2 Third Bird Foul
+```
+
+### Thicket 1 and Thicket 2 (Future)
+- Multi-round lookahead (5-8 moves ahead)
+- Requires recursive checking through opponent responses
+- Much more computationally expensive
+- Would need transposition tables for performance
+
+### User-Facing Features (Future)
+- Real-time Third Bird Foul detection during human play
+- Visual indicators when moves would violate the rule
+- Takeback UI for resolving fouls
+- Move confirmation system (Rule 17(ii))
+
+## Testing and Validation
+
+### Test Scenarios Needed
+
+1. **Basic Type 1 Detection:**
+   - AI avoids creating ghosting pivots that give opponent nest sight
+   - AI avoids moving blocking pieces that currently prevent opponent from winning
+
+2. **Edge Cases:**
+   - All moves violate (unavoidable foul)
+   - Owl already captured (no need to check for that player)
+   - Only one opponent remaining (different turn order)
+
+3. **Game Theory Validation:**
+   - Does AI play more defensively with this rule?
+   - Does it prevent obvious blunders?
+   - Does it make games more balanced?
+
+## Architecture Notes
+
+### Why Max^n Was Required First
+
+The Third Bird Rule implementation depends on the Max^n refactoring (commit d8c9f6d) because:
+
+1. **Three-way competition model:** Max^n understands each player maximizes their own score
+2. **Opponent analysis:** Can evaluate "what happens if next player moves"
+3. **Realistic simulation:** Models each player's best response independently
+
+The previous Paranoid Minimax couldn't properly check Third Bird violations because it treated all opponents as allied against the AI.
+
+### Design Decision: Preventive vs Reactive
+
+**Chosen Approach: Preventive (AI self-checks before moving)**
+
+**Pros:**
+- Simpler implementation (no UI changes needed)
+- AIs automatically follow the rule
+- Good foundation for game theory research
+
+**Cons:**
+- Doesn't help human players detect fouls
+- Can't enforce rule in human vs human games
+- Requires separate UI implementation for full rule support
+
+**Future Direction:** Add reactive checking for human moves with visual feedback and takeback UI.
+
+## Performance Impact
+
+**Negligible for Thicket 0:**
+- Each move requires one additional position check (hasNestSight)
+- Already doing position simulation for evaluation
+- No noticeable slowdown
+
+**Potential Impact for Thicket 1-2:**
+- Would require recursive lookahead (exponential growth)
+- Needs optimization (transposition tables, alpha-beta pruning)
+- Consider moving to backend for deeper search
+
+## Integration with AI Research Goals
+
+This implementation supports the research questions outlined in the AI Refactoring notes:
+
+1. **Game Balance:** Does Third Bird Rule prevent forced wins?
+2. **Opening Theory:** Which openings avoid early fouls?
+3. **Tourney Dynamics:** Does the rule help weaker players survive?
+
+The AI can now be tested with and without Third Bird Rule checking to compare outcomes.
+
+## Related Commits
+
+### Primary Implementation
+- **25e4566** (Jan 4, 2026): "Clarify Third Bird Rule terminology (Thicket depth)"
+  - Updated src/sidebar/content.js with precise terminology
+  - Defined move/turn/round distinction
+  - Documented all three Thicket levels
+  - Added concrete examples with move counts
+
+- **567ed8b** (Jan 5, 2026): "Implement Third Bird Rule - Thicket 0, Type 1 checking"
+  - Added hasNestSight() helper function
+  - Added isType1ThirdBirdViolation() detection
+  - Modified selectBestMove() to filter violating moves
+  - Added logging for violations (🚫 marker)
+  - Fallback handling for unavoidable fouls
+
+### Background/Foundation
+- **d8c9f6d** (Dec 25, 2025): "Refactor AI from paranoid minimax to Max^n"
+  - Required foundation for Third Bird checking
+  - Enabled proper 3-player move simulation
+
+## Files Modified
+
+1. **src/sidebar/content.js** (Terminology commit)
+   - Updated Rule 17(i) with precise Thicket terminology
+   - Lines 430-443: Thicket depth definitions and examples
+
+2. **src/ai/aiStrategies.js** (Implementation commit)
+   - Line 42-58: `hasNestSight()` helper
+   - Line 60-85: `isType1ThirdBirdViolation()` checker
+   - Line 174-194: Move filtering in `selectBestMove()`
+
+3. **dist/bundle.js** (Both commits)
+   - Rebuilt to include changes
+
+## Next Steps
+
+### Immediate (Testing Phase)
+1. Test AI vs AI games with logging enabled
+2. Verify AIs avoid obvious kingmaking moves
+3. Document any edge cases discovered
+4. Validate that unavoidable foul detection works
+
+### Short-term (Type 2 Implementation)
+1. Implement Type 2: Passive Kingmaking detection
+2. Add "can this player block?" logic
+3. Test with positions where blocking is required
+
+### Medium-term (Human Player Support)
+1. Add Third Bird checking to human move validation
+2. Create UI for displaying violations
+3. Implement takeback system
+4. Add move confirmation workflow
+
+### Long-term (Advanced Thickets)
+1. Implement Thicket 1 (5-move lookahead)
+2. Implement Thicket 2 (8-move lookahead)
+3. Optimize with transposition tables
+4. Consider backend implementation for performance
+
+## Current Status
+
+**Working:**
+- ✅ AI detects when moves would give nest sight to next player
+- ✅ AI filters out Type 1 violating moves
+- ✅ AI handles unavoidable foul situations gracefully
+- ✅ Comprehensive logging for debugging
+
+**Testing Needed:**
+- ⏳ AI vs AI games to validate behavior
+- ⏳ Edge cases (all moves violate, eliminated players)
+- ⏳ Integration with Max^n evaluation
+
+**Not Yet Implemented:**
+- ❌ Type 2 violations (passive kingmaking)
+- ❌ Thicket 1 and 2 (deeper lookahead)
+- ❌ Human player foul detection
+- ❌ UI for takebacks and move confirmation
