@@ -235,12 +235,26 @@ export class MinimaxAI {
       }
     }
 
-    // Select best move
-    const bestMove = evaluatedMoves.reduce((best, current) =>
-      current.evaluation > best.evaluation ? current : best
-    );
+    // Sort moves by evaluation score and show top candidates
+    const sortedMoves = evaluatedMoves.sort((a, b) => b.evaluation - a.evaluation);
 
-    console.log(`🎯 ${this.playerColor.toUpperCase()} plays: ${bestMove.piece.name} → ${bestMove.targetSquare} (score: ${bestMove.evaluation.toFixed(0)})`);
+    console.log(`\n📊 ${this.playerColor.toUpperCase()} - Top 10 moves evaluated:`);
+    sortedMoves.slice(0, 10).forEach((move, index) => {
+      const nextPlayer = this.getNextPlayer(this.playerColor);
+      const newPositions = this.simulateMove(
+        this.gameState.piecePositions,
+        move.piece.name,
+        move.targetSquare
+      );
+      const givesNestSight = this.hasNestSight(nextPlayer, newPositions);
+      const nestSightMarker = givesNestSight ? ' 🚫' : '';
+      console.log(`  ${index + 1}. ${move.piece.name} → ${move.targetSquare}: ${move.evaluation.toFixed(0)}${nestSightMarker}`);
+    });
+
+    // Select best move
+    const bestMove = sortedMoves[0];
+
+    console.log(`🎯 ${this.playerColor.toUpperCase()} plays: ${bestMove.piece.name} → ${bestMove.targetSquare} (score: ${bestMove.evaluation.toFixed(0)})\n`);
     return bestMove;
   }
 
