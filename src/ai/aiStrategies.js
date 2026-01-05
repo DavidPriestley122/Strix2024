@@ -523,21 +523,33 @@ export class MinimaxAI {
 
     // PART 5: Immediate win threat detection
     // If a player can win next move, that's GREAT for them, BAD for others
-    const shadowedSquares = this.calculateShadowedSquares(tempGameState.piecePositions);
 
     for (const color of this.playerOrder) {
       const owl = this.getPlayerPieces(color, tempGameState).find(p => p.type === 'Owl');
       if (!owl || owl.position === 'captured') continue;
 
+      // Calculate shadows EXCLUDING the owl being checked (avoid self-shadowing!)
+      const shadowedSquares = this.calculateShadowedSquares(tempGameState.piecePositions, owl.name);
+
       const owlMoves = this.getPossibleMoves(owl, tempGameState);
+
+      // DEBUG: Log nest sight checking
+      const hasNestMove = owlMoves.some(m => nestSquares.includes(m));
+      if (hasNestMove) {
+        console.log(`🎯 NEST SIGHT CHECK: ${color} Owl at ${owl.position}`);
+        console.log(`   Owl moves: ${owlMoves.join(', ')}`);
+      }
 
       for (const move of owlMoves) {
         if (nestSquares.includes(move)) {
           const nestFace = move.charAt(0);
           const isShadowed = shadowedSquares[nestFace].includes(move);
 
+          console.log(`   ✓ Can reach nest ${move}: shadowed=${isShadowed}`);
+
           if (!isShadowed) {
             // This player can win! Great for them, terrible for others
+            console.log(`   🏆 GIVING +100000 to ${color}!`);
             scores[color] += 100000; // Massive bonus for potential win
 
             // Penalize OTHER players (they would lose)
@@ -547,6 +559,8 @@ export class MinimaxAI {
               }
             }
             break;
+          } else {
+            console.log(`   ❌ Nest ${move} is shadowed, no bonus`);
           }
         }
       }
