@@ -38,6 +38,52 @@ export class MinimaxAI {
     return nestSquares.includes(move.targetSquare);
   }
 
+  // Check if a player has "nest sight" - their Owl can reach a nest square on next turn
+  // This is the foundation for Third Bird Rule checking (Thicket 0)
+  hasNestSight(playerColor, positions) {
+    // Get the player's Owl
+    const owlPiece = this.getPlayerPieces(playerColor, { piecePositions: positions })
+      .find(p => p.type === 'Owl');
+
+    if (!owlPiece || owlPiece.position === 'captured') {
+      return false;
+    }
+
+    // Get all possible moves for the Owl
+    const owlMoves = this.getPossibleMoves(owlPiece, { piecePositions: positions });
+
+    // Check if any move reaches a nest square
+    const nestSquares = ['b7-7', 'y7-7', 'g7-7'];
+    return owlMoves.some(move => nestSquares.includes(move));
+  }
+
+  // Check if a move violates the Third Bird Rule (Type 1, Thicket 0)
+  // Type 1: Active Kingmaking - move gives nest sight to next player who didn't have it
+  isType1ThirdBirdViolation(move, nextPlayer) {
+    const currentPositions = this.gameState.piecePositions;
+
+    // Check if next player has nest sight BEFORE this move
+    const hadNestSightBefore = this.hasNestSight(nextPlayer, currentPositions);
+
+    // Simulate the move to get new positions
+    const newPositions = this.simulateMove(
+      currentPositions,
+      move.piece.name,
+      move.targetSquare
+    );
+
+    // Check if next player has nest sight AFTER this move
+    const hasNestSightAfter = this.hasNestSight(nextPlayer, newPositions);
+
+    // Type 1 violation: Next player gains nest sight from this move
+    // (Active kingmaking - giving them a winning opportunity they didn't have)
+    if (!hadNestSightBefore && hasNestSightAfter) {
+      return true;
+    }
+
+    return false;
+  }
+
   // Calculate shadowed squares based on piece positions
   // Based on gameStateManager.updateShadowedRows logic
   calculateShadowedSquares(piecePositions, excludedPiece = null) {
@@ -125,10 +171,31 @@ export class MinimaxAI {
       }
     }
 
-    const evaluatedMoves = [];
+    // THIRD BIRD RULE (Thicket 0, Type 1): Filter out moves that give nest sight to next player
     const nextPlayer = this.getNextPlayer(this.playerColor);
+    const legalMoves = [];
+    const violatingMoves = [];
 
     for (const move of moves) {
+      if (this.isType1ThirdBirdViolation(move, nextPlayer)) {
+        violatingMoves.push(move);
+        console.log(`🚫 THIRD BIRD VIOLATION: ${this.playerColor.toUpperCase()} ${move.piece.name}→${move.targetSquare} would give nest sight to ${nextPlayer}`);
+      } else {
+        legalMoves.push(move);
+      }
+    }
+
+    // If all moves violate Third Bird, we must choose the least bad option
+    // (This shouldn't happen in well-played games, but we need a fallback)
+    const movesToEvaluate = legalMoves.length > 0 ? legalMoves : moves;
+
+    if (legalMoves.length === 0 && violatingMoves.length > 0) {
+      console.log(`⚠️ ${this.playerColor.toUpperCase()}: ALL moves violate Third Bird Rule! Choosing least bad option...`);
+    }
+
+    const evaluatedMoves = [];
+
+    for (const move of movesToEvaluate) {
       // Simulate this move
       const newPositions = this.simulateMove(
         this.gameState.piecePositions,
