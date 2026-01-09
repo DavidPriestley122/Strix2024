@@ -38,6 +38,73 @@ export class MinimaxAI {
     return nestSquares.includes(move.targetSquare);
   }
 
+  // Detect if we're in the opening phase of the game
+  isOpeningPhase(piecePositions) {
+    // Opening phase = first few moves when pieces haven't moved much
+    // Count how many pieces are still close to starting positions
+    let piecesInStartingArea = 0;
+    let totalActivePieces = 0;
+
+    const startingRows = { b: 1, y: 1, g: 1 }; // Starting rows for each color
+
+    for (const [pieceName, position] of Object.entries(piecePositions)) {
+      if (position === 'captured') continue;
+      totalActivePieces++;
+
+      const face = position[0];
+      const coords = position.substring(1).split("-");
+      const row = parseInt(coords[0]);
+      const col = parseInt(coords[1]);
+
+      // Check if piece is in starting area (rows 1-3)
+      if (row <= 3) {
+        piecesInStartingArea++;
+      }
+    }
+
+    // Opening phase if more than 70% of pieces are still in starting area
+    return totalActivePieces > 0 && (piecesInStartingArea / totalActivePieces) > 0.7;
+  }
+
+  // Check if a piece has friendly support nearby (for piece coordination)
+  hasFriendlySupport(pieceName, position, piecePositions) {
+    if (!position || position === 'captured') return false;
+
+    const pieceColor = pieceName.startsWith('brown') ? 'brown' :
+                      pieceName.startsWith('yellow') ? 'yellow' : 'green';
+
+    // Get adjacent and nearby squares (within 2 squares)
+    const face = position[0];
+    const coords = position.substring(1).split("-");
+    const row = parseInt(coords[0]);
+    const col = parseInt(coords[1]);
+
+    // Check all squares within Manhattan distance of 2
+    for (let dr = -2; dr <= 2; dr++) {
+      for (let dc = -2; dc <= 2; dc++) {
+        if (dr === 0 && dc === 0) continue;
+        if (Math.abs(dr) + Math.abs(dc) > 2) continue; // Manhattan distance limit
+
+        const checkRow = row + dr;
+        const checkCol = col + dc;
+        if (checkRow < 1 || checkRow > 7 || checkCol < 1 || checkCol > 7) continue;
+
+        const checkSquare = `${face}${checkRow}-${checkCol}`;
+
+        // Look for friendly pieces at this square
+        for (const [otherPieceName, otherPosition] of Object.entries(piecePositions)) {
+          if (otherPosition === checkSquare &&
+              otherPieceName.startsWith(pieceColor) &&
+              otherPieceName !== pieceName) {
+            return true; // Found a friendly piece nearby
+          }
+        }
+      }
+    }
+
+    return false; // No friendly support nearby
+  }
+
   // Check if a player has "nest sight" - their Owl can reach a nest square on next turn
   // This is the foundation for Third Bird Rule checking (Thicket 0)
   hasNestSight(playerColor, positions) {
@@ -157,6 +224,44 @@ export class MinimaxAI {
   // Main decision function - now with recursive minimax lookahead
   selectBestMove() {
     console.log(`🚀🚀🚀 RAVEN-BUGFIX-DEPLOYED-VERSION-20251230 🚀🚀🚀`);
+
+    // PHASE 2: Check learned opening book FIRST (before generating all moves)
+    if (this.memory && this.gameState.moveHistory) {
+      const moveHistory = this.gameState.moveHistory || [];
+
+      // Extract actual moves from history (filter out metadata like "// Brown wins")
+      const actualMoves = moveHistory.filter(m => m && !m.startsWith('//') && !m.startsWith('['));
+
+      const learnedMove = this.memory.getBestOpeningMove(actualMoves);
+
+      if (learnedMove) {
+        // Parse learned move format: "yO-y72" or "bR-g75"
+        const match = learnedMove.match(/^([bygBYG][ORK])-([bygBYG]\d-\d)$/);
+        if (match) {
+          const pieceName = match[1];
+          const targetSquare = match[2];
+
+          // Verify this piece still exists and move is valid
+          const piecePosition = this.gameState.piecePositions[pieceName];
+          if (piecePosition && piecePosition !== 'captured') {
+            const piece = {
+              name: pieceName,
+              position: piecePosition,
+              type: this.getPieceType(pieceName)
+            };
+
+            // Validate the move is actually legal
+            if (this.isValidMove(pieceName, targetSquare, this.gameState)) {
+              console.log(`📚 USING LEARNED OPENING: ${pieceName} → ${targetSquare}`);
+              return { piece, targetSquare };
+            } else {
+              console.log(`⚠️ Learned move ${learnedMove} is no longer valid, falling back to evaluation`);
+            }
+          }
+        }
+      }
+    }
+
     const moves = this.generateAllMoves(this.playerColor);
 
     if (moves.length === 0) {

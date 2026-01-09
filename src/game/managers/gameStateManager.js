@@ -285,12 +285,15 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
         this.moveHistory.push(winningMessage);
         this.gameOver = true;
         console.log("Game over detected in proceedToNextTurn:", winningMessage);
-        
+
         // Finalize export manager
         if (this.gameExportManager && typeof this.gameExportManager.finalizeGame === 'function') {
           this.gameExportManager.finalizeGame();
         }
-        
+
+        // Record game result for AI learning
+        this.recordGameResultForAI(winningMessage);
+
         this.updateGameOverDisplay(winningMessage);
         return;
       }
@@ -534,6 +537,48 @@ export function createGameStateManager(guiElements, gameResetFunctions) {
 
     setAI: function (aiModule) {
       this.aiModule = aiModule;
+    },
+
+    // Record game result for AI learning
+    recordGameResultForAI: function(winningMessage) {
+      if (!this.aiModule || !this.aiModule.aiPlayers) return;
+
+      // Parse winning message: "Brown wins", "Yellow wins", "Green wins"
+      const winner = winningMessage.toLowerCase().split(' ')[0]; // "brown", "yellow", "green"
+
+      // Extract move history (filter out metadata and winningMessage)
+      const actualMoves = this.moveHistory
+        .filter(m => typeof m === 'string' && !m.startsWith('//') && !m.startsWith('[') && !m.includes('wins'))
+        .map(m => {
+          // Extract move notation (e.g., "bR-g75" from various formats)
+          const match = m.match(/([bygBYG][ORK])-([bygBYG]\d-\d)/);
+          return match ? `${match[1]}-${match[2]}` : null;
+        })
+        .filter(m => m !== null);
+
+      console.log(`🎓 RECORDING GAME FOR AI LEARNING: Winner=${winner}, Moves=${actualMoves.length}`);
+
+      // Record result for each AI player
+      for (const [color, aiPlayer] of Object.entries(this.aiModule.aiPlayers)) {
+        if (!aiPlayer || !aiPlayer.minimaxAI || !aiPlayer.minimaxAI.memory) continue;
+
+        const result = color === winner ? 'win' : 'loss';
+
+        const gameData = {
+          result: result,
+          moves: actualMoves,
+          finalPosition: this.piecePositions
+        };
+
+        // Record asynchronously (don't wait)
+        aiPlayer.minimaxAI.memory.recordGameResult(gameData)
+          .then(() => {
+            console.log(`🎓 ${color} AI learned from game: ${result}`);
+          })
+          .catch(err => {
+            console.error(`Error recording game for ${color} AI:`, err);
+          });
+      }
     },
 
     checkWinningConditions: function (piece, destinationSquare) {
