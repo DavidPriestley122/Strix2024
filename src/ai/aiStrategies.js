@@ -230,7 +230,7 @@ export class MinimaxAI {
       const moveHistory = this.gameState.moveHistory || [];
 
       // Extract actual moves from history (filter out metadata like "// Brown wins")
-      const actualMoves = moveHistory.filter(m => m && !m.startsWith('//') && !m.startsWith('['));
+      const actualMoves = moveHistory.filter(m => m && typeof m === 'string' && !m.startsWith('//') && !m.startsWith('['));
 
       const learnedMove = this.memory.getBestOpeningMove(actualMoves);
 
