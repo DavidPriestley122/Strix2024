@@ -588,11 +588,16 @@ export class MinimaxAI {
     // PART 4: Capture threat evaluation (EN PRISE DETECTION)
     // Being under threat hurts that player's score
     const enPrisePenalties = { brown: 0, yellow: 0, green: 0 };
+    console.log(`🔍 THREAT DETECTION: Checking all pieces for threats...`);
     for (const color of this.playerOrder) {
       const playerPieces = this.getPlayerPieces(color, tempGameState);
 
       for (const piece of playerPieces) {
         if (piece.position === 'captured') continue;
+
+        if (piece.type === 'Owl') {
+          console.log(`   Checking ${color} ${piece.type} at ${piece.position}`);
+        }
 
         // Check if any opponent can capture this piece
         for (const opponentColor of this.playerOrder) {
