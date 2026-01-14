@@ -162,6 +162,12 @@ input[type="radio"]:hover {
   border-radius: var(--button-border-radius);
   border: 2px solid var(--owl-eye);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+  box-sizing: border-box;
+}
+
+/* Ensure all children respect boundaries */
+.move-panel * {
+  box-sizing: border-box;
 }
 
 .move-panel h3 {
