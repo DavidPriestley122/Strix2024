@@ -1,6 +1,46 @@
 // GAME ANALYSIS MANAGER MODULE
 // Handles saving interesting games for pattern analysis and AI training
 
+// Backend API configuration
+const API_URL = window.STRIX_API_URL || 'http://localhost:3001';
+
+// API Helper Functions
+async function fetchLibraryFromBackend() {
+  try {
+    const response = await fetch(`${API_URL}/analysis-library`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.warn('⚠️ Backend unavailable, using localStorage fallback:', error);
+    // Fallback to localStorage
+    const stored = localStorage.getItem('strix-analysis-library');
+    return stored ? JSON.parse(stored) : null;
+  }
+}
+
+async function saveLibraryToBackend(library) {
+  try {
+    const response = await fetch(`${API_URL}/analysis-library`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(library)
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    // Also save to localStorage as backup
+    localStorage.setItem('strix-analysis-library', JSON.stringify(library));
+    return await response.json();
+  } catch (error) {
+    console.warn('⚠️ Backend save failed, using localStorage fallback:', error);
+    // Fallback to localStorage
+    localStorage.setItem('strix-analysis-library', JSON.stringify(library));
+    return { success: true, fallback: true };
+  }
+}
+
 export function createGameAnalysisManager(gameState) {
   const STORAGE_KEY = 'strix-analysis-library';
 
@@ -218,12 +258,12 @@ export function createGameAnalysisManager(gameState) {
       return captured;
     },
 
-    loadLibraryFromStorage: function() {
+    loadLibraryFromStorage: async function() {
       try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = await fetchLibraryFromBackend();
         if (stored) {
-          this.library = JSON.parse(stored);
-          console.log(`📚 Loaded ${this.library.games.length} games from analysis library`);
+          this.library = stored;
+          console.log(`📚 Loaded ${this.library.games.length} games from analysis library (backend)`);
         } else {
           // Initialize empty library with structure
           this.library = {
@@ -252,13 +292,17 @@ export function createGameAnalysisManager(gameState) {
       }
     },
 
-    saveLibraryToStorage: function() {
+    saveLibraryToStorage: async function() {
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.library));
-        console.log(`💾 Saved library with ${this.library.games.length} games to localStorage`);
+        const result = await saveLibraryToBackend(this.library);
+        if (result.fallback) {
+          console.log(`💾 Saved library with ${this.library.games.length} games (localStorage fallback)`);
+        } else {
+          console.log(`💾 Saved library with ${this.library.games.length} games to backend`);
+        }
       } catch (error) {
         console.error('❌ Failed to save library to storage:', error);
-        gameState.displayInfoMessage('Failed to save to local storage');
+        gameState.displayInfoMessage('Failed to save library');
       }
     },
 
