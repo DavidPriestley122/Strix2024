@@ -594,6 +594,11 @@ export class MinimaxAI {
       for (const piece of playerPieces) {
         if (piece.position === 'captured') continue;
 
+        // DEBUG: Log when checking Owl threats
+        if (piece.type === 'Owl') {
+          console.log(`🦉 Checking threats to ${color} Owl at ${piece.position}`);
+        }
+
         // Check if any opponent can capture this piece
         for (const opponentColor of this.playerOrder) {
           if (opponentColor === color) continue;
@@ -609,10 +614,14 @@ export class MinimaxAI {
               const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
               enPrisePenalties[color] += threatPenalty;
               scores[color] -= threatPenalty;
+              console.log(`   ⚠️ IMMEDIATE THREAT: ${oppPiece.name} at ${oppPiece.position} can capture ${piece.name} (-${threatPenalty})`);
             }
 
             // CHECK 2: EN PRISE - Can opponent MOVE to threaten this piece?
             // This is critical for depth-1 AI to avoid blunders like moving into capture range
+            if (piece.type === 'Owl' && oppPiece.type === 'Raven') {
+              console.log(`   🔎 Checking if ${oppPiece.name} at ${oppPiece.position} can mob ${piece.name}...`);
+            }
             const movingThreat = this.canPieceMoveToThreaten(oppPiece, piece, tempGameState);
             if (movingThreat) {
               // Significant penalty for en prise positions (piece can be captured next turn)
@@ -620,6 +629,7 @@ export class MinimaxAI {
               const enPrisePenalty = this.getCaptureValue(piece.name) * 0.6;
               enPrisePenalties[color] += enPrisePenalty;
               scores[color] -= enPrisePenalty;
+              console.log(`   ⚠️ EN PRISE: ${oppPiece.name} can move to threaten ${piece.name} (-${enPrisePenalty})`);
             }
           }
         }
@@ -1183,15 +1193,22 @@ export class MinimaxAI {
       // Filter to cross-face moves only (mobbing requires cross-face)
       const crossFaceMoves = ravenMoves.filter(move => move[0] !== attackerFace);
 
+      // DEBUG: Log Raven mobbing threat checking
+      if (crossFaceMoves.length > 0) {
+        console.log(`🔍 Checking Raven mob threat: ${attackerPiece} at ${attackerPosition} → victim at ${victimSquare}`);
+        console.log(`   Cross-face moves (${crossFaceMoves.length}): ${crossFaceMoves.slice(0, 5).join(', ')}...`);
+      }
+
       // For each cross-face move, check if there's a passive Raven that creates valid mob
       for (const ravenMove of crossFaceMoves) {
-        // Look for passive Ravens (any Raven that's not the attacker)
+        // Look for passive Ravens (any Raven that's not the attacker, INCLUDING OTHER TEAMS!)
         for (const [passiveName, passivePos] of Object.entries(piecePositions)) {
           if (!passiveName.endsWith('Raven')) continue;
           if (passiveName === attackerPiece || passivePos === 'captured') continue;
 
           // Check if active Raven at ravenMove + passive Raven + victim = valid mob
           if (isValidMobbingConfiguration(ravenMove, passivePos, victimSquare)) {
+            console.log(`   ✅ MOBBING THREAT FOUND: ${attackerPiece} → ${ravenMove} + passive ${passiveName} at ${passivePos} can mob victim at ${victimSquare}`);
             return true; // Raven can mob the victim from this position
           }
         }
