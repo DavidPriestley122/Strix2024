@@ -1172,28 +1172,32 @@ export class MinimaxAI {
       return canThreaten;
     }
     else if (pieceType === 'Raven') {
-      // Get all valid Raven moves including mobbing opportunities
-      const ravenMoves = getAllRavenMoves(attackerPosition, piecePositions, attackerPiece);
+      // Ravens capture via MOBBING: active Raven moves cross-face + passive Raven = sandwich
+      // Check if Raven can move to create a mobbing configuration with victim
 
-      // Raven check debug - disabled to reduce spam
-
-      // CRITICAL: Ravens capture via MOBBING only, not by moving to victim square
-      // Check if Raven can mob the victim from any of its possible moves
-      // Simplified: Check if any move creates a potential mobbing configuration
-      const attackerColor = attackerPiece.substring(0, attackerPiece.search(/[A-Z]/));
-      const victimFace = victimSquare[0];
       const attackerFace = attackerPosition[0];
 
-      // CRITICAL: Ravens only captured if mobbed from their possible MOBBING moves
-      // The getAllRavenMoves already includes mobbing destination squares
-      // So we just need to check if victimSquare can be mobbed from any of those moves
-      // However, Ravens don't capture pieces AT their destination - they mob pieces
-      // This whole section is fundamentally flawed - Ravens can't threaten by moving
-      // They can only threaten by BEING IN POSITION to mob, which getAllRavenMoves handles
+      // Get all possible Raven moves
+      const ravenMoves = getAllRavenMoves(attackerPosition, piecePositions, attackerPiece);
 
-      // For now, return false - Raven threats should be detected via actual mobbing logic
-      // in the move generation, not here
-      return false;
+      // Filter to cross-face moves only (mobbing requires cross-face)
+      const crossFaceMoves = ravenMoves.filter(move => move[0] !== attackerFace);
+
+      // For each cross-face move, check if there's a passive Raven that creates valid mob
+      for (const ravenMove of crossFaceMoves) {
+        // Look for passive Ravens (any Raven that's not the attacker)
+        for (const [passiveName, passivePos] of Object.entries(piecePositions)) {
+          if (!passiveName.endsWith('Raven')) continue;
+          if (passiveName === attackerPiece || passivePos === 'captured') continue;
+
+          // Check if active Raven at ravenMove + passive Raven + victim = valid mob
+          if (isValidMobbingConfiguration(ravenMove, passivePos, victimSquare)) {
+            return true; // Raven can mob the victim from this position
+          }
+        }
+      }
+
+      return false; // No mobbing configuration found
     }
 
     return false;
