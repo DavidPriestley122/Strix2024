@@ -88,6 +88,7 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`🚀 Strix Analysis Backend running on port ${PORT}`);
     console.log(`📁 Data directory: ${DATA_DIR}`);
+    console.log(`💾 Volume-backed persistent storage enabled`);
   });
 }
 
