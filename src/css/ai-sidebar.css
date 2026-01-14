@@ -268,6 +268,8 @@ input[type="radio"]:hover {
 /* Move Input Section */
 .move-input-section {
   margin-bottom: 15px;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .input-label {
@@ -282,6 +284,8 @@ input[type="radio"]:hover {
   display: flex;
   gap: 5px;
   margin-bottom: 8px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .move-input {
@@ -332,6 +336,8 @@ input[type="radio"]:hover {
 .button-row {
   display: flex;
   gap: 8px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .control-button.primary {
