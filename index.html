@@ -189,97 +189,92 @@
         </div>
 
         <div class="move-panel">
-          <h3>Move History & Input</h3>
-          
-          <div class="move-history-section">
-            <div class="move-history-header">
-              <span class="history-title">Game Moves</span>
-              <button id="clear-history-btn" class="small-button" title="Clear History">⊗</button>
-            </div>
+          <h3>Move History & Game Manager</h3>
+
+          <!-- Current Game - Always Visible -->
+          <div class="current-game-section">
+            <div class="section-label">Current Game</div>
             <div id="move-history-display" class="move-history-list">
-              <!-- Moves will be added dynamically -->
+              <!-- Moves added dynamically -->
             </div>
           </div>
 
-          <div class="move-input-section">
-            <label for="move-input" class="input-label">Enter Move:</label>
-            <div class="input-row">
-              <input 
-                type="text" 
-                id="move-input" 
-                class="move-input" 
-                placeholder="e.g., bO-b72"
+          <!-- Enter Move - Always Visible -->
+          <div class="enter-move-section">
+            <div class="input-row-compact">
+              <input
+                type="text"
+                id="move-input"
+                class="move-input-compact"
+                placeholder="Enter move (SGN): e.g. bO-b72"
                 autocomplete="off"
                 spellcheck="false"
               />
-              <button id="validate-move-btn" class="small-button" title="Validate move">✓</button>
+              <button id="execute-move-btn" class="btn-execute">Execute</button>
             </div>
-            <div class="button-row">
-              <button id="execute-move-btn" class="control-button primary">Execute</button>
-              <button id="clear-input-btn" class="control-button secondary">Clear</button>
-            </div>
+            <a href="#" class="sgn-help-link" title="Learn SGN notation">What is SGN?</a>
           </div>
 
-
-
+          <!-- Load & Replay - Collapsible -->
           <div class="collapsible-section">
-            <button class="section-header" data-section="export">
-              <span class="section-title">Export Game</span>
+            <button class="section-header collapsed" data-section="load-replay">
+              <span class="section-title">Load & Replay</span>
               <span class="section-arrow">▼</span>
             </button>
-            <div class="section-content" id="export-content">
-              <div class="export-controls">
-                <div class="export-buttons">
-                  <button id="export-sgn-btn" class="small-button" title="Export as SGN format">SGN</button>
-                  <button id="export-txt-btn" class="small-button" title="Export as text">TXT</button>
-                  <button id="export-json-btn" class="small-button" title="Export as JSON">JSON</button>
-                </div>
-                <div class="export-actions">
-                  <button id="copy-game-btn" class="control-button secondary" title="Copy game to clipboard">📋 Copy</button>
-                  <button id="save-game-btn" class="control-button secondary" title="Save game to file">💾 Save</button>
-                </div>
+            <div class="section-content collapsed" id="load-replay-content">
+              <div class="load-actions">
+                <input type="file" id="import-file-input" accept=".sgn,.txt,.json" style="display: none;">
+                <button id="import-file-btn" class="btn-secondary">📁 Load File</button>
+                <button id="import-clipboard-btn" class="btn-secondary">📋 Paste SGN</button>
+                <button id="analysis-library-btn" class="btn-secondary">📚 Browse Library</button>
               </div>
-            </div>
-          </div>
 
-          <div class="collapsible-section">
-            <button class="section-header" data-section="import">
-              <span class="section-title">Import & Replay</span>
-              <span class="section-arrow">▼</span>
-            </button>
-            <div class="section-content" id="import-content">
-              <div class="import-controls">
-                <div class="import-actions">
-                  <input type="file" id="import-file-input" accept=".sgn,.txt,.json" style="display: none;">
-                  <button id="import-file-btn" class="control-button secondary" title="Load game from file">📁 Load File</button>
-                  <button id="import-clipboard-btn" class="control-button secondary" title="Load game from clipboard">📋 From Clipboard</button>
+              <div id="replay-controls" class="replay-controls" style="display: none;">
+                <div class="replay-transport">
+                  <button id="replay-start-btn" class="btn-transport" title="Start">⏮</button>
+                  <button id="replay-prev-btn" class="btn-transport" title="Previous">◀</button>
+                  <button id="replay-next-btn" class="btn-transport" title="Next">▶</button>
+                  <button id="replay-end-btn" class="btn-transport" title="End">⏭</button>
+                  <button id="replay-stop-btn" class="btn-transport-stop" title="Stop & Reset">⏹</button>
                 </div>
-                <div class="replay-options">
-                  <label for="replay-speed" class="speed-label">Speed:</label>
-                  <select id="replay-speed" class="speed-select">
+                <div class="replay-info">
+                  <span id="replay-position">Position: 0/0</span>
+                  <select id="replay-speed" class="replay-speed-select">
+                    <option value="0">Step-by-step</option>
                     <option value="500">Fast (0.5s)</option>
                     <option value="1000" selected>Normal (1s)</option>
                     <option value="3000">Slow (3s)</option>
-                    <option value="0">Step by Step</option>
                   </select>
-                  <button id="next-move-btn" class="control-button" style="display: none; margin-top: 8px;">Next Move</button>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- ANALYSIS FEATURE - Consider access control for multiplayer version -->
+          <!-- Save & Export - Collapsible, Collapsed -->
           <div class="collapsible-section">
-            <button class="section-header" data-section="analysis">
-              <span class="section-title">📊 Game Analysis</span>
+            <button class="section-header collapsed" data-section="save-export">
+              <span class="section-title">Save & Export</span>
               <span class="section-arrow">▼</span>
             </button>
-            <div class="section-content" id="analysis-content">
-              <div class="analysis-controls">
-                <button id="save-to-analysis-btn" class="control-button primary" title="Save current game for pattern analysis">💾 Save to Analysis</button>
-                <button id="analysis-library-btn" class="control-button secondary" title="Browse saved games" style="margin-top: 8px;">📚 Analysis Library</button>
-                <button id="export-analysis-btn" class="control-button secondary" title="Download analysis library" style="margin-top: 8px;">📥 Export Library</button>
+            <div class="section-content collapsed" id="save-export-content">
+              <button id="save-to-analysis-btn" class="btn-primary-full">💾 Save to Library</button>
+              <div class="export-row">
+                <button id="copy-game-btn" class="btn-secondary">📋 Copy SGN</button>
+                <button id="save-game-btn" class="btn-secondary">🔗 Download</button>
               </div>
+            </div>
+          </div>
+
+          <!-- Game Analysis - Collapsible, Collapsed -->
+          <div class="collapsible-section">
+            <button class="section-header collapsed" data-section="analysis">
+              <span class="section-title">Game Analysis</span>
+              <span class="section-arrow">▼</span>
+            </button>
+            <div class="section-content collapsed" id="analysis-content">
+              <div class="analysis-note">Research tool for pattern analysis</div>
+              <button id="save-analysis-full-btn" class="btn-primary-full">💾 Save with Analysis Data</button>
+              <button id="export-analysis-btn" class="btn-secondary-full">📥 Export Library</button>
             </div>
           </div>
         </div>
