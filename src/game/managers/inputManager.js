@@ -31,21 +31,15 @@ export function createInputManager(gameState, resetFunctions) {
       // Get HTML elements
       const moveInput = document.getElementById('move-input');
       const executeBtn = document.getElementById('execute-move-btn');
-      const clearBtn = document.getElementById('clear-input-btn');
-      const validateBtn = document.getElementById('validate-move-btn');
       const capturedPiecesEl = document.getElementById('captured-pieces');
       const moveHistoryEl = document.getElementById('move-history-display');
-      
-      if (!moveInput || !executeBtn || !clearBtn || !validateBtn) {
+
+      if (!moveInput || !executeBtn) {
         console.warn('Move input elements not found in DOM');
         return;
       }
 
-      // Clear button handler
-      clearBtn.addEventListener('click', () => {
-        moveInput.value = '';
-        moveInput.classList.remove('valid', 'invalid');
-      });
+      // Note: clearBtn and validateBtn removed in redesign (input full width)
 
       // Real-time validation on input
       moveInput.addEventListener('input', () => {
@@ -98,21 +92,6 @@ export function createInputManager(gameState, resetFunctions) {
       });
 
       // Validate button handler
-      validateBtn.addEventListener('click', () => {
-        const input = moveInput.value.trim();
-        if (!input) {
-          gameState.displayInfoMessage('Please enter a move to validate');
-          return;
-        }
-
-        const parsedMove = moveNotation.parseMove(input);
-        if (parsedMove && parsedMove.valid) {
-          gameState.displayInfoMessage(`Valid: ${moveNotation.moveToNotation(parsedMove)}`);
-        } else {
-          gameState.displayInfoMessage('Invalid move notation');
-        }
-      });
-
       // Execute button handler
       executeBtn.addEventListener('click', () => {
         const input = moveInput.value.trim();

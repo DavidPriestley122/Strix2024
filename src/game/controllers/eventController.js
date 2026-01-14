@@ -119,9 +119,15 @@ export function createEventController(dependencies) {
         
         // Add import button listeners
         this.setupImportButtonListeners();
-        
+
         // Add collapsible section listeners
         this.setupCollapsibleSections();
+
+        // Add replay transport controls
+        this.setupReplayControls();
+
+        // Add SGN help link
+        this.setupSGNHelpLink();
       }, GAME_CONFIG.TIMERS.BUTTON_LISTENER_DELAY);
     },
 
@@ -320,6 +326,93 @@ export function createEventController(dependencies) {
       });
       
       console.log(`Set up ${sectionHeaders.length} collapsible sections`);
+    },
+
+    setupReplayControls() {
+      console.log("Setting up replay transport controls...");
+
+      const replayStart = document.getElementById('replay-start-btn');
+      const replayPrev = document.getElementById('replay-prev-btn');
+      const replayNext = document.getElementById('replay-next-btn');
+      const replayEnd = document.getElementById('replay-end-btn');
+      const replayStop = document.getElementById('replay-stop-btn');
+
+      if (replayStart) {
+        replayStart.addEventListener('click', () => {
+          console.log("Replay: Jump to start");
+          if (gameStateManager.gameState.executeMoveSequence) {
+            // Reset to position 0
+            gameStateManager.gameState.replayCurrentPosition = 0;
+            // TODO: Implement jump to start
+          }
+        });
+      }
+
+      if (replayPrev) {
+        replayPrev.addEventListener('click', () => {
+          console.log("Replay: Previous move");
+          // TODO: Step backward one move
+        });
+      }
+
+      if (replayNext) {
+        replayNext.addEventListener('click', () => {
+          console.log("Replay: Next move");
+          // Trigger next move in step-by-step mode
+          const nextMoveBtn = document.getElementById('next-move-btn');
+          if (nextMoveBtn && nextMoveBtn.style.display !== 'none') {
+            nextMoveBtn.click();
+          }
+        });
+      }
+
+      if (replayEnd) {
+        replayEnd.addEventListener('click', () => {
+          console.log("Replay: Jump to end");
+          // TODO: Jump to final position
+        });
+      }
+
+      if (replayStop) {
+        replayStop.addEventListener('click', () => {
+          console.log("Replay: Stop and reset to live game");
+          // Hide replay controls
+          const replayControls = document.getElementById('replay-controls');
+          if (replayControls) {
+            replayControls.style.display = 'none';
+          }
+          // Reset game to live state
+          // TODO: Implement proper stop/reset
+        });
+      }
+
+      console.log("Replay controls wired up");
+    },
+
+    setupSGNHelpLink() {
+      const sgnHelpLink = document.querySelector('.sgn-help-link');
+      if (sgnHelpLink) {
+        sgnHelpLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          console.log("SGN help requested - opening gameplay section");
+
+          // Open the "How to Play" section in the left sidebar
+          const gameplayCategoryBtn = document.querySelector('[data-category="gameplay"]');
+          if (gameplayCategoryBtn) {
+            gameplayCategoryBtn.click();
+
+            // Scroll to notation section after a brief delay
+            setTimeout(() => {
+              const notationSection = document.querySelector('.content-area');
+              if (notationSection) {
+                notationSection.scrollTop = 0;
+                // TODO: Add SGN documentation to gameplay section
+              }
+            }, 300);
+          }
+        });
+        console.log("SGN help link connected");
+      }
     },
 
     // CUBE CLICK HANDLERS
