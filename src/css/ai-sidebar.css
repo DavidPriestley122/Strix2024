@@ -269,7 +269,6 @@ input[type="radio"]:hover {
 .move-input-section {
   margin-bottom: 15px;
   max-width: 100%;
-  overflow: hidden;
 }
 
 .input-label {
@@ -290,6 +289,7 @@ input[type="radio"]:hover {
 
 .move-input {
   flex: 1;
+  min-width: 0;
   padding: 8px 12px;
   background: rgba(0, 0, 0, 0.6);
   border: 2px solid rgba(255, 255, 255, 0.2);
