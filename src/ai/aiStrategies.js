@@ -151,6 +151,75 @@ export class MinimaxAI {
     return false;
   }
 
+  // Check if a player can prevent an opponent from winning
+  // "Preventing" includes: positional blocking, capturing the Owl, removing ghosting pivots
+  canPlayerBlockNestSight(playerColor, opponentColor, gameState) {
+    // Generate all possible moves for the player
+    const playerMoves = this.generateAllMoves(playerColor, { piecePositions: gameState });
+
+    // Check if any move would remove the opponent's nest sight
+    for (const move of playerMoves) {
+      // Simulate this move
+      const newPositions = this.simulateMove(
+        gameState,
+        move.piece.name,
+        move.targetSquare
+      );
+
+      // Check if opponent has nest sight after this move
+      const oppHasNestSight = this.hasNestSight(opponentColor, newPositions);
+
+      if (!oppHasNestSight) {
+        // This move prevents the opponent from winning
+        // (could be blocking path, capturing Owl, removing ghosting pivot, etc.)
+        return true;
+      }
+    }
+
+    return false; // No way to prevent opponent's win
+  }
+
+  // Check if a move violates the Third Bird Rule (Type 2, Thicket 0)
+  // Type 2: Giving nest sight to skip-one player when intervening player cannot prevent them
+  // "Cannot prevent" = no move that blocks path, captures Owl, or removes ghosting pivot
+  // Example: Yellow moves → Brown (skip-one) gets nest sight → Green (next) cannot prevent Brown
+  isType2ThirdBirdViolation(move, nextPlayer, skipOnePlayer) {
+    const currentPositions = this.gameState.piecePositions;
+
+    // Step 1: Check if skip-one player has nest sight BEFORE my move
+    const skipOneHadNestSightBefore = this.hasNestSight(skipOnePlayer, currentPositions);
+
+    // Step 2: Simulate my move to get the state after my turn
+    const positionsAfterMyMove = this.simulateMove(
+      currentPositions,
+      move.piece.name,
+      move.targetSquare
+    );
+
+    // Step 3: Check if skip-one player has nest sight AFTER my move
+    const skipOneHasNestSightAfter = this.hasNestSight(skipOnePlayer, positionsAfterMyMove);
+
+    // Step 4: Type 2 only applies if I GAVE nest sight to skip-one player
+    if (skipOneHadNestSightBefore || !skipOneHasNestSightAfter) {
+      return false; // Skip-one already had it, or doesn't have it now
+    }
+
+    // Step 5: I gave nest sight to skip-one player. Now check if intervening player can prevent them.
+    // "Prevent" includes blocking path, capturing Owl, or removing ghosting pivot
+    const nextPlayerCanPrevent = this.canPlayerBlockNestSight(
+      nextPlayer,
+      skipOnePlayer,
+      positionsAfterMyMove
+    );
+
+    if (nextPlayerCanPrevent) {
+      return false; // Intervening player can handle it, no violation
+    }
+
+    // Type 2 violation: I gave nest sight to skip-one player AND intervening player is helpless
+    return true;
+  }
+
   // Calculate shadowed squares based on piece positions
   // Based on gameStateManager.updateShadowedRows logic
   calculateShadowedSquares(piecePositions, excludedPiece = null) {
@@ -276,26 +345,42 @@ export class MinimaxAI {
       }
     }
 
-    // THIRD BIRD RULE (Thicket 0, Type 1): Filter out moves that give nest sight to next player
+    // THIRD BIRD RULE (Thicket 0, Type 1 & Type 2): Filter out Third Bird violations
     const nextPlayer = this.getNextPlayer(this.playerColor);
+    const skipOnePlayer = this.getNextPlayer(nextPlayer); // Player two positions ahead
     const legalMoves = [];
-    const violatingMoves = [];
+    const type1Violations = [];
+    const type2Violations = [];
 
     for (const move of moves) {
+      // Check Type 1: Active Kingmaking (giving nest sight to immediate next player)
       if (this.isType1ThirdBirdViolation(move, nextPlayer)) {
-        violatingMoves.push(move);
-        console.log(`🚫 THIRD BIRD VIOLATION: ${this.playerColor.toUpperCase()} ${move.piece.name}→${move.targetSquare} would give nest sight to ${nextPlayer}`);
-      } else {
-        legalMoves.push(move);
+        type1Violations.push(move);
+        console.log(`🚫 TYPE 1 THIRD BIRD: ${this.playerColor.toUpperCase()} ${move.piece.name}→${move.targetSquare} would give nest sight to ${nextPlayer}`);
+        continue; // Skip to next move
       }
+
+      // Check Type 2: Giving nest sight to skip-one player when next player cannot prevent
+      // Example: Yellow moves → Brown (skip-one) gets nest sight → Green (next) helpless
+      if (this.isType2ThirdBirdViolation(move, nextPlayer, skipOnePlayer)) {
+        type2Violations.push(move);
+        console.log(`🚫 TYPE 2 THIRD BIRD: ${this.playerColor.toUpperCase()} ${move.piece.name}→${move.targetSquare} gives nest sight to ${skipOnePlayer}, ${nextPlayer} cannot prevent`);
+        continue; // Skip to next move
+      }
+
+      // Move is legal
+      legalMoves.push(move);
     }
 
     // If all moves violate Third Bird, we must choose the least bad option
     // (This shouldn't happen in well-played games, but we need a fallback)
     const movesToEvaluate = legalMoves.length > 0 ? legalMoves : moves;
 
-    if (legalMoves.length === 0 && violatingMoves.length > 0) {
-      console.log(`⚠️ ${this.playerColor.toUpperCase()}: ALL moves violate Third Bird Rule! Choosing least bad option...`);
+    if (legalMoves.length === 0) {
+      const totalViolations = type1Violations.length + type2Violations.length;
+      console.log(`⚠️ ${this.playerColor.toUpperCase()}: ALL ${totalViolations} moves violate Third Bird Rule!`);
+      console.log(`   Type 1 violations: ${type1Violations.length}, Type 2 violations: ${type2Violations.length}`);
+      console.log(`   Choosing least bad option (unavoidable foul - Rule 17(xi))...`);
     }
 
     const evaluatedMoves = [];
