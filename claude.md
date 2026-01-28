@@ -1217,3 +1217,296 @@ The AI can now be tested with and without Third Bird Rule checking to compare ou
 - ❌ Thicket 1 and 2 (deeper lookahead)
 - ❌ Human player foul detection
 - ❌ UI for takebacks and move confirmation
+
+---
+
+# Type 2 Third Bird Foul Implementation & MCTS Research - Jan 28, 2026
+
+## Session Overview
+
+Discussion and implementation of Type 2 Third Bird Foul detection, plus research into Monte Carlo Tree Search (MCTS) for improving AI players in 3-player games.
+
+## MCTS Research for 3-Player Strix
+
+### Why MCTS Over Max^n?
+
+Current AI uses Max^n (depth-1), which has issues:
+- **Shallow search**: Depth-1 only evaluates immediate moves
+- **Evaluation function dependency**: Requires good heuristics (material, position, threats)
+- **Known bugs**: Shadowing not fully integrated, ghosting partially working
+
+MCTS advantages for Strix:
+- **No evaluation function needed**: Uses win/loss outcomes from random playouts
+- **Handles 3-player dynamics naturally**: No paranoid assumptions
+- **Anytime algorithm**: Can return best move at any time
+- **Scalable**: More time = stronger play automatically
+- **Emergent complexity**: Ghosting, mobbing, Third Bird Rule naturally emerge from simulations
+
+### How MCTS Works
+
+**Four phases (repeated thousands of times):**
+
+1. **Selection**: Traverse tree using UCB1 formula (balances exploitation vs exploration)
+2. **Expansion**: Add one new unexplored move to tree
+3. **Simulation (Rollout)**: Play random game from new position until someone wins
+4. **Backpropagation**: Update win/loss statistics for all nodes in path
+
+**Example after 1000 simulations:**
+```
+Brown Owl can move to 3 squares:
+- b56: 340 visits, 145 wins (43% win rate)
+- b65: 450 visits, 248 wins (55% win rate) ← Best move!
+- b64: 210 visits, 52 wins (25% win rate)
+
+Choose b65 (highest win rate)
+```
+
+**For 3-player games:**
+Each node tracks wins separately for each player:
+```javascript
+node.wins = { brown: 145, yellow: 95, green: 100 }
+node.visits = 340
+// Brown's win rate = 145/340 = 42.6%
+```
+
+### Key Insight: Self-Play During Real-Time
+
+MCTS doesn't require pre-training. During each AI turn:
+- Runs for ~1 second (configurable)
+- Simulates hundreds/thousands of random games
+- Returns best move based on statistics
+- Tree is discarded (or partially reused for next move)
+
+No offline training phase needed - works from first game!
+
+### MCTS Integration with Third Bird Rule
+
+Type 1 and Type 2 violations can be filtered during move expansion:
+```javascript
+// Expansion phase
+function expandNode(node) {
+  let legalMoves = generateAllMoves(node.state);
+  
+  // Filter Type 1: Giving nest sight to next player
+  legalMoves = legalMoves.filter(m => !isType1Violation(m));
+  
+  // Filter Type 2: Giving nest sight to skip-one when next can't prevent
+  legalMoves = legalMoves.filter(m => !isType2Violation(m));
+  
+  // Add random legal move to tree
+  const move = randomChoice(legalMoves);
+  node.addChild(move);
+}
+```
+
+## Type 2 Third Bird Foul Implementation
+
+### Initial Misunderstanding
+
+**First attempt (WRONG):**
+- Type 2 = Failing to block when next player already has nest sight
+- This is just defensive failure, not a Third Bird violation
+
+**Corrected definition:**
+- Type 2 = Giving nest sight to skip-one player when intervening player is helpless
+- Example: Yellow moves → Brown (skip-one) gets nest sight → Green (next) cannot prevent
+
+### Key Clarification: "Preventing" vs "Blocking"
+
+Multiple ways to remove an opponent's nest sight:
+
+1. **Positional Blocking**: Place piece in Owl's path to nest
+   - Example: `gR-y73` blocks Yellow's Owl
+
+2. **Capturing the Owl**: Eliminate threat entirely
+   - Example: `gK-b66xyO` (swoop capture)
+   - Result: Yellow has no Owl → hasNestSight('yellow') returns false
+
+3. **Removing Ghosting Pivot**: Capture/move piece Owl needs to ghost through
+   - Example: Yellow needs Brown's Kite at b45 to ghost
+   - Green captures: `gK-b45xbK`
+   - Result: Yellow can't ghost anymore → no nest sight
+
+The implementation handles all three cases automatically by checking "does this move remove opponent's nest sight?" regardless of mechanism.
+
+### Implementation Details
+
+**New Functions in aiStrategies.js:**
+
+#### 1. `canPlayerBlockNestSight(playerColor, opponentColor, gameState)`
+```javascript
+// Returns true if player has ANY move that removes opponent's nest sight
+// Detects: blocking, capturing, or removing ghosting pivots
+
+for (const move of allPlayerMoves) {
+  simulateMove(move);
+  if (!hasNestSight(opponent)) {
+    return true; // Found a way to prevent them
+  }
+}
+return false; // No way to prevent opponent's win
+```
+
+#### 2. `isType2ThirdBirdViolation(move, nextPlayer, skipOnePlayer)`
+```javascript
+// Five-step detection:
+// 1. Did skip-one have nest sight before my move?
+// 2. Simulate my move
+// 3. Does skip-one have nest sight after my move?
+// 4. If yes (I gave it to them), can intervening player prevent?
+// 5. If intervening player helpless → Type 2 violation
+
+const skipOneHadBefore = hasNestSight(skipOnePlayer, current);
+const positionsAfter = simulateMove(move);
+const skipOneHasAfter = hasNestSight(skipOnePlayer, positionsAfter);
+
+if (!skipOneHadBefore && skipOneHasAfter) {
+  // I gave nest sight to skip-one
+  const nextCanPrevent = canPlayerBlockNestSight(nextPlayer, skipOnePlayer, positionsAfter);
+  return !nextCanPrevent; // Violation if next player is helpless
+}
+```
+
+#### 3. Updated `selectBestMove()` filtering
+```javascript
+const nextPlayer = this.getNextPlayer(this.playerColor);
+const skipOnePlayer = this.getNextPlayer(nextPlayer);
+
+for (const move of moves) {
+  // Filter Type 1: Giving nest sight to immediate next
+  if (isType1ThirdBirdViolation(move, nextPlayer)) {
+    console.log(`🚫 TYPE 1 THIRD BIRD: gives nest sight to ${nextPlayer}`);
+    continue;
+  }
+  
+  // Filter Type 2: Giving nest sight to skip-one when next can't prevent
+  if (isType2ThirdBirdViolation(move, nextPlayer, skipOnePlayer)) {
+    console.log(`🚫 TYPE 2 THIRD BIRD: gives nest sight to ${skipOnePlayer}, ${nextPlayer} cannot prevent`);
+    continue;
+  }
+  
+  legalMoves.push(move);
+}
+```
+
+### Console Output Examples
+
+**Type 1 Violation:**
+```
+🚫 TYPE 1 THIRD BIRD: YELLOW yK-b45 would give nest sight to green
+```
+
+**Type 2 Violation:**
+```
+🚫 TYPE 2 THIRD BIRD: YELLOW yK-b25 gives nest sight to brown, green cannot prevent
+```
+
+**All Moves Violate (Unavoidable Foul):**
+```
+⚠️ BROWN: ALL 12 moves violate Third Bird Rule!
+   Type 1 violations: 3, Type 2 violations: 9
+   Choosing least bad option (unavoidable foul - Rule 17(xi))...
+```
+
+## Testing Status
+
+**Implemented and Committed:**
+- ✅ Type 1 Third Bird detection (Jan 5, 2026)
+- ✅ Type 2 Third Bird detection (Jan 28, 2026)
+- ✅ Both types filtered at Thicket 0 depth
+- ✅ Comprehensive logging for debugging
+- ✅ Documentation: TYPE2_THIRD_BIRD_IMPLEMENTATION.md
+
+**Pending Testing:**
+- ⏳ AI vs AI games to validate Type 2 behavior
+- ⏳ Edge cases (all moves violate, multi-way prevention)
+- ⏳ Performance impact of Type 2 checking
+
+**Not Yet Implemented:**
+- ❌ Thicket 1 and Thicket 2 (multi-round lookahead)
+- ❌ Human player Third Bird enforcement
+- ❌ UI warnings and takeback system
+- ❌ MCTS AI implementation
+
+## Next Steps
+
+### Immediate (Before MCTS)
+1. **Test Type 2 Implementation**
+   - Run AI vs AI games
+   - Verify Type 2 violations are detected correctly
+   - Check performance impact
+
+2. **Validate Edge Cases**
+   - All moves violate Third Bird
+   - Skip-one player already has nest sight
+   - Multiple ways to prevent (which is required?)
+
+### Short-term (MCTS Implementation)
+1. Implement basic MCTS structure (selection, expansion, simulation, backpropagation)
+2. Integrate Type 1 and Type 2 filtering during expansion
+3. Test MCTS vs current Max^n AI
+4. Optimize simulation speed (fast rollout policy)
+
+### Medium-term (Advanced Features)
+1. Thicket 1 implementation (5-move lookahead)
+2. Tree reuse between moves (performance optimization)
+3. UCB1 parameter tuning (exploration constant)
+4. Opening book integration with MCTS
+
+## Related Commits
+
+**Type 2 Implementation:**
+- **b780958** (Jan 28, 2026): "Implement Type 2 Third Bird Foul detection (skip-one kingmaking)"
+  - Added canPlayerBlockNestSight() helper
+  - Added isType2ThirdBirdViolation() detection
+  - Updated selectBestMove() to filter both Type 1 and Type 2
+  - Improved terminology: "prevent" includes blocking/capturing/removing pivots
+  - Created TYPE2_THIRD_BIRD_IMPLEMENTATION.md documentation
+
+**Previous Third Bird Work:**
+- **567ed8b** (Jan 5, 2026): "Implement Third Bird Rule - Thicket 0, Type 1 checking"
+- **25e4566** (Jan 4, 2026): "Clarify Third Bird Rule terminology (Thicket depth)"
+
+## Files Modified
+
+1. **src/ai/aiStrategies.js**
+   - Lines 154-179: canPlayerBlockNestSight() helper
+   - Lines 180-210: isType2ThirdBirdViolation() detection
+   - Lines 331-350: Updated selectBestMove() filtering
+   - Updated variable names: thirdPlayer → skipOnePlayer (clarity)
+   - Improved comments and terminology
+
+2. **TYPE2_THIRD_BIRD_IMPLEMENTATION.md** (new file)
+   - Complete documentation of Type 2 implementation
+   - Examples of all three prevention mechanisms
+   - Console output examples
+   - Testing checklist
+
+3. **dist/bundle.js**
+   - Rebuilt with Type 2 implementation
+
+## Architecture Notes
+
+### Why Type 2 Before MCTS?
+
+Decision: Implement Type 2 before MCTS because:
+1. **Correctness matters**: AI should understand the actual game rules
+2. **Current AI benefits**: Even depth-1 Max^n should enforce Type 2
+3. **Better foundation**: MCTS inherits correct move generation
+4. **Avoid retrofitting**: Easier to do it right now than fix later
+
+MCTS will use the same `generateAllMoves()` function that filters both Type 1 and Type 2, ensuring legal playouts from the start.
+
+### Performance Considerations
+
+Type 2 checking is more expensive than Type 1:
+- Generates all moves for current player (to find alternatives)
+- Generates all moves for intervening player (to check if they can prevent)
+- Multiple simulations per candidate move
+
+For MCTS (thousands of playouts), this cost multiplies. Potential optimizations:
+- Cache "can player X prevent player Y" checks
+- Only enforce Type 2 at root node (actual move selection)
+- Use fast approximate checking during random playouts
+- Lazy evaluation: only check if Type 1 passes
+
