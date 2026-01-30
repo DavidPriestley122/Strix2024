@@ -3,7 +3,7 @@ import { getAllKiteMoves } from "../game/rules/kiteRules.js";
 import { getAllRavenMoves, isValidMobbingConfiguration } from "../game/rules/ravenRules.js";
 import { StrixPatterns } from "./strixPatterns.js";
 import { convertToFlightway, generateFlightwayRoute } from "../game/rules/flightwayUtils.js";
-import { LocalAIStorage } from "./aiStorage.js";
+import { BackendAIStorage, LocalAIStorage } from "./aiStorage.js";
 import { AIMemory } from "./aiMemory.js";
 
 export class MinimaxAI {
@@ -24,8 +24,9 @@ export class MinimaxAI {
     // Initialize tactical pattern recognition
     this.patterns = new StrixPatterns(gameStateManager);
 
-    // Initialize AI memory for learning (using LocalStorage for now)
-    const storage = new LocalAIStorage();
+    // Initialize AI memory for learning (using Railway backend for persistence)
+    const apiUrl = window.STRIX_API_URL || 'http://localhost:3001';
+    const storage = new BackendAIStorage(apiUrl);
     this.memory = new AIMemory(playerColor, storage);
     this.memory.initialize().catch(err => console.error('AI memory init error:', err));
   }
