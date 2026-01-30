@@ -112,8 +112,8 @@ export class LocalAIStorage extends AIStorage {
 }
 
 /**
- * Backend implementation for cloud-based AI learning (future)
- * Uses Railway or other backend API for centralized learning
+ * Backend implementation for cloud-based AI learning
+ * Uses Railway backend API for centralized, persistent learning
  */
 export class BackendAIStorage extends AIStorage {
   constructor(apiUrl) {
@@ -123,21 +123,23 @@ export class BackendAIStorage extends AIStorage {
 
   async loadMemory(playerColor) {
     try {
-      const response = await fetch(`${this.apiUrl}/ai/memory/${playerColor}`);
+      const response = await fetch(`${this.apiUrl}/api/ai/memory/${playerColor}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      return await response.json();
+      const memory = await response.json();
+      console.log(`🌐 Loaded ${playerColor} AI memory from backend (${memory.statistics?.gamesPlayed || 0} games)`);
+      return memory;
     } catch (error) {
       console.error(`Error loading AI memory from backend for ${playerColor}:`, error);
-      // Fallback to local storage or default
-      return null;
+      // Return default memory structure as fallback
+      return this.createDefaultMemory(playerColor);
     }
   }
 
   async saveMemory(playerColor, data) {
     try {
-      const response = await fetch(`${this.apiUrl}/ai/memory/${playerColor}`, {
+      const response = await fetch(`${this.apiUrl}/api/ai/memory/${playerColor}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -146,14 +148,18 @@ export class BackendAIStorage extends AIStorage {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log(`🌐 Saved ${playerColor} AI memory to backend (${result.gamesPlayed} games, ${result.winRate}% win rate)`);
     } catch (error) {
       console.error(`Error saving AI memory to backend for ${playerColor}:`, error);
+      throw error; // Re-throw to let caller know save failed
     }
   }
 
   async recordGame(gameData) {
     try {
-      const response = await fetch(`${this.apiUrl}/games`, {
+      const response = await fetch(`${this.apiUrl}/api/games`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(gameData)
@@ -162,6 +168,9 @@ export class BackendAIStorage extends AIStorage {
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
+
+      const result = await response.json();
+      console.log(`🌐 Recorded game to backend (${result.totalGames} total games)`);
     } catch (error) {
       console.error('Error recording game to backend:', error);
     }
@@ -169,14 +178,41 @@ export class BackendAIStorage extends AIStorage {
 
   async getGameHistory(limit = 100) {
     try {
-      const response = await fetch(`${this.apiUrl}/games?limit=${limit}`);
+      const response = await fetch(`${this.apiUrl}/api/games?limit=${limit}`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
       }
-      return await response.json();
+      const history = await response.json();
+      console.log(`🌐 Loaded ${history.length} games from backend`);
+      return history;
     } catch (error) {
       console.error('Error loading game history from backend:', error);
       return [];
     }
+  }
+
+  createDefaultMemory(playerColor) {
+    return {
+      version: '1.0',
+      playerColor: playerColor,
+      statistics: {
+        gamesPlayed: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0
+      },
+      patterns: {
+        avoidedMoves: [],
+        successfulMoves: []
+      },
+      evaluationWeights: {
+        owlDistanceToNest: 50,
+        pieceValue: 100,
+        ghostingThreat: -5000,
+        captureOpportunity: 200
+      },
+      openingBook: {},
+      lastUpdated: new Date().toISOString()
+    };
   }
 }
