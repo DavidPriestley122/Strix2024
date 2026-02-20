@@ -12,13 +12,13 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease, left 0.3s ease;
+  transition: width 0.3s ease, transform 0.3s ease;
   font-family: "Libre Baskerville", serif;
 }
 
 /* Collapsed state — slides off the left edge */
 .sidebar.collapsed {
-  left: calc(-1 * var(--sidebar-width));
+  transform: translateX(-100%);
 }
 
 /* Toggle tab — sits on the right edge of the left sidebar */

@@ -12,12 +12,12 @@
   overflow-y: auto;
   z-index: 1000;
   font-family: "Libre Baskerville", serif;
-  transition: right 0.3s ease;
+  transition: transform 0.3s ease;
 }
 
 /* Collapsed state — slides off the right edge */
 #ai-sidebar.collapsed {
-  right: calc(-1 * var(--sidebar-width));
+  transform: translateX(100%);
 }
 
 /* Toggle tab — sits on the left edge of the right sidebar */
