@@ -16,6 +16,39 @@
   font-family: "Libre Baskerville", serif;
 }
 
+/* Collapsed state — slides off the left edge */
+.sidebar.collapsed {
+  left: calc(-1 * var(--sidebar-width));
+}
+
+/* Toggle tab — sits on the right edge of the left sidebar */
+.sidebar-toggle-tab {
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 52px;
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(210, 180, 140, 0.35);
+  border-left: none;
+  border-radius: 0 6px 6px 0;
+  color: var(--owl-light);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 1002;
+  transition: background 0.2s ease;
+}
+
+.sidebar-toggle-tab:hover {
+  background: rgba(34, 139, 34, 0.6);
+  color: white;
+}
+
 .sidebar.expanded {
   width: 500px; /* Adjust this value as needed */
 }

@@ -1,61 +1,29 @@
-/*const wrapper = document.getElementById("game-wrapper");
-const container = document.getElementById("game-container");
-const canvas = document.getElementById("renderCanvas");
-const sidebar = document.getElementById("game-sidebar");
-const main = document.querySelector("main");
-
-export function initResizeHandler(engine) {
-  window.addEventListener("resize", () => resizeGame(engine));
-  resizeGame(engine); // Initial size setup
-}
-
-function resizeGame(engine) {
-  const targetWidth = 1600;
-  const targetHeight = 1200;
-  const sidebarWidth = 250;
-
-  // Set wrapper and container size
-  wrapper.style.width = `${targetWidth}px`;
-  wrapper.style.height = `${targetHeight}px`;
-  container.style.width = `${targetWidth}px`;
-  container.style.height = `${targetHeight}px`;
-
-  // Center the game wrapper
-  const windowWidth = window.innerWidth;
-  const totalSideSpace = windowWidth - targetWidth;
-  const leftMargin = Math.max(sidebarWidth, totalSideSpace / 2);
-
-  wrapper.style.marginLeft = `${leftMargin - sidebarWidth}px`;
-
- 
-  // Adjust sidebar height
-  if (sidebar) {
-    const header = document.querySelector('header');
-    const footer = document.querySelector('footer');
-    sidebar.style.top = `${header.offsetHeight}px`;
-   
-  }
-
-  if (engine) {
-    engine.resize();
-  }
-}
- */
 const wrapper = document.getElementById("game-wrapper");
 const container = document.getElementById("game-container");
 const canvas = document.getElementById("renderCanvas");
 const sidebar = document.getElementById("game-sidebar");
+const aiSidebar = document.getElementById("ai-sidebar");
+
+const SIDEBAR_WIDTH = 250;
+
+function getLeftWidth() {
+  return sidebar.classList.contains("collapsed") ? 0 : SIDEBAR_WIDTH;
+}
+
+function getRightWidth() {
+  return aiSidebar.classList.contains("collapsed") ? 0 : SIDEBAR_WIDTH;
+}
 
 export function initResizeHandler(engine) {
   function resizeGame() {
-    const aspectRatio = 1840 / 1380; // Original width / height (4:3 ratio)
-    const sidebarWidth = sidebar.offsetWidth;
-    const headerHeight = document.querySelector('header').offsetHeight;
-    const maxWidth = window.innerWidth - sidebarWidth;
-    const maxHeight = window.innerHeight - 200; // Adjust for header/footer (reduced from 300)
+    const aspectRatio = 1840 / 1380;
+    const headerHeight = document.querySelector("header").offsetHeight;
+    const leftWidth = getLeftWidth();
+    const rightWidth = getRightWidth();
+    const maxWidth = window.innerWidth - leftWidth - rightWidth;
+    const maxHeight = window.innerHeight - 200;
 
     let newWidth, newHeight;
-
     if (maxWidth / maxHeight > aspectRatio) {
       newHeight = maxHeight;
       newWidth = newHeight * aspectRatio;
@@ -71,18 +39,14 @@ export function initResizeHandler(engine) {
     canvas.width = newWidth;
     canvas.height = newHeight;
 
-     // Update the left and top positions of the game wrapper
-     wrapper.style.left = `${sidebarWidth}px`;
-     wrapper.style.top = `${headerHeight}px`;
+    // Centre in the available space between sidebars
+    const idealLeft = leftWidth + Math.max(0, (maxWidth - newWidth) / 2);
+    wrapper.style.left = `${idealLeft}px`;
+    wrapper.style.marginLeft = "0px";
+    wrapper.style.top = `${headerHeight}px`;
 
-    // Center the game wrapper
-    const leftMargin = Math.max(sidebarWidth, (window.innerWidth - newWidth) / 2);
-    wrapper.style.marginLeft = `${leftMargin - sidebarWidth}px`;
-
-    // Adjust sidebar height
     if (sidebar) {
-      const header = document.querySelector('header');
-      sidebar.style.top = `${header.offsetHeight}px`;
+      sidebar.style.top = `${headerHeight}px`;
       sidebar.style.height = `${newHeight}px`;
     }
 
@@ -91,6 +55,57 @@ export function initResizeHandler(engine) {
     }
   }
 
+  // ── Left sidebar toggle tab ──────────────────────────────────────────────
+  const leftToggle = document.getElementById("left-sidebar-toggle");
+  if (leftToggle) {
+    leftToggle.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+      leftToggle.textContent = sidebar.classList.contains("collapsed")
+        ? "›"
+        : "‹";
+      resizeGame();
+    });
+  }
+
+  // ── Right sidebar toggle tab ─────────────────────────────────────────────
+  const rightToggle = document.getElementById("right-sidebar-toggle");
+  if (rightToggle) {
+    rightToggle.addEventListener("click", () => {
+      aiSidebar.classList.toggle("collapsed");
+      rightToggle.textContent = aiSidebar.classList.contains("collapsed")
+        ? "‹"
+        : "›";
+      resizeGame();
+    });
+  }
+
+  // ── Maximize / restore button ────────────────────────────────────────────
+  const maximizeBtn = document.getElementById("maximizeButton");
+  if (maximizeBtn) {
+    maximizeBtn.addEventListener("click", () => {
+      const bothCollapsed =
+        sidebar.classList.contains("collapsed") &&
+        aiSidebar.classList.contains("collapsed");
+
+      if (bothCollapsed) {
+        // Restore both sidebars
+        sidebar.classList.remove("collapsed");
+        aiSidebar.classList.remove("collapsed");
+        if (leftToggle) leftToggle.textContent = "‹";
+        if (rightToggle) rightToggle.textContent = "›";
+        maximizeBtn.querySelector(".mode-status").textContent = "OFF";
+      } else {
+        // Collapse both sidebars
+        sidebar.classList.add("collapsed");
+        aiSidebar.classList.add("collapsed");
+        if (leftToggle) leftToggle.textContent = "›";
+        if (rightToggle) rightToggle.textContent = "‹";
+        maximizeBtn.querySelector(".mode-status").textContent = "ON";
+      }
+      resizeGame();
+    });
+  }
+
   window.addEventListener("resize", resizeGame);
-  resizeGame(); // Initial size setup
+  resizeGame();
 }

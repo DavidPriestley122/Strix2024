@@ -99,6 +99,7 @@
 
     <main style="position: relative">
       <aside id="game-sidebar" class="sidebar">
+        <button class="sidebar-toggle-tab" id="left-sidebar-toggle" title="Hide/show left sidebar">‹</button>
         <div class="main-categories">
           <button class="category-button" data-category="about-strix">
             About Strix
@@ -132,6 +133,10 @@
               <span class="mode-label">Glass Mode:</span>
               <span class="mode-status">OFF</span>
             </button>
+            <button id="maximizeButton" class="glass-toggle" title="Hide/show both sidebars">
+              <span class="mode-label">Maximize:</span>
+              <span class="mode-status">OFF</span>
+            </button>
           </div>
         </div>
       </div>
@@ -139,6 +144,7 @@
     </main>
 
     <aside id="ai-sidebar">
+      <button class="sidebar-toggle-tab" id="right-sidebar-toggle" title="Hide/show right sidebar">›</button>
       <h2>AI Players</h2>
       <div class="ai-controls">
         <div class="player-config">

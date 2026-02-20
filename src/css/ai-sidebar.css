@@ -12,6 +12,42 @@
   overflow-y: auto;
   z-index: 1000;
   font-family: "Libre Baskerville", serif;
+  transition: right 0.3s ease;
+}
+
+/* Collapsed state — slides off the right edge */
+#ai-sidebar.collapsed {
+  right: calc(-1 * var(--sidebar-width));
+}
+
+/* Toggle tab — sits on the left edge of the right sidebar */
+#ai-sidebar .sidebar-toggle-tab {
+  position: absolute;
+  left: -20px;
+  right: auto;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 52px;
+  background: rgba(0, 0, 0, 0.82);
+  border: 1px solid rgba(210, 180, 140, 0.35);
+  border-right: none;
+  border-left: 1px solid rgba(210, 180, 140, 0.35);
+  border-radius: 6px 0 0 6px;
+  color: var(--owl-light);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 1002;
+  transition: background 0.2s ease;
+}
+
+#ai-sidebar .sidebar-toggle-tab:hover {
+  background: rgba(34, 139, 34, 0.6);
+  color: white;
 }
 
 /* Style the AI sidebar title */
