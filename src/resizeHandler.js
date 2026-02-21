@@ -48,7 +48,6 @@ export function initResizeHandler(engine) {
 
     if (sidebar) {
       sidebar.style.top = `${headerHeight}px`;
-      sidebar.style.height = `${newHeight}px`;
     }
 
     if (engine) {
