@@ -15,6 +15,14 @@ export class MinimaxAI {
     this.tacticalLogging = true;  // TEMPORARILY ENABLED FOR DEBUGGING
     this.evalLogging = false;     // Per-leaf evaluation logs (off by default — noisy & perf-critical)
 
+    // Threat-extension (forcing-line) search: looks deep ONLY along tactically
+    // forcing moves (wins, Owl-captures, threat blocks, threat creations) so it
+    // can read forced sequences — e.g. a setup move that ends in your own Owl
+    // being captured several plies later — without a full-width deep search.
+    this.tacticalDepth = 5;          // plies to read along forcing lines
+    this.tacticalNodeBudget = 4000;  // hard cap per candidate; static fallback if exceeded
+    this._tacticalNodes = 0;         // per-decision node counter
+
     // Player order for three-player game
     this.playerOrder = ["brown", "yellow", "green"];
     this.players = this.playerOrder;
@@ -401,8 +409,12 @@ export class MinimaxAI {
       );
       const isCapture = capturedPieces.length > 0;
 
-      // Recursively evaluate with Max^n (each player maximizes their own score)
-      const scores = this.maxn(newPositions, this.maxDepth - 1, nextPlayer, isCapture ? `${move.piece.name}→${move.targetSquare}` : null);
+      // Evaluate with the threat-extension search: reads deep along forcing
+      // lines (wins / Owl-captures / blocks / threat-creations) and falls back
+      // to the static eval where the position is quiet. This is what lets the
+      // AI see that a move ignites a forced sequence losing its own Owl.
+      this._tacticalNodes = 0;
+      const scores = this.tacticalMaxn(newPositions, this.tacticalDepth, nextPlayer, this.playerColor);
 
       // Extract OUR score from the multi-player scores
       move.evaluation = scores[this.playerColor];
@@ -597,6 +609,127 @@ export class MinimaxAI {
     }
     return null;
   }
+
+  // ========== THREAT-EXTENSION (FORCING-LINE) SEARCH ==========
+
+  // Legal moves for a piece in a HYPOTHETICAL position (not the live board).
+  // getPossibleMoves already generates rule-correct moves against the passed
+  // state (Kite/Raven occupancy + path, Owl adjacency/ghosts) and shadow-filters
+  // them. We add the two checks the generators don't: non-Owls may not stop on a
+  // nest square (Rule 4), and an Owl may not land on a same-team piece.
+  legalMovesInState(piece, gameState) {
+    const nestSquares = ["b7-7", "y7-7", "g7-7"];
+    const moves = this.getPossibleMoves(piece, gameState);
+    return moves.filter(target => {
+      if (piece.type !== "Owl" && nestSquares.includes(target)) return false;
+      if (piece.type === "Owl") {
+        const occupant = this.findPieceAtSquare(target, gameState);
+        if (occupant && this.isSameTeam(piece.name, occupant)) return false;
+      }
+      return true;
+    });
+  }
+
+  // Build the set of TACTICALLY RELEVANT moves for a player in a position:
+  // moves that win, capture an opponent Owl, neutralise an opponent's existing
+  // win-threat (block path / take the Owl / take the ghost pivot), or create a
+  // new win-threat for the mover. Returns [] when the position is "quiet" — the
+  // caller then stops extending and scores statically.
+  generateRelevantMoves(playerColor, gameState) {
+    const positions = gameState.piecePositions;
+    const opponents = this.playerOrder.filter(c => c !== playerColor);
+
+    // Threats present BEFORE this player moves, used to detect blocks/creations.
+    const oppThreatBefore = {};
+    for (const opp of opponents) oppThreatBefore[opp] = this.hasNestSight(opp, positions);
+    const moverThreatBefore = this.hasNestSight(playerColor, positions);
+
+    const relevant = [];
+    const pieces = this.getPlayerPieces(playerColor, gameState);
+
+    for (const piece of pieces) {
+      for (const targetSquare of this.legalMovesInState(piece, gameState)) {
+        const after = this.simulateMove(positions, piece.name, targetSquare);
+
+        let tag = null;
+        if (this.checkWinner(after) === playerColor) {
+          tag = "win";
+        } else if (opponents.some(opp => {
+          const oppOwl = `${opp}Owl`;
+          return positions[oppOwl] && positions[oppOwl] !== "captured" && after[oppOwl] === "captured";
+        })) {
+          tag = "owlCapture";
+        } else if (opponents.some(opp => oppThreatBefore[opp] && !this.hasNestSight(opp, after))) {
+          tag = "block";
+        } else if (!moverThreatBefore && this.hasNestSight(playerColor, after)) {
+          tag = "createThreat";
+        }
+
+        if (tag) relevant.push({ piece, targetSquare, tacticalTag: tag });
+      }
+    }
+
+    return relevant;
+  }
+
+  // Recursive Max^n restricted to forcing moves. Each player maximises its own
+  // score; quiet positions and the depth/budget limits fall back to the static
+  // evaluation (whose elimination terms already score a lost Owl at ~ -1,000,000).
+  tacticalMaxn(positions, depth, player, rootPlayer) {
+    // Terminal: someone reached the nest.
+    const winner = this.checkWinner(positions);
+    if (winner) {
+      const terminal = { brown: -1000000, yellow: -1000000, green: -1000000 };
+      terminal[winner] = 1000000;
+      return terminal;
+    }
+
+    if (depth <= 0 || this._tacticalNodes >= this.tacticalNodeBudget) {
+      return this.evaluatePosition(positions).scores;
+    }
+    this._tacticalNodes++;
+
+    // Skip eliminated players (Rule 16: no Owl ⇒ no moves). If fewer than two
+    // Owls remain there is no tactical contest left — score statically.
+    let mover = player;
+    let hops = 0;
+    while (this.isEliminated(mover, positions) && hops < this.playerOrder.length) {
+      mover = this.getNextPlayer(mover);
+      hops++;
+    }
+    if (hops >= this.playerOrder.length) {
+      return this.evaluatePosition(positions).scores;
+    }
+
+    // Quiet move generation must not spam the strategic logs.
+    const savedStrategic = this.strategicLogging;
+    this.strategicLogging = false;
+    const moves = this.generateRelevantMoves(mover, { piecePositions: positions });
+    this.strategicLogging = savedStrategic;
+
+    if (moves.length === 0) {
+      return this.evaluatePosition(positions).scores; // quiet — stop extending
+    }
+
+    const nextPlayer = this.getNextPlayer(mover);
+    let bestScores = null;
+    for (const move of moves) {
+      const child = this.simulateMove(positions, move.piece.name, move.targetSquare);
+      const childScores = this.tacticalMaxn(child, depth - 1, nextPlayer, rootPlayer);
+      if (!bestScores || childScores[mover] > bestScores[mover]) {
+        bestScores = childScores;
+      }
+    }
+    return bestScores;
+  }
+
+  // A player is eliminated once its Owl has been captured (Rule 16).
+  isEliminated(playerColor, positions) {
+    const owl = positions[`${playerColor}Owl`];
+    return !owl || owl === "captured";
+  }
+
+  // ========== END THREAT-EXTENSION SEARCH ==========
 
   // Evaluate a position using Max^n (returns scores for ALL players)
   evaluatePosition(piecePositions) {
