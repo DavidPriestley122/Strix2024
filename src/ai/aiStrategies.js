@@ -13,6 +13,7 @@ export class MinimaxAI {
     this.maxDepth = 1; // Depth 1: Evaluate immediate moves only (basic competence)
     this.strategicLogging = true; // TEMPORARILY ENABLED FOR DEBUGGING
     this.tacticalLogging = true;  // TEMPORARILY ENABLED FOR DEBUGGING
+    this.evalLogging = false;     // Per-leaf evaluation logs (off by default — noisy & perf-critical)
 
     // Player order for three-player game
     this.playerOrder = ["brown", "yellow", "green"];
@@ -599,6 +600,8 @@ export class MinimaxAI {
 
   // Evaluate a position using Max^n (returns scores for ALL players)
   evaluatePosition(piecePositions) {
+    const elog = (...args) => { if (this.evalLogging) console.log(...args); };
+
     // Max^n: Each player gets their own score
     const scores = {
       brown: 0,
@@ -607,6 +610,26 @@ export class MinimaxAI {
     };
     const nestSquares = ["b7-7", "y7-7", "g7-7"];
     const tempGameState = { piecePositions: piecePositions };
+
+    // PART 0: Survival / elimination (Rule 16 & Rule 22)
+    // Losing your Owl ends your game; the last Owl standing wins outright.
+    // This term dominates the evaluation, so the AI treats protecting its own
+    // Owl and removing opponents' Owls as near-decisive — exactly as the rules
+    // dictate. Scaled to match the terminal win/loss values used by checkWinner.
+    const ELIMINATION = 1000000;
+    const aliveOwlColors = this.playerOrder.filter(color => {
+      const p = piecePositions[`${color}Owl`];
+      return p && p !== "captured";
+    });
+    for (const color of this.playerOrder) {
+      const owlPos = piecePositions[`${color}Owl`];
+      if (!owlPos || owlPos === "captured") {
+        scores[color] -= ELIMINATION; // eliminated — cannot win (Rule 16)
+      }
+    }
+    if (aliveOwlColors.length === 1) {
+      scores[aliveOwlColors[0]] += ELIMINATION; // last Owl standing wins (Rule 22)
+    }
 
     // PART 1: Material evaluation (piece count and value)
     const materialScores = { brown: 0, yellow: 0, green: 0 };
@@ -672,18 +695,24 @@ export class MinimaxAI {
     }
 
     // PART 4: Capture threat evaluation (EN PRISE DETECTION)
-    // Being under threat hurts that player's score
+    // Being under threat hurts that player's score. Owls are scored at
+    // elimination scale (losing one ends the game, Rule 16), so the AI stops
+    // hanging its Owl and pounces on exposed enemy Owls. Rule 15 (Owls on black
+    // squares are immune to Kites and Ravens) is enforced inside the threat
+    // helpers, so safe Owls are neither feared nor falsely targeted.
     const enPrisePenalties = { brown: 0, yellow: 0, green: 0 };
-    console.log(`🔍 THREAT DETECTION: Checking all pieces for threats...`);
+    elog(`🔍 THREAT DETECTION: Checking all pieces for threats...`);
     for (const color of this.playerOrder) {
       const playerPieces = this.getPlayerPieces(color, tempGameState);
 
       for (const piece of playerPieces) {
         if (piece.position === 'captured') continue;
 
-        if (piece.type === 'Owl') {
-          console.log(`   Checking ${color} ${piece.type} at ${piece.position}`);
-        }
+        const isOwl = piece.type === 'Owl';
+        // An Owl in danger risks elimination, so weight it far above ordinary
+        // material. Non-Owls use their capture value scaled by threat certainty.
+        const immediateWeight = isOwl ? 150000 : this.getCaptureValue(piece.name) * 0.8;
+        const enPriseWeight   = isOwl ?  80000 : this.getCaptureValue(piece.name) * 0.6;
 
         // Check if any opponent can capture this piece
         for (const opponentColor of this.playerOrder) {
@@ -694,25 +723,18 @@ export class MinimaxAI {
             if (oppPiece.position === 'captured') continue;
 
             // CHECK 1: IMMEDIATE THREAT - Can opponent capture from current position?
-            const canCapture = this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position, tempGameState);
-            if (canCapture) {
-              // This player's piece is under immediate threat - bad for them
-              const threatPenalty = this.getCaptureValue(piece.name) * 0.8;
-              enPrisePenalties[color] += threatPenalty;
-              scores[color] -= threatPenalty;
-              console.log(`   ⚠️ IMMEDIATE THREAT: ${oppPiece.name} at ${oppPiece.position} can capture ${piece.name} (-${threatPenalty})`);
+            if (this.canPieceCaptureAtSquare(oppPiece.name, oppPiece.position, piece.position, tempGameState)) {
+              enPrisePenalties[color] += immediateWeight;
+              scores[color] -= immediateWeight;
+              elog(`   ⚠️ IMMEDIATE THREAT: ${oppPiece.name} at ${oppPiece.position} can capture ${piece.name} (-${immediateWeight})`);
             }
-
-            // CHECK 2: EN PRISE - Can opponent MOVE to threaten this piece?
-            // This is critical for depth-1 AI to avoid blunders like moving into capture range
-            const movingThreat = this.canPieceMoveToThreaten(oppPiece, piece, tempGameState);
-            if (movingThreat) {
-              // Significant penalty for en prise positions (piece can be captured next turn)
-              // Slightly less than immediate threat since opponent needs a move to execute it
-              const enPrisePenalty = this.getCaptureValue(piece.name) * 0.6;
-              enPrisePenalties[color] += enPrisePenalty;
-              scores[color] -= enPrisePenalty;
-              console.log(`   ⚠️ EN PRISE: ${oppPiece.name} can move to threaten ${piece.name} (-${enPrisePenalty})`);
+            // CHECK 2: EN PRISE - Can opponent MOVE to threaten this piece next turn?
+            // Critical for depth-1 AI to avoid moving into capture range. Only counted
+            // when there is no immediate threat from this attacker (avoid double-penalty).
+            else if (this.canPieceMoveToThreaten(oppPiece, piece, tempGameState)) {
+              enPrisePenalties[color] += enPriseWeight;
+              scores[color] -= enPriseWeight;
+              elog(`   ⚠️ EN PRISE: ${oppPiece.name} can move to threaten ${piece.name} (-${enPriseWeight})`);
             }
           }
         }
@@ -734,8 +756,8 @@ export class MinimaxAI {
       // DEBUG: Log nest sight checking
       const hasNestMove = owlMoves.some(m => nestSquares.includes(m));
       if (hasNestMove) {
-        console.log(`🎯 NEST SIGHT CHECK: ${color} Owl at ${owl.position}`);
-        console.log(`   Owl moves: ${owlMoves.join(', ')}`);
+        elog(`🎯 NEST SIGHT CHECK: ${color} Owl at ${owl.position}`);
+        elog(`   Owl moves: ${owlMoves.join(', ')}`);
       }
 
       for (const move of owlMoves) {
@@ -743,11 +765,11 @@ export class MinimaxAI {
           const nestFace = move.charAt(0);
           const isShadowed = shadowedSquares[nestFace].includes(move);
 
-          console.log(`   ✓ Can reach nest ${move}: shadowed=${isShadowed}`);
+          elog(`   ✓ Can reach nest ${move}: shadowed=${isShadowed}`);
 
           if (!isShadowed) {
             // This player can win! Great for them, terrible for others
-            console.log(`   🏆 GIVING +100000 to ${color}!`);
+            elog(`   🏆 GIVING +100000 to ${color}!`);
             scores[color] += 100000; // Massive bonus for potential win
 
             // Penalize OTHER players (they would lose)
@@ -758,7 +780,7 @@ export class MinimaxAI {
             }
             break;
           } else {
-            console.log(`   ❌ Nest ${move} is shadowed, no bonus`);
+            elog(`   ❌ Nest ${move} is shadowed, no bonus`);
           }
         }
       }
@@ -1238,10 +1260,30 @@ export class MinimaxAI {
     return captures;
   }
 
+  // Rule 15 helper: dark/black squares are those where (row + col) is even.
+  // This holds uniformly across all three faces (e.g. the nest squares
+  // b7-7 / y7-7 / g7-7 are all black). An Owl on a black square is immune to
+  // Kites and Ravens, though still vulnerable to other Owls.
+  isBlackSquare(square) {
+    if (!square || square === 'captured' || square.length < 4) return false;
+    const row = parseInt(square.charAt(1), 10);
+    const col = parseInt(square.charAt(3), 10);
+    return (row + col) % 2 === 0;
+  }
+
   canPieceCaptureAtSquare(attackerPiece, attackerPosition, victimSquare, gameState = null) {
     const state = gameState || this.gameState;
     const piecePositions = state.piecePositions || state;
     const pieceType = this.getPieceType(attackerPiece);
+
+    // Rule 15: an Owl standing on a black square cannot be taken by a Kite or
+    // mobbed by Ravens (only another Owl can capture it).
+    if (pieceType === 'Kite' || pieceType === 'Raven') {
+      const victimName = this.findPieceAtSquare(victimSquare, state);
+      if (victimName && victimName.includes('Owl') && this.isBlackSquare(victimSquare)) {
+        return false;
+      }
+    }
 
     if (pieceType === 'Owl') {
       return this.getPossibleMoves({name: attackerPiece, position: attackerPosition, type: 'Owl'}, state)
@@ -1285,7 +1327,7 @@ export class MinimaxAI {
 
           // Check if active Raven at ravenMove + passive Raven + victim = valid mob
           if (isValidMobbingConfiguration(ravenMove, passivePos, victimSquare)) {
-            console.log(`   ✅ MOBBING THREAT: ${attackerPiece} → ${ravenMove} + passive ${passiveName} at ${passivePos} can mob ${victimSquare}`);
+            if (this.evalLogging) console.log(`   ✅ MOBBING THREAT: ${attackerPiece} → ${ravenMove} + passive ${passiveName} at ${passivePos} can mob ${victimSquare}`);
             return true; // Raven can mob the victim from this position
           }
         }
@@ -1301,6 +1343,14 @@ export class MinimaxAI {
   // This is essential for depth-1 AI to avoid moving into positions where piece can be captured
   canPieceMoveToThreaten(oppPiece, myPiece, gameState = null) {
     const state = gameState || this.gameState;
+
+    // Rule 15: an Owl on a black square is immune to Kites and Ravens, so they
+    // can never move to threaten it (the generic path below also routes through
+    // canPieceCaptureAtSquare, but the Kite fast-path needs this guard too).
+    if ((oppPiece.type === 'Kite' || oppPiece.type === 'Raven') &&
+        myPiece.type === 'Owl' && this.isBlackSquare(myPiece.position)) {
+      return false;
+    }
 
     // SPECIAL CASE FOR KITES: They capture DURING their move, not after
     // Check if Kite can move to a cross-face square adjacent to victim (1-move capture)
