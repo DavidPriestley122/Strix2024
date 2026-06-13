@@ -683,6 +683,19 @@ export class MinimaxAI {
       const positionalValue = Math.max(0, 120 - (distanceToNest * 10));
       positionalScores[color] += positionalValue;
       scores[color] += positionalValue;
+
+      // PART 2b: Ghost-opportunity bonus.
+      // Reward having a crosspiece in place that lets this Owl GHOST closer to
+      // the nest than a normal one-square step could manage. This is what makes
+      // the AI proactively set up ghosting plays — e.g. moving a Kite or Raven
+      // cross-adjacent to its own Owl so the Owl can pivot inward next turn.
+      // (Ghosts that reach the nest outright are already valued via nest sight.)
+      const ghostShortcut = this.bestGhostAdvancement(owlPiece, owlPosition, distanceToNest, tempGameState);
+      if (ghostShortcut > 0) {
+        const ghostBonus = ghostShortcut * 12; // per square of flightway distance saved
+        positionalScores[color] += ghostBonus;
+        scores[color] += ghostBonus;
+      }
     }
 
     // PART 3: Strategic pattern evaluation (ghosting threats)
@@ -1468,6 +1481,34 @@ export class MinimaxAI {
     }
 
     return minDistance === Infinity ? 12 : minDistance; // Default to max if no route found
+  }
+
+  // Ghost-opportunity heuristic.
+  // Looks at every legal move the Owl currently has (orthogonal steps AND ghost
+  // pivots, already shadow-filtered by getPossibleMoves) and finds the closest
+  // it can get to the nest in a single move. A normal orthogonal step can only
+  // close the gap by one square, so any extra progress is a "ghost shortcut" —
+  // the payoff of a crosspiece being cross-adjacent to the Owl. Returning that
+  // shortcut (in saved flightway-distance squares) lets the evaluation reward
+  // setting up ghosting plays a move before the Owl actually pivots.
+  bestGhostAdvancement(owlName, owlPosition, baseDistance, gameState) {
+    if (baseDistance <= 1) return 0; // already at/next to the nest — nothing to set up
+
+    const owlMoves = this.getPossibleMoves(
+      { name: owlName, position: owlPosition, type: 'Owl' },
+      gameState
+    );
+    if (!owlMoves || owlMoves.length === 0) return 0;
+
+    let bestNextDistance = baseDistance;
+    for (const move of owlMoves) {
+      const d = this.calculateDistanceToNearestNest(move);
+      if (d < bestNextDistance) bestNextDistance = d;
+    }
+
+    // A single orthogonal step can reach at best (baseDistance - 1); anything
+    // beyond that is only possible by ghosting.
+    return Math.max(0, (baseDistance - 1) - bestNextDistance);
   }
 
   // Evaluate positional advancement
