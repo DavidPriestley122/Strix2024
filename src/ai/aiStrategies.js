@@ -40,12 +40,30 @@ export class MinimaxAI {
     this.memory.initialize().catch(err => console.error('AI memory init error:', err));
   }
 
-  // Check if move results in immediate win
-  isImmediateWinningMove(move) {
-    if (move.piece.type !== "Owl") return false;
-
+  // Is the given position a win for `color`? Either its Owl is on a nest
+  // square (Rule 1) or it is the last Owl standing (Rule 22).
+  isWinFor(color, positions) {
     const nestSquares = ["b7-7", "y7-7", "g7-7"];
-    return nestSquares.includes(move.targetSquare);
+    const owl = positions[`${color}Owl`];
+    if (owl && owl !== "captured" && nestSquares.includes(owl)) return true;
+
+    const aliveOwls = this.playerOrder.filter(c => {
+      const p = positions[`${c}Owl`];
+      return p && p !== "captured";
+    });
+    return aliveOwls.length === 1 && aliveOwls[0] === color;
+  }
+
+  // Check if a move wins immediately — reaching the nest OR capturing the last
+  // opposing Owl (any piece can do the latter, e.g. a Kite swoop on the final
+  // enemy Owl ends the game by Rule 22).
+  isImmediateWinningMove(move) {
+    const after = this.simulateMove(
+      this.gameState.piecePositions,
+      move.piece.name,
+      move.targetSquare
+    );
+    return this.isWinFor(this.playerColor, after);
   }
 
   // Detect if we're in the opening phase of the game
@@ -596,7 +614,8 @@ export class MinimaxAI {
     return bestScores;
   }
 
-  // Check if any player has won
+  // Check if any player has won — by reaching the nest (Rule 1) or by being the
+  // last Owl standing (Rule 22).
   checkWinner(piecePositions) {
     const nestSquares = ["b7-7", "y7-7", "g7-7"];
     for (const [pieceName, position] of Object.entries(piecePositions)) {
@@ -607,6 +626,14 @@ export class MinimaxAI {
         if (pieceName.startsWith("green")) return "green";
       }
     }
+
+    // Last Owl standing: if only one team still has an Owl, that team has won.
+    const aliveOwls = this.playerOrder.filter(c => {
+      const p = piecePositions[`${c}Owl`];
+      return p && p !== "captured";
+    });
+    if (aliveOwls.length === 1) return aliveOwls[0];
+
     return null;
   }
 
@@ -676,11 +703,13 @@ export class MinimaxAI {
   // score; quiet positions and the depth/budget limits fall back to the static
   // evaluation (whose elimination terms already score a lost Owl at ~ -1,000,000).
   tacticalMaxn(positions, depth, player, rootPlayer) {
-    // Terminal: someone reached the nest.
+    // Terminal: someone has won (nest or last Owl standing). Add the remaining
+    // depth so a win reached sooner scores higher than the same win reached
+    // later — the AI takes the quickest path to victory.
     const winner = this.checkWinner(positions);
     if (winner) {
       const terminal = { brown: -1000000, yellow: -1000000, green: -1000000 };
-      terminal[winner] = 1000000;
+      terminal[winner] = 1000000 + depth;
       return terminal;
     }
 
