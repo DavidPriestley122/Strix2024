@@ -66,73 +66,6 @@ export class MinimaxAI {
     return this.isWinFor(this.playerColor, after);
   }
 
-  // Detect if we're in the opening phase of the game
-  isOpeningPhase(piecePositions) {
-    // Opening phase = first few moves when pieces haven't moved much
-    // Count how many pieces are still close to starting positions
-    let piecesInStartingArea = 0;
-    let totalActivePieces = 0;
-
-    const startingRows = { b: 1, y: 1, g: 1 }; // Starting rows for each color
-
-    for (const [pieceName, position] of Object.entries(piecePositions)) {
-      if (position === 'captured') continue;
-      totalActivePieces++;
-
-      const face = position[0];
-      const coords = position.substring(1).split("-");
-      const row = parseInt(coords[0]);
-      const col = parseInt(coords[1]);
-
-      // Check if piece is in starting area (rows 1-3)
-      if (row <= 3) {
-        piecesInStartingArea++;
-      }
-    }
-
-    // Opening phase if more than 70% of pieces are still in starting area
-    return totalActivePieces > 0 && (piecesInStartingArea / totalActivePieces) > 0.7;
-  }
-
-  // Check if a piece has friendly support nearby (for piece coordination)
-  hasFriendlySupport(pieceName, position, piecePositions) {
-    if (!position || position === 'captured') return false;
-
-    const pieceColor = pieceName.startsWith('brown') ? 'brown' :
-                      pieceName.startsWith('yellow') ? 'yellow' : 'green';
-
-    // Get adjacent and nearby squares (within 2 squares)
-    const face = position[0];
-    const coords = position.substring(1).split("-");
-    const row = parseInt(coords[0]);
-    const col = parseInt(coords[1]);
-
-    // Check all squares within Manhattan distance of 2
-    for (let dr = -2; dr <= 2; dr++) {
-      for (let dc = -2; dc <= 2; dc++) {
-        if (dr === 0 && dc === 0) continue;
-        if (Math.abs(dr) + Math.abs(dc) > 2) continue; // Manhattan distance limit
-
-        const checkRow = row + dr;
-        const checkCol = col + dc;
-        if (checkRow < 1 || checkRow > 7 || checkCol < 1 || checkCol > 7) continue;
-
-        const checkSquare = `${face}${checkRow}-${checkCol}`;
-
-        // Look for friendly pieces at this square
-        for (const [otherPieceName, otherPosition] of Object.entries(piecePositions)) {
-          if (otherPosition === checkSquare &&
-              otherPieceName.startsWith(pieceColor) &&
-              otherPieceName !== pieceName) {
-            return true; // Found a friendly piece nearby
-          }
-        }
-      }
-    }
-
-    return false; // No friendly support nearby
-  }
-
   // Check if a player has "nest sight" - their Owl can reach a nest square on next turn
   // This is the foundation for Third Bird Rule checking (Thicket 0)
   hasNestSight(playerColor, positions) {
@@ -320,8 +253,6 @@ export class MinimaxAI {
 
   // Main decision function - now with recursive minimax lookahead
   selectBestMove() {
-    console.log(`🚀🚀🚀 RAVEN-BUGFIX-DEPLOYED-VERSION-20251230 🚀🚀🚀`);
-
     // PHASE 2: Check learned opening book FIRST (before generating all moves)
     if (this.memory && this.gameState.moveHistory) {
       const moveHistory = this.gameState.moveHistory || [];
@@ -421,12 +352,6 @@ export class MinimaxAI {
         move.targetSquare
       );
 
-      // DEBUG: Show opponent's predicted response for capture moves
-      const capturedPieces = Object.entries(newPositions).filter(([name, pos]) =>
-        pos === 'captured' && this.gameState.piecePositions[name] !== 'captured'
-      );
-      const isCapture = capturedPieces.length > 0;
-
       // Evaluate with the threat-extension search: reads deep along forcing
       // lines (wins / Owl-captures / blocks / threat-creations) and falls back
       // to the static eval where the position is quiet. This is what lets the
@@ -487,7 +412,10 @@ export class MinimaxAI {
   // Simulate a move on a cloned game state
   // CRITICAL: Must execute captures so material evaluation works correctly!
   simulateMove(piecePositions, pieceName, targetSquare) {
-    const newState = JSON.parse(JSON.stringify(piecePositions));
+    // piecePositions is a flat map of name → square string, so a shallow
+    // copy is a full clone — far cheaper than JSON round-tripping, and this
+    // runs thousands of times per decision inside the tactical search.
+    const newState = { ...piecePositions };
     const pieceType = this.getPieceType(pieceName);
     const fromSquare = piecePositions[pieceName];
 
@@ -503,17 +431,28 @@ export class MinimaxAI {
       }
     }
     else if (pieceType === 'Kite') {
-      // Kite swoop capture: cross-face move captures adjacent opponents
+      // Kite swoop capture: cross-face move captures ONE adjacent opponent.
+      // Rule 11: a Kite landing between two pieces chooses which to capture
+      // but cannot capture both — assume it takes the most valuable victim.
+      // Rule 15: an Owl on a black square is immune to Kites.
       const fromFace = fromSquare[0];
       const toFace = targetSquare[0];
 
       if (fromFace !== toFace) { // Must be cross-face swoop
-        const adjacentSquares = this.getAdjacentSquares(targetSquare);
-        for (const adjSquare of adjacentSquares) {
+        let bestVictim = null;
+        let bestValue = -1;
+        for (const adjSquare of this.getAdjacentSquares(targetSquare)) {
           const victim = this.findPieceAtSquare(adjSquare, { piecePositions });
-          if (victim && !this.isSameTeam(pieceName, victim)) {
-            newState[victim] = 'captured';
+          if (!victim || this.isSameTeam(pieceName, victim)) continue;
+          if (victim.includes('Owl') && this.isBlackSquare(adjSquare)) continue; // Rule 15
+          const value = this.getCaptureValue(victim);
+          if (value > bestValue) {
+            bestValue = value;
+            bestVictim = victim;
           }
+        }
+        if (bestVictim) {
+          newState[bestVictim] = 'captured';
         }
       }
     }
@@ -530,6 +469,8 @@ export class MinimaxAI {
         for (const [victimName, victimPos] of Object.entries(piecePositions)) {
           if (victimPos === 'captured' || victimName === pieceName) continue;
           if (this.isSameTeam(pieceName, victimName)) continue;
+          // Rule 15: an Owl on a black square cannot be mobbed by Ravens
+          if (victimName.includes('Owl') && this.isBlackSquare(victimPos)) continue;
 
           // Look for a passive Raven that creates valid mobbing configuration
           for (const [passiveName, passivePos] of Object.entries(piecePositions)) {
@@ -556,62 +497,6 @@ export class MinimaxAI {
     const currentIndex = this.playerOrder.indexOf(currentPlayer);
     const nextIndex = (currentIndex + 1) % this.playerOrder.length;
     return this.playerOrder[nextIndex];
-  }
-
-  // Recursive Max^n search (each player maximizes their own score)
-  maxn(piecePositions, depth, currentPlayer, debugCapture = null) {
-    // Terminal conditions
-    if (depth === 0) {
-      const evaluation = this.evaluatePosition(piecePositions);
-      return evaluation.scores; // Returns {brown: X, yellow: Y, green: Z}
-    }
-
-    // Check for wins (terminal state)
-    const winner = this.checkWinner(piecePositions);
-    if (winner) {
-      // Winner gets huge score, losers get terrible score
-      const terminalScores = {
-        brown: winner === 'brown' ? 1000000 : -1000000,
-        yellow: winner === 'yellow' ? 1000000 : -1000000,
-        green: winner === 'green' ? 1000000 : -1000000
-      };
-      return terminalScores;
-    }
-
-    // DISABLE LOGGING during recursive calls to avoid exponential log spam
-    const savedLogging = this.strategicLogging;
-    this.strategicLogging = false;
-
-    // Generate moves for current player
-    const gameState = { piecePositions: piecePositions };
-    const moves = this.generateAllMoves(currentPlayer, gameState);
-
-    // Restore logging
-    this.strategicLogging = savedLogging;
-
-    if (moves.length === 0) {
-      // No moves available - return neutral scores
-      return { brown: 0, yellow: 0, green: 0 };
-    }
-
-    const nextPlayer = this.getNextPlayer(currentPlayer);
-
-    // Max^n: Current player picks move that maximizes THEIR score
-    let bestScores = null;
-    let bestMove = null;
-
-    for (const move of moves) {
-      const newPositions = this.simulateMove(piecePositions, move.piece.name, move.targetSquare);
-      const childScores = this.maxn(newPositions, depth - 1, nextPlayer, debugCapture);
-
-      // Current player picks the move with the best score FOR THEM
-      if (!bestScores || childScores[currentPlayer] > bestScores[currentPlayer]) {
-        bestScores = childScores;
-        bestMove = move;
-      }
-    }
-
-    return bestScores;
   }
 
   // Check if any player has won — by reaching the nest (Rule 1) or by being the
@@ -997,21 +882,19 @@ export class MinimaxAI {
     }
 
     for (const piece of pieces) {
-      const possibleMoves = this.getPossibleMoves(piece, state);
+      // legalMovesInState = rule-correct, shadow-filtered moves against the
+      // PASSED state, plus Rule 4 (non-Owls can't stop on nest) and Owl
+      // own-team occupancy. This matters for hypothetical positions, where
+      // moveExecutor (live-board validator) cannot be used.
+      const possibleMoves = this.legalMovesInState(piece, state);
       this.logStrategy(`${piece.name} has ${possibleMoves.length} possible moves: ${possibleMoves.slice(0,5).join(', ')}${possibleMoves.length > 5 ? '...' : ''}`);
 
       let validMovesForPiece = 0;
       let crossFaceValidMoves = 0;
       let sameFaceValidMoves = 0;
-      
+
       for (const targetSquare of possibleMoves) {
         const isValid = this.isValidMove(piece.name, targetSquare, state);
-
-        // Debug defensive move validation
-        if ((piece.name === 'yellowKite' || piece.name === 'greenKite') &&
-            (targetSquare === 'b7-6' || targetSquare === 'b7-4')) {
-          console.log(`🔍 VALIDATION: ${piece.name} → ${targetSquare}: ${isValid ? 'VALID' : 'REJECTED'}`);
-        }
 
         if (isValid) {
           moves.push({
@@ -1078,10 +961,6 @@ export class MinimaxAI {
         break;
       case "Kite":
         moves = getAllKiteMoves(currentPos, state.piecePositions, piece.name);
-        // Debug Kite moves for defensive positions
-        if ((currentPos === 'y6-2' || currentPos === 'y4-6') && (piece.name === 'yellowKite' || piece.name === 'greenKite')) {
-          // Kite moves debug - disabled to reduce spam
-        }
         break;
       case "Raven":
         moves = getAllRavenMoves(currentPos, state.piecePositions, piece.name);
@@ -1116,22 +995,13 @@ export class MinimaxAI {
   }
 
   isValidMove(pieceName, targetSquare, gameState = null) {
-    // Try using moveExecutor first
-    if (this.moveExecutor) {
-      const result = this.moveExecutor.isValidMove(targetSquare, pieceName);
-      
-      // Debug rejected cross-face moves and Kite moves
-      const currentPos = this.gameState.piecePositions[pieceName];
-      const currentFace = currentPos ? currentPos[0] : '?';
-      const targetFace = targetSquare[0];
-      const isCrossFace = currentFace !== targetFace;
-      const isKite = pieceName.includes('Kite');
-      
-      if (!result && (isKite || isCrossFace)) {
-        this.logStrategy(`🔍 VALIDATION FAILED: ${pieceName} from ${currentPos} to ${targetSquare} (${isCrossFace ? 'cross-face' : 'same-face'})`);
-      }
-      
-      return result;
+    // moveExecutor validates against the LIVE board only. Consulting it for a
+    // hypothetical (simulated) position would answer the wrong question —
+    // e.g. Type 2 Third Bird checks ask "can the intervening player block
+    // AFTER my move?", which must be judged in the post-move position.
+    const isLiveState = !gameState || gameState === this.gameState;
+    if (this.moveExecutor && isLiveState) {
+      return this.moveExecutor.isValidMove(targetSquare, pieceName);
     }
 
     // Fallback: basic validation
@@ -1154,115 +1024,6 @@ export class MinimaxAI {
     }
 
     return true;
-  }
-
-  // Evaluate capture opportunities for a move
-  evaluateCapture(move) {
-    let captureScore = 0;
-    const piece = move.piece;
-    const targetSquare = move.targetSquare;
-
-    // Check capture type based on piece
-    if (piece.type === 'Owl') {
-      // Owl captures: direct capture by moving to occupied square
-      const targetPiece = this.findPieceAtSquare(targetSquare);
-      if (targetPiece) {
-        if (!this.isSameTeam(piece.name, targetPiece)) {
-          captureScore = this.getCaptureValue(targetPiece);
-          this.logStrategy(`🎯 OWL CAPTURE: ${piece.name} can capture ${targetPiece} (+${captureScore})`);
-        } else {
-          this.logTactical(`❌ ${piece.name}→${targetSquare}: own piece ${targetPiece} in the way`);
-        }
-      }
-    } 
-    else if (piece.type === 'Kite') {
-      // Kite captures: cross-face swooping (must move to different face)
-      const currentFace = piece.position[0];
-      const targetFace = targetSquare[0];
-      
-      if (currentFace !== targetFace) {
-        // Check adjacent squares for capturable pieces
-        const adjacentSquares = this.getAdjacentSquares(targetSquare);
-        for (const adjSquare of adjacentSquares) {
-          const targetPiece = this.findPieceAtSquare(adjSquare);
-          if (targetPiece && !this.isSameTeam(piece.name, targetPiece)) {
-            const pieceValue = this.getCaptureValue(targetPiece);
-            captureScore += pieceValue;
-            this.logStrategy(`🦅 KITE CAPTURE: ${piece.name} can swoop ${targetPiece} at ${adjSquare} (+${pieceValue})`);
-          }
-        }
-      }
-    }
-    else if (piece.type === 'Raven') {
-      // Raven captures: mobbing (cross-face move + passive raven)
-      const currentFace = piece.position[0];
-      const targetFace = targetSquare[0];
-      
-      if (currentFace !== targetFace) {
-        // Find potential mobbing victims
-        const mobbingCaptures = this.findRavenMobbingCaptures(piece, targetSquare);
-        for (const capture of mobbingCaptures) {
-          const pieceValue = this.getCaptureValue(capture.targetPiece);
-          captureScore += pieceValue;
-          this.logStrategy(`🐦 RAVEN MOBBING: ${piece.name} can mob ${capture.targetPiece} (+${pieceValue})`);
-        }
-      }
-    }
-
-    return captureScore;
-  }
-
-  // === NEW: Unified offensive capture analysis ===
-  evaluateMyCaptures(move) {
-    let score = 0;
-    const piece = move.piece;
-    const targetSquare = move.targetSquare;
-    
-    if (piece.type === 'Owl') {
-      const directCapture = this.findOwlDirectCapture(targetSquare);
-      if (directCapture) {
-        score += this.getCaptureValue(directCapture);
-        this.logStrategy(`🎯 OWL CAPTURE: ${piece.name} can capture ${directCapture} (+${this.getCaptureValue(directCapture)})`);
-      }
-    }
-    else if (piece.type === 'Kite') {
-      const swoopCaptures = this.findKiteSwoopCaptures(piece.position, targetSquare);
-      for (const capture of swoopCaptures) {
-        const value = this.getCaptureValue(capture);
-        score += value;
-        this.logStrategy(`🦅 KITE CAPTURE: ${piece.name} can swoop ${capture} (+${value})`);
-      }
-    }
-    else if (piece.type === 'Raven') {
-      const mobbingCaptures = this.findRavenMobbingCaptures(piece, targetSquare);
-      for (const capture of mobbingCaptures) {
-        const value = this.getCaptureValue(capture.targetPiece);
-        score += value;
-        this.logStrategy(`🐦 RAVEN MOBBING: ${piece.name} can mob ${capture.targetPiece} (+${value})`);
-      }
-    }
-    
-    return score;
-  }
-
-  // === NEW: Unified defensive threat analysis ===
-  evaluateThreatsToMe(move) {
-    let penalty = 0;
-    const myPiece = move.piece.name;
-    const myTargetSquare = move.targetSquare;
-    
-    // Check what opponent pieces could capture me at target square
-    for (const [opponentPiece, position] of Object.entries(this.gameState.piecePositions)) {
-      if (position === "captured" || this.isSameTeam(myPiece, opponentPiece)) continue;
-      
-      if (this.canPieceCaptureAtSquare(opponentPiece, position, myTargetSquare)) {
-        const threatValue = this.getCaptureValue(myPiece) * 0.3; // 30% threat penalty
-        penalty += threatValue;
-        this.logStrategy(`⚠️ THREAT: ${opponentPiece} can capture ${myPiece} at ${myTargetSquare} (-${threatValue})`);
-      }
-    }
-    
-    return penalty;
   }
 
   // Get capture value based on piece type
@@ -1311,128 +1072,6 @@ export class MinimaxAI {
     }
     
     return adjacent;
-  }
-
-  // Find Raven mobbing capture opportunities
-  findRavenMobbingCaptures(piece, targetSquare) {
-    // Disable overly aggressive mobbing detection for now
-    // The current implementation is too permissive and creates inflated scores
-    return [];
-    
-    /* ORIGINAL CODE - DISABLED
-    const captures = [];
-    
-    // Get current piece positions
-    const piecePositions = this.gameState.piecePositions;
-    if (!piecePositions) return captures;
-    
-    // Find all pieces that could be mobbed from the target position
-    for (const [victimName, victimPos] of Object.entries(piecePositions)) {
-      if (victimPos === "captured" || victimName === piece.name) continue;
-      
-      // Don't mob teammates
-      const ravenColor = piece.name.split(/(?=[A-Z])/)[0];
-      const victimColor = victimName.split(/(?=[A-Z])/)[0];
-      if (ravenColor === victimColor) continue;
-      
-      // Find a passive Raven that could help mob this victim
-      for (const [passiveRavenName, passiveRavenPos] of Object.entries(piecePositions)) {
-        if (!passiveRavenName.endsWith('Raven') || 
-            passiveRavenPos === "captured" || 
-            passiveRavenName === piece.name) continue;
-        
-        // Check if this forms a valid mobbing configuration
-        // This is a simplified check - you might want to use the actual isValidMobbingConfiguration
-        if (this.wouldFormValidMobbing(targetSquare, passiveRavenPos, victimPos)) {
-          captures.push({
-            targetPiece: victimName,
-            victimPosition: victimPos,
-            passiveRaven: passiveRavenName
-          });
-          break; // Only count each victim once
-        }
-      }
-    }
-    
-    return captures;
-    */
-  }
-
-  // Simplified mobbing check (you might want to use the real mobbing rules)
-  wouldFormValidMobbing(attackingRavenPos, passiveRavenPos, victimPos) {
-    // This is a simplified heuristic - real implementation would use exact mobbing geometry
-    // For now, just check if all three pieces are reasonably close
-    const dist1 = this.calculateDistance(attackingRavenPos, passiveRavenPos);
-    const dist2 = this.calculateDistance(attackingRavenPos, victimPos);
-    const dist3 = this.calculateDistance(passiveRavenPos, victimPos);
-    
-    // Ravens should be within reasonable mobbing distance
-    return dist1 <= 3 && dist2 <= 3 && dist3 <= 3;
-  }
-
-  // Calculate simple distance between two squares
-  calculateDistance(pos1, pos2) {
-    const coords1 = this.parsePosition(pos1);
-    const coords2 = this.parsePosition(pos2);
-    return Math.abs(coords1.row - coords2.row) + Math.abs(coords1.col - coords2.col);
-  }
-
-  // Parse position string into components
-  parsePosition(position) {
-    const coords = position.substring(1).split("-");
-    return {
-      face: position[0],
-      row: parseInt(coords[0]),
-      col: parseInt(coords[1])
-    };
-  }
-
-  // Debug: Log current board state
-  logBoardState() {
-    this.logStrategy(`📋 BOARD STATE:`);
-    const opponents = this.players.filter(p => p !== this.playerColor);
-    
-    // Show my pieces
-    const myPieces = this.getPlayerPieces(this.playerColor);
-    this.logStrategy(`  🔵 MY PIECES (${this.playerColor}):`);
-    for (const piece of myPieces) {
-      this.logStrategy(`    ${piece.name}: ${piece.position}`);
-    }
-    
-    // Show opponent pieces
-    for (const opponent of opponents) {
-      const oppPieces = this.getPlayerPieces(opponent);
-      this.logStrategy(`  🔴 ${opponent.toUpperCase()} PIECES:`);
-      for (const piece of oppPieces) {
-        this.logStrategy(`    ${piece.name}: ${piece.position}`);
-      }
-    }
-  }
-
-  // === CONSOLIDATED: Capture detection helpers ===
-  findOwlDirectCapture(targetSquare) {
-    const occupyingPiece = this.findPieceAtSquare(targetSquare);
-    if (occupyingPiece && !this.isSameTeam(`${this.playerColor}Piece`, occupyingPiece)) {
-      return occupyingPiece;
-    }
-    return null;
-  }
-
-  findKiteSwoopCaptures(kitePosition, targetSquare) {
-    const captures = [];
-    const currentFace = kitePosition[0];
-    const targetFace = targetSquare[0];
-    
-    if (currentFace !== targetFace) { // Cross-face move required
-      const adjacentSquares = this.getAdjacentSquares(targetSquare);
-      for (const adjSquare of adjacentSquares) {
-        const victim = this.findPieceAtSquare(adjSquare);
-        if (victim && !this.isSameTeam(`${this.playerColor}Piece`, victim)) {
-          captures.push(victim);
-        }
-      }
-    }
-    return captures;
   }
 
   // Rule 15 helper: dark/black squares are those where (row + col) is even.
@@ -1573,16 +1212,6 @@ export class MinimaxAI {
   }
 
 
-  // Base score for different piece types to encourage variety
-  getBasePieceScore(pieceType) {
-    switch(pieceType) {
-      case 'Owl': return 20;    // Reduced from 100 - still important but not overwhelming
-      case 'Kite': return 50;   // Medium base - good for captures
-      case 'Raven': return 10;  // Lower base - prevent Ravens-only play
-      default: return 1;
-    }
-  }
-
   // Calculate flightway distance between two squares
   calculateFlightwayDistance(fromSquare, toSquare) {
     // Convert both squares to flightway coordinates
@@ -1673,57 +1302,4 @@ export class MinimaxAI {
     return Math.max(0, (baseDistance - 1) - bestNextDistance);
   }
 
-  // Evaluate positional advancement
-  evaluateAdvancement(move) {
-    const piece = move.piece;
-    const targetSquare = move.targetSquare;
-
-    // Parse target coordinates
-    const coords = targetSquare.substring(1).split("-");
-    const row = parseInt(coords[0]);
-    const col = parseInt(coords[1]);
-    const face = targetSquare[0];
-
-    let bonus = 0;
-
-    // Owls get bonus for moving toward center and nest
-    if (piece.type === 'Owl') {
-      // ANY of the three nest squares wins!
-      const nestSquares = ['b7-7', 'y7-7', 'g7-7'];
-
-      // MASSIVE bonus for landing on ANY WINNING SQUARE
-      if (nestSquares.includes(targetSquare)) {
-        bonus += 10000; // This is the win! Highest priority!
-        this.logStrategy(`🏆 WINNING SQUARE DETECTED: ${targetSquare} (+10000)`);
-      }
-      else {
-        // Calculate FLIGHTWAY distance to nearest nest (actual move count!)
-        const nestDistance = this.calculateDistanceToNearestNest(targetSquare);
-
-        // Progressive bonus based on actual move count (closer = better)
-        // Max distance is ~12 moves, so we create a strong gradient
-        const distanceBonus = Math.max(0, 120 - (nestDistance * 10));
-        bonus += distanceBonus;
-
-        if (distanceBonus > 0) {
-          this.logStrategy(`📏 Distance to nest: ${nestDistance} moves → +${distanceBonus} points`);
-        }
-      }
-    }
-    
-    // Kites get bonus for edge positions (better for swooping)
-    if (piece.type === 'Kite') {
-      if (row === 1 || row === 7 || col === 1 || col === 7) {
-        bonus += 15;
-      }
-    }
-    
-    // Ravens get small bonus for center positions (mobbing opportunities)
-    if (piece.type === 'Raven') {
-      const centerDistance = Math.abs(row - 4) + Math.abs(col - 4);
-      if (centerDistance <= 2) bonus += 5;
-    }
-    
-    return bonus;
-  }
 }

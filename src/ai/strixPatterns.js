@@ -98,12 +98,19 @@ export class StrixPatterns {
       return threats;
     }
 
-    // Find all potential crosspieces for ghosting
+    // Find all potential crosspieces for ghosting.
+    // Rule 8: the crosspiece may be an Owl, Kite or Raven FROM ANY TEAM —
+    // including the ghosting Owl's own teammates. Only the Owl itself is
+    // excluded (a piece cannot be its own pivot).
     const potentialCrosspieces = [];
     for (const [pieceName, position] of Object.entries(
       gameState.piecePositions
     )) {
-      if (position !== "captured" && !pieceName.startsWith(opponentColor)) {
+      if (
+        position !== "captured" &&
+        !position.includes("--") && // skip pieces parked in Owlhalla
+        pieceName !== owlName
+      ) {
         potentialCrosspieces.push({ name: pieceName, position: position });
       }
     }

@@ -1,80 +1,37 @@
 # AI Strategies Audit - Game Mechanisms
 
-## Game Mechanisms to Verify
+**Last updated: July 15, 2026** (previous version predated shadow-filtering integration and was stale)
 
-### 1. **Shadowing** ❌ NOT INTEGRATED
-- **Location**: `src/game/managers/gameStateManager.js` - `updateShadowedRows()`
-- **How it works**: Pieces cast shadows on other faces; shadowed squares cannot be occupied
-- **Current AI status**:
-  - ❌ Move generation (`getAllOwlMoves`, etc.) doesn't check shadows
-  - ❌ Position evaluation doesn't account for shadows
-  - ❌ Win threat detection doesn't filter shadowed nest squares
-- **Fix needed**:
-  - Import/implement shadow calculation in AI
-  - Filter shadowed squares from possible moves
-  - Check shadows when evaluating win threats
+## Game Mechanisms — Current Status
 
-### 2. **Ghosting** ⚠️ PARTIALLY INTEGRATED
-- **Location**: `src/game/rules/owlRules.js` - `getGhostingMoves()`
-- **How it works**: Owls jump through cross-adjacent pieces to other faces
-- **Current AI status**:
-  - ✅ Move generation includes ghosting moves
-  - ✅ Position evaluation detects ghosting threats (via StrixPatterns)
-  - ⚠️ Win threat detection uses `getPossibleMoves` but doesn't verify moves are actually valid
-- **Fix needed**:
-  - Verify ghosting moves account for path blocking
-  - Ensure ghosting calculation respects all constraints
+### 1. **Shadowing** ✅ INTEGRATED
+- `calculateShadowedSquares()` in `src/ai/aiStrategies.js` mirrors `gameStateManager.updateShadowedRows()`
+- `getPossibleMoves()` filters shadowed destinations (Rule 5); pass-through of crosspieces (Rule 6) is handled by the rule generators
+- Win-threat detection (Part 5 of `evaluatePosition`) checks nest squares for shadowing, excluding the moving Owl itself
 
-### 3. **Mobbing** ❓ UNKNOWN
-- **Location**: Likely in Raven rules
-- **How it works**: Ravens can gang up on Owls
-- **Current AI status**: Unknown - needs investigation
-- **Fix needed**: Verify mobbing is properly evaluated
+### 2. **Ghosting** ✅ INTEGRATED
+- Move generation includes ghosting via `getAllOwlMoves()`
+- `StrixPatterns.detectCompleteGhostThreats()` detects ghost threats; crosspieces from **any team** are considered (Rule 8), excluding only the Owl itself (fixed July 2026)
+- Ghost-opportunity bonus (Part 2b) rewards setting up pivots a move ahead
 
-### 4. **Capture Rules** ⚠️ PARTIALLY INTEGRATED
-- **Location**: Various rule files
-- **Current AI status**:
-  - ✅ Position evaluator checks capture threats (Part 3)
-  - ⚠️ May not account for all piece-specific capture rules
-- **Fix needed**: Verify all capture mechanisms are evaluated
+### 3. **Mobbing** ✅ INTEGRATED
+- `simulateMove()` and threat detection use `isValidMobbingConfiguration()` from `ravenRules.js` (real geometry, not heuristics)
+- Passive Raven may be from any team, including paralysed teams (Rule 12/16)
 
-### 5. **Move Validation** ❌ INCONSISTENT
-- **Current AI status**:
-  - Move generation uses rule files (`getAllOwlMoves`, etc.)
-  - Position evaluation uses `getPossibleMoves` which may not match actual validation
-  - Win threat detection doesn't use proper validation
-- **Fix needed**: Use consistent validation that matches game controller
+### 4. **Capture Rules** ✅ INTEGRATED
+- Owl: direct capture by displacement (Rule 9)
+- Kite: cross-face swoop, captures exactly **one** adjacent victim — most valuable chosen (Rule 10/11, fixed July 2026)
+- Raven: mobbing may capture all sandwiched victims (Rule 13)
+- Rule 15 (Owl on black square immune to Kites/Ravens) enforced in both threat detection **and** `simulateMove` (fixed July 2026)
 
-## Priority Fixes
+### 5. **Move Validation** ✅ CONSISTENT
+- Live board: `moveExecutor.isValidMove()` (the game's own validator)
+- Hypothetical positions (search / Third Bird checks): `legalMovesInState()` — rule-based generation + Rule 4 (non-Owls can't stop on nest) + Owl own-team occupancy. `moveExecutor` is deliberately **not** consulted for simulated states (fixed July 2026 — it validates the live board only)
 
-### HIGH PRIORITY
-1. **Add shadow checking to win threat detection**
-   - Implement `calculateShadowedSquares(piecePositions)` in AI
-   - Filter nest squares by shadow status
-   - This will fix the immediate bug where defensive moves aren't recognized
+## Known Remaining Gaps
 
-2. **Add shadow checking to move generation**
-   - Ensure `getPossibleMoves` filters out shadowed destinations
-   - Or add shadow filtering layer in AI
-
-### MEDIUM PRIORITY
-3. **Audit mobbing mechanics**
-   - Understand how it works
-   - Verify AI accounts for it
-
-4. **Verify capture rules are complete**
-   - Check all piece types
-   - Ensure AI evaluates all capture scenarios
-
-### LOW PRIORITY
-5. **Optimize evaluation function**
-   - After mechanisms are correct, tune weights
-   - Add more strategic patterns
-
-## Implementation Plan
-
-1. Create `calculateShadowedSquares(piecePositions)` helper function
-2. Modify Part 4 of `evaluatePosition()` to check shadows
-3. Test with the failing game scenario
-4. If successful, continue with medium priority items
-5. Create comprehensive test suite for AI play
+1. **No exchange evaluation** — en-prise penalties (Part 4) ignore whether the threatened piece is defended, so the AI plays materially timid
+2. **Rule 13 "or none"** — `simulateMove` always executes available captures; declining a capture (e.g. to avoid a Third Bird foul) cannot be expressed
+3. **Kite swoop adjacency is same-face only** — if around-the-corner adjacency counts for swoop victims, the AI won't see those threats (verify against `kiteRules.js`)
+4. **Thicket 1/2 not implemented** — Third Bird checking is Thicket 0 (Types 1 & 2) only
+5. **Class naming** — `MinimaxAI` actually implements max^n with threat-extension search
